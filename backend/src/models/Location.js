@@ -1,4 +1,3 @@
-import { ModelShim } from './modelShim.js';
-
-export const Location = new ModelShim('locations');
+import { Location } from './index';
+export { Location };
 export default Location;

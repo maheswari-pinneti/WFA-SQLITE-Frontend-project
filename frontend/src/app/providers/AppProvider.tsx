@@ -2,7 +2,7 @@ import React from 'react';
 import { Provider } from 'react-redux';
 import { BrowserRouter } from 'react-router-dom';
 import { store } from '../store';
-import { ThemeProvider } from '../../design-system/theme/theme';
+import { ThemeProvider } from '../../theme/ThemeProvider';
 import { setupAuthInterceptors } from '../../api/interceptors/authInterceptor';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { queryClient } from '../../api/client';

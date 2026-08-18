@@ -1,4 +1,3 @@
-import { ModelShim } from './modelShim.js';
-
-export const AuditLog = new ModelShim('audit_logs');
+import { AuditLog } from './index';
+export { AuditLog };
 export default AuditLog;

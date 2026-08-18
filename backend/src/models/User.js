@@ -1,6 +1,3 @@
-import { ModelShim } from './modelShim.js';
-
-export const User = new ModelShim('users');
-export const MfaChallenge = new ModelShim('mfachallenges');
-
+import { User, MfaChallenge } from './index';
+export { User, MfaChallenge };
 export default User;

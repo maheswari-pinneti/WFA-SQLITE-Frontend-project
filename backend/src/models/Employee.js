@@ -1,4 +1,3 @@
-import { ModelShim } from './modelShim.js';
-
-export const Employee = new ModelShim('employees');
+import { Employee } from './index';
+export { Employee };
 export default Employee;

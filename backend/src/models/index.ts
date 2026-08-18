@@ -1,0 +1,25 @@
+import { ModelShim } from '../database/sqlite.js';
+
+export const User = new ModelShim('users');
+export const MfaChallenge = new ModelShim('mfachallenges');
+export const Employee = new ModelShim('employees');
+export const Attendance = new ModelShim('attendancerecords');
+export const Correction = new ModelShim('correctionrequests');
+export const BreakSession = new ModelShim('breaksessions');
+export const AttendanceEvent = new ModelShim('attendanceevents');
+export const IdempotencyRecord = new ModelShim('idempotencyrecords');
+export const Shift = new ModelShim('shifts');
+export const Department = new ModelShim('departments');
+export const Team = new ModelShim('teams');
+export const Location = new ModelShim('locations');
+export const AuditLog = new ModelShim('audit_logs');
+export const RefreshToken = new ModelShim('refreshtokens');
+export const Session = new ModelShim('sessions');
+export const LeaveRequest = new ModelShim('leaverequests');
+export const Task = new ModelShim('tasks');
+export const Notification = new ModelShim('notifications');
+export const PerformanceRecord = new ModelShim('performancerecords');
+export const Skill = new ModelShim('skills');
+export const Company = new ModelShim('companies');
+export const Role = new ModelShim('roles');
+export const Permission = new ModelShim('permissions');

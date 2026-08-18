@@ -1,6 +1,3 @@
-import { ModelShim } from './modelShim.js';
-
-export const Session = new ModelShim('sessions');
-export const RefreshToken = new ModelShim('refreshtokens');
-
+import { RefreshToken } from './index';
+export { RefreshToken };
 export default RefreshToken;
