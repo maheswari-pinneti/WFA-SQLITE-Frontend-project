@@ -1093,19 +1093,19 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
   opacity: 0.95;
 }
 .app-sidebar > * { position: relative; z-index: 1; }
-.app-sidebar.sidebar-accent-admin { --sidebar-accent: #60a5fa; --sidebar-accent-strong: #2563eb; --sidebar-accent-soft: rgba(96, 165, 250, 0.16); --sidebar-ink: #dbeafe; }
-.app-sidebar.sidebar-accent-hr { --sidebar-accent: #c084fc; --sidebar-accent-strong: #9333ea; --sidebar-accent-soft: rgba(192, 132, 252, 0.16); --sidebar-ink: #f3e8ff; }
-.app-sidebar.sidebar-accent-manager { --sidebar-accent: #22d3ee; --sidebar-accent-strong: #0891b2; --sidebar-accent-soft: rgba(34, 211, 238, 0.15); --sidebar-ink: #cffafe; }
-.app-sidebar.sidebar-accent-team-lead { --sidebar-accent: #2dd4bf; --sidebar-accent-strong: #0f766e; --sidebar-accent-soft: rgba(45, 212, 191, 0.15); --sidebar-ink: #ccfbf1; }
-.app-sidebar.sidebar-accent-employee { --sidebar-accent: #34d399; --sidebar-accent-strong: #059669; --sidebar-accent-soft: rgba(52, 211, 153, 0.15); --sidebar-ink: #d1fae5; }
+.app-sidebar.sidebar-accent-admin { --sidebar-accent: #8b5cf6; --sidebar-accent-strong: #7c3aed; --sidebar-accent-soft: rgba(139, 92, 246, 0.16); --sidebar-ink: #f5f3ff; }
+.app-sidebar.sidebar-accent-hr { --sidebar-accent: #3b82f6; --sidebar-accent-strong: #1d4ed8; --sidebar-accent-soft: rgba(59, 130, 246, 0.16); --sidebar-ink: #eff6ff; }
+.app-sidebar.sidebar-accent-manager { --sidebar-accent: #10b981; --sidebar-accent-strong: #047857; --sidebar-accent-soft: rgba(16, 185, 129, 0.15); --sidebar-ink: #ecfdf5; }
+.app-sidebar.sidebar-accent-team-lead { --sidebar-accent: #f59e0b; --sidebar-accent-strong: #b45309; --sidebar-accent-soft: rgba(245, 158, 11, 0.15); --sidebar-ink: #fffbeb; }
+.app-sidebar.sidebar-accent-employee { --sidebar-accent: #f43f5e; --sidebar-accent-strong: #9f1239; --sidebar-accent-soft: rgba(244, 63, 94, 0.15); --sidebar-ink: #fff1f2; }
 .app-sidebar.sidebar-accent-emerald { --sidebar-accent: #34d399; --sidebar-accent-strong: #059669; --sidebar-accent-soft: rgba(52, 211, 153, 0.15); --sidebar-ink: #d1fae5; }
 
 [data-theme='light'] .app-sidebar {
-  background: linear-gradient(180deg, #ffffff 0%, #f7faff 58%, #f3f7fc 100%) !important;
+  background: var(--bg-primary) !important;
   box-shadow: 14px 0 35px rgba(15, 23, 42, 0.08) !important;
 }
 [data-theme='dark'] .app-sidebar {
-  background: linear-gradient(180deg, #0e192a 0%, #091321 52%, #07101d 100%) !important;
+  background: var(--bg-primary) !important;
 }
 
 .sidebar-brand {

@@ -1,4 +1,5 @@
 import React from 'react';
+import './Auth.css';
 
 interface AuthLayoutProps {
   children: React.ReactNode;
@@ -7,8 +8,8 @@ interface AuthLayoutProps {
 
 export const AuthLayout: React.FC<AuthLayoutProps> = ({ children }) => {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[#0f172a] text-[#f8fafc] p-6 select-none">
-      <div className="w-full max-w-[440px] bg-[#1e293b] p-8 rounded-2xl shadow-xl border border-[#334155]">
+    <div className="auth-page">
+      <div className="auth-card">
         {children}
       </div>
     </div>

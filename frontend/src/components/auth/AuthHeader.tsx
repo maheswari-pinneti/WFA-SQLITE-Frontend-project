@@ -7,11 +7,14 @@ interface AuthHeaderProps {
 
 export const AuthHeader: React.FC<AuthHeaderProps> = ({ title, subtitle }) => {
   return (
-    <div className="space-y-1">
-      <h2 className="text-2xl font-bold tracking-tight text-[var(--text-primary)]">
+    <div className="auth-header">
+      <div className="auth-title-container">
+        <img src="/assets/images/logo.png" alt="Logo" style={{ height: '32px', width: 'auto', objectFit: 'contain' }} />
+      </div>
+      <h2 className="auth-title">
         {title}
       </h2>
-      <p className="text-sm text-[var(--text-muted)] font-medium">
+      <p className="auth-subtitle">
         {subtitle}
       </p>
     </div>

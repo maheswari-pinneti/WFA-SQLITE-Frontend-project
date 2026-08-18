@@ -70,28 +70,28 @@ export const SignupForm: React.FC<SignupFormProps> = ({ selectedRole, onRoleChan
   };
 
   return (
-    <div className="space-y-6">
+    <div className="auth-space-y-6">
       <AuthHeader
         title="Create Account"
         subtitle="Register your corporate profile to access Workforce Analytics"
       />
 
       {error && (
-        <div className="p-3.5 rounded-xl bg-red-500/10 border border-red-500/20 text-red-600 dark:text-red-400 text-xs font-semibold">
+        <div className="auth-alert-error">
           {error}
         </div>
       )}
 
       {isSuccess && (
-        <div className="p-3.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-xs font-semibold">
+        <div className="auth-alert-success">
           Account created successfully! Redirecting...
         </div>
       )}
 
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <form onSubmit={handleSubmit} className="auth-space-y-4">
         {/* Full Name */}
-        <div className="space-y-1.5">
-          <label className="block text-sm font-semibold text-[var(--text-primary)]">
+        <div className="auth-form-group">
+          <label className="auth-label">
             Full Name
           </label>
           <input
@@ -101,13 +101,13 @@ export const SignupForm: React.FC<SignupFormProps> = ({ selectedRole, onRoleChan
             value={fullName}
             onChange={(e) => setFullName(e.target.value)}
             placeholder="Sarah Connor"
-            className="w-full px-3.5 py-2.5 rounded-xl border border-[var(--border-color)] bg-[var(--bg-secondary)] text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--role-primary)]/20 focus:border-[var(--role-primary)] transition disabled:opacity-50"
+            className="auth-input"
           />
         </div>
 
         {/* Corporate Email */}
-        <div className="space-y-1.5">
-          <label className="block text-sm font-semibold text-[var(--text-primary)]">
+        <div className="auth-form-group">
+          <label className="auth-label">
             Corporate Email
           </label>
           <input
@@ -117,20 +117,20 @@ export const SignupForm: React.FC<SignupFormProps> = ({ selectedRole, onRoleChan
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             placeholder="sarah.connor@thestackly.com"
-            className="w-full px-3.5 py-2.5 rounded-xl border border-[var(--border-color)] bg-[var(--bg-secondary)] text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--role-primary)]/20 focus:border-[var(--role-primary)] transition disabled:opacity-50"
+            className="auth-input"
           />
         </div>
 
         {/* Department Selection */}
-        <div className="space-y-1.5">
-          <label className="block text-sm font-semibold text-[var(--text-primary)]">
+        <div className="auth-form-group">
+          <label className="auth-label">
             Department
           </label>
           <select
             value={department}
             disabled={isLoading || isSuccess}
             onChange={(e) => setDepartment(e.target.value)}
-            className="w-full px-3.5 py-2.5 rounded-xl border border-[var(--border-color)] bg-[var(--bg-secondary)] text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--role-primary)]/20 focus:border-[var(--role-primary)] transition disabled:opacity-50"
+            className="auth-select"
           >
             <option value="Engineering">Engineering</option>
             <option value="Human Resources">Human Resources</option>
@@ -146,7 +146,7 @@ export const SignupForm: React.FC<SignupFormProps> = ({ selectedRole, onRoleChan
         />
 
         {/* Password */}
-        <div className="disabled:opacity-50">
+        <div>
           <PasswordField
             value={password}
             onChange={(e) => setPassword(e.target.value)}
@@ -156,7 +156,7 @@ export const SignupForm: React.FC<SignupFormProps> = ({ selectedRole, onRoleChan
         </div>
 
         {/* Confirm Password */}
-        <div className="disabled:opacity-50">
+        <div>
           <PasswordField
             value={confirmPassword}
             onChange={(e) => setConfirmPassword(e.target.value)}
@@ -166,16 +166,17 @@ export const SignupForm: React.FC<SignupFormProps> = ({ selectedRole, onRoleChan
         </div>
 
         {/* Terms of Service */}
-        <label className="flex items-start gap-2.5 text-xs text-[var(--text-secondary)] font-medium cursor-pointer">
+        <label className="auth-checkbox-label" style={{ fontSize: '0.75rem', alignItems: 'flex-start' }}>
           <input
             type="checkbox"
             checked={agreeTerms}
             disabled={isLoading || isSuccess}
             onChange={(e) => setAgreeTerms(e.target.checked)}
-            className="rounded border-[var(--border-color)] text-[var(--role-primary)] focus:ring-[var(--role-primary)]/20 mt-0.5"
+            className="auth-checkbox"
+            style={{ marginTop: '0.125rem' }}
           />
           <span>
-            I agree to the <a href="#terms" className="text-[var(--role-primary)] font-semibold hover:underline">Terms of Service</a> and <a href="#privacy" className="text-[var(--role-primary)] font-semibold hover:underline">Privacy Policy</a>.
+            I agree to the <a href="#terms" className="auth-link">Terms of Service</a> and <a href="#privacy" className="auth-link">Privacy Policy</a>.
           </span>
         </label>
 
@@ -183,7 +184,7 @@ export const SignupForm: React.FC<SignupFormProps> = ({ selectedRole, onRoleChan
         <button
           type="submit"
           disabled={isLoading || isSuccess}
-          className="w-full py-2.5 rounded-xl font-bold bg-[var(--role-primary)] text-white hover:bg-[var(--role-primary)]/90 active:scale-[0.98] transition select-none shadow-md disabled:opacity-50"
+          className="auth-btn-primary"
         >
           {isLoading ? 'Creating Account...' : 'Sign Up'}
         </button>

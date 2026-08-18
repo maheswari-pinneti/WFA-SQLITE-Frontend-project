@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Eye, EyeOff } from 'lucide-react';
 
 interface PasswordFieldProps {
   value: string;
@@ -42,21 +43,14 @@ export const PasswordField: React.FC<PasswordFieldProps> = ({
   }
 
   return (
-    <div className="space-y-1.5">
-      <div className="flex justify-between items-center">
-        <label className="block text-sm font-semibold text-[var(--text-primary)]">
+    <div className="auth-form-group">
+      <div className="auth-label-row">
+        <label className="auth-label">
           {label}
         </label>
-        <button
-          type="button"
-          onClick={() => setShow(!show)}
-          className="text-xs font-semibold text-[var(--role-primary)] hover:underline focus:outline-none"
-        >
-          {show ? 'Hide password' : 'Show password'}
-        </button>
       </div>
 
-      <div className="relative">
+      <div className="password-input-wrapper">
         <input
           type={show ? 'text' : 'password'}
           name={name}
@@ -64,8 +58,16 @@ export const PasswordField: React.FC<PasswordFieldProps> = ({
           onChange={onChange}
           placeholder={placeholder}
           required={required}
-          className="w-full px-3.5 py-2.5 rounded-xl border border-[var(--border-color)] bg-[var(--bg-secondary)] text-[var(--text-primary)] placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[var(--role-primary)]/20 focus:border-[var(--role-primary)] transition"
+          className="auth-input"
         />
+        <button
+          type="button"
+          onClick={() => setShow(!show)}
+          className="password-toggle-icon-btn"
+          aria-label={show ? 'Hide password' : 'Show password'}
+        >
+          {show ? <EyeOff size={18} /> : <Eye size={18} />}
+        </button>
       </div>
 
       {showStrength && value.length > 0 && (

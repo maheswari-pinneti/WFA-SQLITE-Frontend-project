@@ -215,28 +215,48 @@ export const LoginForm: React.FC<LoginFormProps> = ({ selectedRole, onRoleChange
   };
 
   return (
-    <div className="space-y-6">
+    <div className="auth-space-y-6">
       <AuthHeader
         title={isOtpMode ? 'MFA Verification' : 'Welcome Back'}
         subtitle={isOtpMode ? 'Enter the 6-digit code sent to your device' : 'Sign in to access your dashboard'}
       />
 
       {error && (
-        <div className="p-3.5 rounded-xl bg-red-500/10 border border-red-500/20 text-red-600 dark:text-red-400 text-xs font-semibold animate-pulse">
+        <div className="auth-alert-error">
           {error}
         </div>
       )}
 
       {successMsg && (
-        <div className="p-3.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-xs font-semibold">
+        <div className="auth-alert-success">
           {successMsg}
         </div>
       )}
 
       {!isOtpMode ? (
-        <form onSubmit={handleLoginSubmit} className="space-y-4">
-          <div className="space-y-1.5">
-            <label className="block text-sm font-semibold text-[var(--text-primary)]">
+        <form onSubmit={handleLoginSubmit} className="auth-space-y-4">
+          <div className="auth-form-group">
+            <label className="auth-label">
+              Roles
+            </label>
+            <select
+              value={selectedRole}
+              onChange={(e) => {
+                const demo = DEMO_ACCOUNTS.find(d => d.role === e.target.value);
+                if (demo) handleDemoClick(demo);
+              }}
+              className="auth-select"
+            >
+              {DEMO_ACCOUNTS.map((demo) => (
+                <option key={demo.role} value={demo.role}>
+                  {demo.name} — {demo.label}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="auth-form-group">
+            <label className="auth-label">
               Email / Employee ID
             </label>
             <input
@@ -245,7 +265,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ selectedRole, onRoleChange
               onChange={(e) => setEmail(e.target.value)}
               placeholder="name@thestackly.com"
               required
-              className="w-full px-3.5 py-2.5 rounded-xl border border-[var(--border-color)] bg-[var(--bg-secondary)] text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--role-primary)]/20 focus:border-[var(--role-primary)] transition"
+              className="auth-input"
             />
           </div>
 
@@ -255,17 +275,17 @@ export const LoginForm: React.FC<LoginFormProps> = ({ selectedRole, onRoleChange
             required
           />
 
-          <div className="flex justify-between items-center text-xs">
-            <label className="flex items-center gap-2 cursor-pointer font-medium text-[var(--text-secondary)]">
+          <div className="auth-controls-row">
+            <label className="auth-checkbox-label">
               <input
                 type="checkbox"
                 checked={rememberMe}
                 onChange={(e) => setRememberMe(e.target.checked)}
-                className="rounded border-[var(--border-color)] text-[var(--role-primary)] focus:ring-[var(--role-primary)]/20"
+                className="auth-checkbox"
               />
               Remember me
             </label>
-            <a href="#forgot" className="font-semibold text-[var(--role-primary)] hover:underline">
+            <a href="#forgot" className="auth-link">
               Forgot password?
             </a>
           </div>
@@ -273,14 +293,14 @@ export const LoginForm: React.FC<LoginFormProps> = ({ selectedRole, onRoleChange
           <button
             type="submit"
             disabled={isLoading}
-            className="w-full py-2.5 rounded-xl font-bold bg-[var(--role-primary)] text-white hover:bg-[var(--role-primary)]/90 active:scale-[0.98] transition disabled:opacity-50 select-none shadow-md"
+            className="auth-btn-primary"
           >
             {isLoading ? 'Signing in...' : 'Sign In'}
           </button>
         </form>
       ) : (
-        <form onSubmit={(e) => { e.preventDefault(); verifyMfaAction(otpValues.join('')); }} className="space-y-6">
-          <div className="flex justify-between gap-2">
+        <form onSubmit={(e) => { e.preventDefault(); verifyMfaAction(otpValues.join('')); }} className="auth-space-y-6">
+          <div style={{ display: 'flex', justifyContent: 'space-between', gap: '0.5rem' }}>
             {otpValues.map((val, idx) => (
               <input
                 key={idx}
@@ -291,7 +311,8 @@ export const LoginForm: React.FC<LoginFormProps> = ({ selectedRole, onRoleChange
                 onChange={(e) => handleOtpChange(idx, e.target.value)}
                 onKeyDown={(e) => handleOtpKeyDown(idx, e)}
                 onPaste={handleOtpPaste}
-                className="w-12 h-12 rounded-xl text-center font-bold text-lg border border-[var(--border-color)] bg-[var(--bg-secondary)] text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--role-primary)]/20 focus:border-[var(--role-primary)] transition"
+                style={{ width: '3rem', height: '3rem' }}
+                className="auth-input"
               />
             ))}
           </div>
@@ -299,46 +320,26 @@ export const LoginForm: React.FC<LoginFormProps> = ({ selectedRole, onRoleChange
           <button
             type="submit"
             disabled={isLoading || otpValues.includes('')}
-            className="w-full py-2.5 rounded-xl font-bold bg-[var(--role-primary)] text-white hover:bg-[var(--role-primary)]/90 active:scale-[0.98] transition disabled:opacity-50 select-none shadow-md"
+            className="auth-btn-primary"
           >
             {isLoading ? 'Verifying...' : 'Verify & Login'}
           </button>
 
-          <div className="flex justify-between items-center text-xs">
-            <span className="text-[var(--text-muted)] font-medium">
+          <div className="auth-controls-row">
+            <span style={{ color: 'var(--text-muted)', fontWeight: 500 }}>
               Time remaining: {timer > 0 ? `${Math.floor(timer / 60)}:${(timer % 60).toString().padStart(2, '0')}` : 'Expired'}
             </span>
             <button
               type="button"
               onClick={handleResendOtp}
               disabled={isLoading || timer > 30}
-              className="font-semibold text-[var(--role-primary)] hover:underline focus:outline-none disabled:opacity-50"
+              className="auth-link"
+              style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
             >
               Resend Code
             </button>
           </div>
         </form>
-      )}
-
-      {/* Demo Credentials Quick Picker */}
-      {!isOtpMode && (
-        <div className="space-y-2 pt-2">
-          <p className="text-xs font-bold uppercase tracking-wider text-[var(--text-muted)]">
-            Quick demo account access:
-          </p>
-          <div className="flex flex-wrap gap-2">
-            {DEMO_ACCOUNTS.map((demo) => (
-              <button
-                key={demo.role}
-                type="button"
-                onClick={() => handleDemoClick(demo)}
-                className="px-2.5 py-1.5 rounded-lg text-xs font-semibold border border-[var(--border-color)] bg-[var(--bg-secondary)] hover:bg-[var(--bg-tertiary)] text-[var(--text-primary)] transition"
-              >
-                {demo.label} ({demo.name})
-              </button>
-            ))}
-          </div>
-        </div>
       )}
 
       <AuthFooter />

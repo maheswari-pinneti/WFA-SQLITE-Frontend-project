@@ -39,10 +39,18 @@ export default defineConfig({
       },
     },
   },
+  ssr: {
+    external: ['better-sqlite3']
+  },
   test: {
     include: ['tests/unit/**/*.test.{ts,tsx}'],
     exclude: ['node_modules', 'tests/**/*.spec.ts'],
-    globals: true
+    globals: true,
+    server: {
+      deps: {
+        external: ['better-sqlite3']
+      }
+    }
   }
 });
 

@@ -71,11 +71,11 @@ interface SidebarProps {
 }
 
 const ROLE_ACCENTS: Record<Role, { className: string; shortLabel: string }> = {
-  [Role.ADMIN]: { className: 'sidebar-accent-emerald', shortLabel: 'Admin workspace' },
-  [Role.HR]: { className: 'sidebar-accent-emerald', shortLabel: 'People operations' },
-  [Role.MANAGER]: { className: 'sidebar-accent-emerald', shortLabel: 'Department workspace' },
-  [Role.TEAM_LEAD]: { className: 'sidebar-accent-emerald', shortLabel: 'Team workspace' },
-  [Role.EMPLOYEE]: { className: 'sidebar-accent-emerald', shortLabel: 'Employee workspace' },
+  [Role.ADMIN]: { className: 'sidebar-accent-admin', shortLabel: 'Admin workspace' },
+  [Role.HR]: { className: 'sidebar-accent-hr', shortLabel: 'People operations' },
+  [Role.MANAGER]: { className: 'sidebar-accent-manager', shortLabel: 'Department workspace' },
+  [Role.TEAM_LEAD]: { className: 'sidebar-accent-team-lead', shortLabel: 'Team workspace' },
+  [Role.EMPLOYEE]: { className: 'sidebar-accent-employee', shortLabel: 'Employee workspace' },
 };
 
 export const Sidebar: React.FC<SidebarProps> = ({
