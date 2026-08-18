@@ -13,7 +13,7 @@ connectMongoDB().catch(err => {
 });
 
 // Establish socket connection to the active dev/production server
-const socketUrl = 'http://localhost:5000';
+const socketUrl = process.env.SOCKET_URL || 'http://localhost:5001';
 console.log(`Connecting Socket.IO client daemon to: ${socketUrl}`);
 const socket = ioClient(socketUrl);
 

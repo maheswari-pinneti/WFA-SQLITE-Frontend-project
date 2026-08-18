@@ -33,7 +33,7 @@ export const env = {
   NODE_ENV,
   JWT_SECRET,
   JWT_REFRESH_SECRET,
-  PORT: process.env.PORT || 5000,
+  PORT: process.env.PORT || 5001,
   MONGODB_URI: process.env.MONGODB_URI,
   MONGODB_DB_NAME: process.env.MONGODB_DB_NAME || 'workforce'
 };

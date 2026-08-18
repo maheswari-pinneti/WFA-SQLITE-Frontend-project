@@ -6,7 +6,7 @@ import { initSockets } from './backend/src/sockets/index.js';
 import { getDb } from './backend/src/config/db.js';
 import logger from './backend/src/config/logger.js';
 
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 5001;
 
 let server;
 let io;

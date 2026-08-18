@@ -16,12 +16,12 @@ export default defineConfig({
     open: false,
     proxy: {
       '/v1': {
-        target: 'http://localhost:5000',
+        target: 'http://localhost:5001',
         changeOrigin: true,
         secure: false,
       },
       '/api': {
-        target: 'http://localhost:5000',
+        target: 'http://localhost:5001',
         changeOrigin: true,
         secure: false,
       },

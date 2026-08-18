@@ -513,13 +513,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
           collapsed ? 'sidebar-is-collapsed w-[76px]' : 'sidebar-is-expanded w-[280px]'
         } ${mobileOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}`}
       >
-        {/* Sidebar Branding Header */}
-        <div className="flex items-center gap-3 px-4 py-5 border-b border-[var(--border-color)]">
-          <StacklyLogo size={32} showText={!collapsed} />
-        </div>
-
         {/* Sidebar Navigation Items List */}
-        <nav className="sidebar-nav sidebar-nav-scroll flex-1 overflow-y-auto w-full scrollbar-thin">
+        <nav className="sidebar-nav sidebar-nav-scroll flex-1 overflow-y-auto w-full scrollbar-thin pt-4">
           {visibleCategories.map((cat: NavigationCategory, groupIdx: number) => {
             return (
               <React.Fragment key={groupIdx}>

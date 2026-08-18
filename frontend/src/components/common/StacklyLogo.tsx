@@ -51,7 +51,7 @@ export const StacklyLogo: React.FC<StacklyLogoProps> = ({
       </svg>
       )}
 
-      {showText && (
+      {showText && !useImg && (
         <span
           className={`font-sans font-black tracking-widest ${textColor}`}
           style={{ fontSize: `${size * 0.52}px`, lineHeight: 1 }}

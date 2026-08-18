@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "concurrently \"tsx server.js\" \"vite\"",
-    "build": "tsc && vite build",
+    "build": "node -e \"import('fs').then(fs => { try { fs.rmSync('dist', { recursive: true, force: true }); } catch(e) {} })\" && tsc && vite build",
     "preview": "vite preview",
     "test": "node -e \"try { require('fs').unlinkSync('backend/database/wfa-test.sqlite'); } catch(e) {}\" && vitest run --no-file-parallelism --test-timeout=20000",
     "test:coverage": "vitest run --coverage --no-file-parallelism --test-timeout=20000",

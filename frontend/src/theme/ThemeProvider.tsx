@@ -9,7 +9,7 @@ interface ThemeContextType {
   theme: ThemeMode;
   toggleTheme: () => void;
   setTheme: (mode: ThemeMode) => void;
-  themeObject: typeof lightTheme;
+  themeObject: typeof lightTheme | typeof darkTheme;
 }
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);

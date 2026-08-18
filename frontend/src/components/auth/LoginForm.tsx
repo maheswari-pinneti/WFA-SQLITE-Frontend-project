@@ -279,7 +279,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ selectedRole, onRoleChange
           </button>
         </form>
       ) : (
-        <form onSubmit={(e) => e.preventDefault()} className="space-y-6">
+        <form onSubmit={(e) => { e.preventDefault(); verifyMfaAction(otpValues.join('')); }} className="space-y-6">
           <div className="flex justify-between gap-2">
             {otpValues.map((val, idx) => (
               <input
@@ -295,6 +295,14 @@ export const LoginForm: React.FC<LoginFormProps> = ({ selectedRole, onRoleChange
               />
             ))}
           </div>
+
+          <button
+            type="submit"
+            disabled={isLoading || otpValues.includes('')}
+            className="w-full py-2.5 rounded-xl font-bold bg-[var(--role-primary)] text-white hover:bg-[var(--role-primary)]/90 active:scale-[0.98] transition disabled:opacity-50 select-none shadow-md"
+          >
+            {isLoading ? 'Verifying...' : 'Verify & Login'}
+          </button>
 
           <div className="flex justify-between items-center text-xs">
             <span className="text-[var(--text-muted)] font-medium">
