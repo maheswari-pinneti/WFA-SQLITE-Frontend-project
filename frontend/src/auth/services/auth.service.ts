@@ -26,11 +26,13 @@ export const authService = {
 
   login: async (email: string, password?: string) => {
     const response = await authApi.login(email, password);
-    // Only store session if login directly succeeded without MFA
     if (response && (response as any).token && (response as any).user) {
       const user = normalizeUser((response as any).user);
       if (!user) throw new Error('Login returned an invalid user session.');
       localStorage.setItem(STORAGE_KEYS.AUTH_TOKEN, (response as any).token);
+      if ((response as any).refreshToken) {
+        localStorage.setItem(STORAGE_KEYS.REFRESH_TOKEN, (response as any).refreshToken);
+      }
       localStorage.setItem(STORAGE_KEYS.USER_DATA, JSON.stringify(user));
       return { ...(response as any), user };
     }
@@ -39,10 +41,13 @@ export const authService = {
 
   verifyMfa: async (challengeId: string, code: string) => {
     const data = await authApi.verifyMfa(challengeId, code);
-    const { token, user } = data;
+    const { token, refreshToken, user } = data;
     const normalizedUser = normalizeUser(user);
     if (!token || !normalizedUser) throw new Error('MFA returned an invalid user session.');
     localStorage.setItem(STORAGE_KEYS.AUTH_TOKEN, token);
+    if (refreshToken) {
+      localStorage.setItem(STORAGE_KEYS.REFRESH_TOKEN, refreshToken);
+    }
     localStorage.setItem(STORAGE_KEYS.USER_DATA, JSON.stringify(normalizedUser));
     return { token, user: normalizedUser };
   },
@@ -52,8 +57,14 @@ export const authService = {
   },
 
   logout: async () => {
-    await authApi.logout();
+    const refreshToken = localStorage.getItem(STORAGE_KEYS.REFRESH_TOKEN) || undefined;
+    try {
+      await authApi.logout(refreshToken);
+    } catch (err) {
+      console.error('Logout request failed:', err);
+    }
     localStorage.removeItem(STORAGE_KEYS.AUTH_TOKEN);
+    localStorage.removeItem(STORAGE_KEYS.REFRESH_TOKEN);
     localStorage.removeItem(STORAGE_KEYS.USER_DATA);
   },
 

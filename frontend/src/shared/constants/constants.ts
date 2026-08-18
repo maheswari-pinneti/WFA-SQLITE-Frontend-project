@@ -6,6 +6,7 @@ export const API_TIMEOUT = 15000;
 
 export const LOCAL_STORAGE_KEYS = {
   AUTH_TOKEN: 'auth_token',
+  REFRESH_TOKEN: 'auth_refresh_token',
   USER_ROLE: 'user_role',
   THEME_MODE: 'theme_mode',
   SIDEBAR_COLLAPSED: 'sidebar_collapsed',
