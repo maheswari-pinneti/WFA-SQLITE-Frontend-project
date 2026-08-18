@@ -61,6 +61,10 @@ export const register = async (req: Request, res: Response): Promise<any> => {
       return res.status(400).json({ success: false, message: 'Name, email, roleType, and password are required' });
     }
 
+    if (role === 'ADMIN' || role === 'HR' || role === 'HR_MANAGER') {
+      return res.status(403).json({ success: false, message: 'Registration for privileged roles (ADMIN, HR) is restricted.' });
+    }
+
     const emailLower = email.trim().toLowerCase();
     if (!emailLower.endsWith('@thestackly.com') && !emailLower.endsWith('@company.com')) {
       return res.status(403).json({ success: false, message: 'Domain access denied. Only corporate email domains permitted.' });
