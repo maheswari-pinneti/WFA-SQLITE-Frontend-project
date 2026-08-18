@@ -1,0 +1,64 @@
+{
+  "admin": {
+    "totalUsers": 10000,
+    "activeSessions": 2840,
+    "systemHealth": "99.98%",
+    "securityAlerts": 0,
+    "roleDistribution": [
+      { "label": "Admin", "value": 50 },
+      { "label": "HR", "value": 250 },
+      { "label": "Manager", "value": 700 },
+      { "label": "Lead", "value": 1500 },
+      { "label": "Employee", "value": 7500 }
+    ]
+  },
+  "hr": {
+    "headcount": 10000,
+    "turnoverRate": 1.2,
+    "presentToday": 9450,
+    "onLeave": 350,
+    "departmentDistribution": [
+      { "label": "Engineering", "value": 4200 },
+      { "label": "Product", "value": 1500 },
+      { "label": "Sales & Mktg", "value": 2300 },
+      { "label": "HR & Ops", "value": 1000 },
+      { "label": "Customer Success", "value": 1000 }
+    ]
+  },
+  "manager": {
+    "teamSize": 10000,
+    "teamProductivity": "94.2%",
+    "activeProjects": 140,
+    "capacityUtilization": "92%",
+    "sprintVelocity": [
+      { "label": "Sprint 21", "value": 820 },
+      { "label": "Sprint 22", "value": 880 },
+      { "label": "Sprint 23", "value": 910 },
+      { "label": "Sprint 24", "value": 950 }
+    ]
+  },
+  "lead": {
+    "sprintProgress": "78%",
+    "tasksCompleted": 420,
+    "pendingReviews": 50,
+    "blockers": 8,
+    "memberStatus": [
+      { "label": "On Track", "value": 85 },
+      { "label": "Needs Support", "value": 10 },
+      { "label": "Over Capacity", "value": 5 }
+    ]
+  },
+  "employee": {
+    "hoursThisWeek": 38.5,
+    "kpiAchievement": "92%",
+    "leavesRemaining": 14,
+    "tasksAssigned": 6,
+    "attendanceHistory": [
+      { "label": "Mon", "value": 8.5 },
+      { "label": "Tue", "value": 8.0 },
+      { "label": "Wed", "value": 8.2 },
+      { "label": "Thu", "value": 8.0 },
+      { "label": "Fri", "value": 5.8 }
+    ]
+  }
+}

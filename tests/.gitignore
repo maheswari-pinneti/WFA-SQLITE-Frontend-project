@@ -1,0 +1,9 @@
+# Playwright reports and caches
+playwright-report/
+blob-report/
+test-results/
+playwright/.cache/
+
+# Coverage reports
+coverage/
+html/

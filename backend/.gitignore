@@ -1,0 +1,18 @@
+# Node modules
+node_modules/
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+
+# Environment variables & secrets
+.env
+.env.local
+.env.development
+.env.production
+
+# IDEs & System files
+.DS_Store
+.vscode/
+.idea/

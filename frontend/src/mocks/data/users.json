@@ -1,0 +1,72 @@
+[
+  {
+    "id": "usr-admin-01",
+    "name": "Sarah Connor",
+    "email": "admin@thestackly.com",
+    "role": "ADMIN",
+    "avatar": "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150",
+    "department": "Executive",
+    "team": "System Architecture",
+    "location": "Global HQ",
+    "title": "System Administrator",
+    "clearanceLevel": 5,
+    "status": "ACTIVE",
+    "permissions": ["USER_CREATE", "USER_UPDATE", "USER_DELETE", "USER_MANAGE", "ROLE_CREATE", "ROLE_UPDATE", "ROLE_DELETE", "ROLE_MANAGE", "PERMISSION_ASSIGN", "EMPLOYEE_VIEW_ALL", "EMPLOYEE_CREATE", "EMPLOYEE_UPDATE", "EMPLOYEE_DELETE", "REPORT_VIEW_ALL", "REPORT_EXPORT", "SYSTEM_SETTINGS_MANAGE", "SYSTEM_CONFIG", "AUDIT_LOG_VIEW", "VIEW_ALL_DATA"]
+  },
+  {
+    "id": "usr-hr-01",
+    "name": "Elena Rostova",
+    "email": "hr@thestackly.com",
+    "role": "HR",
+    "avatar": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150",
+    "department": "Human Resources",
+    "team": "People Operations",
+    "location": "New York",
+    "title": "VP of HR Operations",
+    "clearanceLevel": 4,
+    "status": "ACTIVE",
+    "permissions": ["EMPLOYEE_VIEW", "EMPLOYEE_CREATE", "EMPLOYEE_UPDATE", "EMPLOYEE_PROFILE_MANAGE", "ATTENDANCE_VIEW_ALL", "ATTENDANCE_MANAGE", "LEAVE_APPROVE", "PERFORMANCE_MANAGE", "RECRUITMENT_MANAGE", "REPORT_GENERATE", "EMPLOYEE_MANAGE", "REPORT_VIEW"]
+  },
+  {
+    "id": "usr-mgr-01",
+    "name": "David Sterling",
+    "email": "manager@thestackly.com",
+    "role": "MANAGER",
+    "avatar": "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150",
+    "department": "Engineering",
+    "team": "Frontend & Backend",
+    "location": "San Francisco",
+    "title": "Department Manager",
+    "clearanceLevel": 3,
+    "status": "ACTIVE",
+    "permissions": ["TEAM_VIEW", "TEAM_ANALYTICS_VIEW", "EMPLOYEE_VIEW_TEAM", "ATTENDANCE_VIEW_TEAM", "LEAVE_APPROVE", "PERFORMANCE_REVIEW", "TASK_ASSIGN", "REPORT_VIEW_TEAM"]
+  },
+  {
+    "id": "usr-lead-01",
+    "name": "Marcus Vance",
+    "email": "lead@thestackly.com",
+    "role": "TEAM_LEAD",
+    "avatar": "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150",
+    "department": "Engineering",
+    "team": "Frontend Team",
+    "location": "San Francisco",
+    "title": "Team Lead (TL)",
+    "clearanceLevel": 2,
+    "status": "ACTIVE",
+    "permissions": ["TEAM_MEMBER_VIEW", "TEAM_VIEW", "TASK_ASSIGN", "TASK_TRACK", "ATTENDANCE_VIEW_TEAM", "PRODUCTIVITY_VIEW", "FEEDBACK_CREATE", "PERFORMANCE_FEEDBACK"]
+  },
+  {
+    "id": "usr-emp-01",
+    "name": "Alex Mercer",
+    "email": "employee@thestackly.com",
+    "role": "EMPLOYEE",
+    "avatar": "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=150",
+    "department": "Engineering",
+    "team": "Frontend Team",
+    "location": "San Francisco",
+    "title": "Full Stack Developer",
+    "clearanceLevel": 1,
+    "status": "ACTIVE",
+    "permissions": ["PROFILE_VIEW", "PROFILE_UPDATE", "ATTENDANCE_VIEW_SELF", "LEAVE_REQUEST", "PERFORMANCE_VIEW_SELF", "GOAL_UPDATE", "DOCUMENT_UPLOAD"]
+  }
+]
