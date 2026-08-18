@@ -15,30 +15,24 @@ export const StacklyLogo: React.FC<StacklyLogoProps> = ({
   useImg = true,
   textColor = 'text-slate-800 dark:text-white',
 }) => {
-  if (useImg) {
-    return (
-      <div className={`inline-flex items-center shrink-0 gap-2.5 transition-all duration-300 ${className}`}>
+  return (
+    <div className={`inline-flex items-center shrink-0 gap-2.5 transition-all duration-300 ${className}`}>
+      {useImg ? (
         <img
           src="/assets/images/logo.png"
           alt="Stackly Logo"
           style={{ height: size, width: 'auto' }}
           className="shrink-0 object-contain"
         />
-      </div>
-    );
-  }
-
-  // Render the vector SVG logo by default
-  return (
-    <div className={`inline-flex items-center shrink-0 gap-2.5 transition-all duration-300 ${className}`}>
-      <svg
-        width={size}
-        height={size}
-        viewBox="0 0 100 100"
-        fill="none"
-        xmlns="http://www.w3.org/2000/svg"
-        className="shrink-0 filter drop-shadow-[0_2px_8px_rgba(45,212,191,0.25)]"
-      >
+      ) : (
+        <svg
+          width={size}
+          height={size}
+          viewBox="0 0 100 100"
+          fill="none"
+          xmlns="http://www.w3.org/2000/svg"
+          className="shrink-0 filter drop-shadow-[0_2px_8px_rgba(45,212,191,0.25)]"
+        >
         <defs>
           <linearGradient id="stackly-grad" x1="0%" y1="0%" x2="100%" y2="100%">
             <stop offset="0%" stopColor="#2dd4bf" />
@@ -55,6 +49,7 @@ export const StacklyLogo: React.FC<StacklyLogoProps> = ({
           opacity="0.8"
         />
       </svg>
+      )}
 
       {showText && (
         <span

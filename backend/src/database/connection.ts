@@ -22,6 +22,15 @@ export const getDb = (): Database.Database => {
     db = new Database(DB_PATH);
     db.pragma('foreign_keys = ON');
     db.pragma('journal_mode = WAL');
+    db.pragma('busy_timeout = 5000');
+    db.prepare(`
+      CREATE TABLE IF NOT EXISTS failed_logins (
+        email TEXT PRIMARY KEY,
+        attempts INTEGER DEFAULT 0,
+        lockedUntil TEXT,
+        updatedAt TEXT
+      )
+    `).run();
   }
   return db;
 };

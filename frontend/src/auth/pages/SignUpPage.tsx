@@ -20,7 +20,9 @@ export const SignUpPage: React.FC = () => {
 
   const handleSignupSubmit = async (data: any) => {
     await signup(data);
-    await login(data.email, data.password);
+    setTimeout(() => {
+      navigate('/login');
+    }, 2500);
   };
 
   return (

@@ -61,6 +61,28 @@ export const LoginForm: React.FC<LoginFormProps> = ({ selectedRole, onRoleChange
     return () => clearInterval(interval);
   }, [expiresAt]);
 
+  // Recover MFA session if present and valid on load
+  useEffect(() => {
+    const savedChallengeId = sessionStorage.getItem('mfa_challenge_id');
+    const savedExpiresAt = sessionStorage.getItem('mfa_expires_at');
+    if (savedChallengeId && savedExpiresAt) {
+      const remaining = Math.max(0, Math.floor((new Date(savedExpiresAt).getTime() - Date.now()) / 1000));
+      if (remaining > 0) {
+        setChallengeId(savedChallengeId);
+        setExpiresAt(savedExpiresAt);
+        setIsOtpMode(true);
+        const devHint = sessionStorage.getItem('mfa_otp_dev_hint');
+        if (devHint) {
+          setOtpValues(devHint.split(''));
+        }
+      } else {
+        sessionStorage.removeItem('mfa_challenge_id');
+        sessionStorage.removeItem('mfa_expires_at');
+        sessionStorage.removeItem('mfa_otp_dev_hint');
+      }
+    }
+  }, []);
+
   const handleDemoClick = (demo: typeof DEMO_ACCOUNTS[0]) => {
     onRoleChange(demo.role);
     setEmail(demo.email);
@@ -86,6 +108,8 @@ export const LoginForm: React.FC<LoginFormProps> = ({ selectedRole, onRoleChange
       if (res.requiresMfa) {
         setChallengeId(res.challengeId);
         setExpiresAt(res.expiresAt);
+        sessionStorage.setItem('mfa_challenge_id', res.challengeId);
+        sessionStorage.setItem('mfa_expires_at', res.expiresAt);
         setOtpValues(['', '', '', '', '', '']);
         if (res.otpDevHint) {
           const otpStr = res.otpDevHint.toString();
@@ -95,6 +119,9 @@ export const LoginForm: React.FC<LoginFormProps> = ({ selectedRole, onRoleChange
         setIsOtpMode(true);
         setSuccessMsg('MFA code generated. Enter the code to continue.');
       } else {
+        sessionStorage.removeItem('mfa_challenge_id');
+        sessionStorage.removeItem('mfa_expires_at');
+        sessionStorage.removeItem('mfa_otp_dev_hint');
         await login(email, password);
         onSuccess();
       }
@@ -115,6 +142,9 @@ export const LoginForm: React.FC<LoginFormProps> = ({ selectedRole, onRoleChange
     setIsLoading(true);
     try {
       await verifyMfa(challengeId, otpCode);
+      sessionStorage.removeItem('mfa_challenge_id');
+      sessionStorage.removeItem('mfa_expires_at');
+      sessionStorage.removeItem('mfa_otp_dev_hint');
       onSuccess();
     } catch (err: any) {
       setError(err.message || 'Verification failed.');
@@ -144,6 +174,24 @@ export const LoginForm: React.FC<LoginFormProps> = ({ selectedRole, onRoleChange
   const handleOtpKeyDown = (index: number, e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Backspace' && !otpValues[index] && index > 0) {
       otpRefs[index - 1].current?.focus();
+    }
+  };
+
+  const handleOtpPaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
+    e.preventDefault();
+    const pastedData = e.clipboardData.getData('text').replace(/\D/g, '').substring(0, 6);
+    if (pastedData.length === 6) {
+      const newOtp = pastedData.split('');
+      setOtpValues(newOtp);
+      verifyMfaAction(pastedData);
+    } else {
+      const newOtp = [...otpValues];
+      for (let i = 0; i < pastedData.length; i++) {
+        newOtp[i] = pastedData[i];
+      }
+      setOtpValues(newOtp);
+      const nextIdx = Math.min(pastedData.length, 5);
+      otpRefs[nextIdx].current?.focus();
     }
   };
 
@@ -242,6 +290,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ selectedRole, onRoleChange
                 value={val}
                 onChange={(e) => handleOtpChange(idx, e.target.value)}
                 onKeyDown={(e) => handleOtpKeyDown(idx, e)}
+                onPaste={handleOtpPaste}
                 className="w-12 h-12 rounded-xl text-center font-bold text-lg border border-[var(--border-color)] bg-[var(--bg-secondary)] text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--role-primary)]/20 focus:border-[var(--role-primary)] transition"
               />
             ))}

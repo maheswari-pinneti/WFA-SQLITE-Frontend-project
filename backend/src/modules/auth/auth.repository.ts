@@ -261,6 +261,30 @@ export class UserRepository {
     db.prepare(`UPDATE mfachallenges SET ${setClause}, updatedAt = ? WHERE id = ?`).run(...values);
     return { nModified: 1 };
   }
+
+  async getFailedLogins(email: string): Promise<{ email: string; attempts: number; lockedUntil: string | null } | null> {
+    const db = getDb();
+    const row = db.prepare('SELECT * FROM failed_logins WHERE email = ?').get(email);
+    return row ? (row as any) : null;
+  }
+
+  async incrementFailedLogins(email: string, lockUntil: string | null = null): Promise<void> {
+    const db = getDb();
+    const now = new Date().toISOString();
+    db.prepare(`
+      INSERT INTO failed_logins (email, attempts, lockedUntil, updatedAt)
+      VALUES (?, 1, ?, ?)
+      ON CONFLICT(email) DO UPDATE SET
+        attempts = attempts + 1,
+        lockedUntil = excluded.lockedUntil,
+        updatedAt = excluded.updatedAt
+    `).run(email, lockUntil, now);
+  }
+
+  async resetFailedLogins(email: string): Promise<void> {
+    const db = getDb();
+    db.prepare('DELETE FROM failed_logins WHERE email = ?').run(email);
+  }
 }
 
 export const userRepository = new UserRepository();

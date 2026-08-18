@@ -20,6 +20,7 @@ export const SignupForm: React.FC<SignupFormProps> = ({ selectedRole, onRoleChan
   const [agreeTerms, setAgreeTerms] = useState(true);
   const [error, setError] = useState('');
   const [isSuccess, setIsSuccess] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -50,7 +51,7 @@ export const SignupForm: React.FC<SignupFormProps> = ({ selectedRole, onRoleChan
       return;
     }
 
-    setIsSuccess(true);
+    setIsLoading(true);
     try {
       await onSubmit({
         fullName,
@@ -59,9 +60,12 @@ export const SignupForm: React.FC<SignupFormProps> = ({ selectedRole, onRoleChan
         roleType: selectedRole,
         password
       });
+      setIsSuccess(true);
     } catch (err: any) {
       setIsSuccess(false);
       setError(err.message || 'Registration failed.');
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -93,10 +97,11 @@ export const SignupForm: React.FC<SignupFormProps> = ({ selectedRole, onRoleChan
           <input
             type="text"
             required
+            disabled={isLoading || isSuccess}
             value={fullName}
             onChange={(e) => setFullName(e.target.value)}
             placeholder="Sarah Connor"
-            className="w-full px-3.5 py-2.5 rounded-xl border border-[var(--border-color)] bg-[var(--bg-secondary)] text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--role-primary)]/20 focus:border-[var(--role-primary)] transition"
+            className="w-full px-3.5 py-2.5 rounded-xl border border-[var(--border-color)] bg-[var(--bg-secondary)] text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--role-primary)]/20 focus:border-[var(--role-primary)] transition disabled:opacity-50"
           />
         </div>
 
@@ -108,10 +113,11 @@ export const SignupForm: React.FC<SignupFormProps> = ({ selectedRole, onRoleChan
           <input
             type="email"
             required
+            disabled={isLoading || isSuccess}
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             placeholder="sarah.connor@thestackly.com"
-            className="w-full px-3.5 py-2.5 rounded-xl border border-[var(--border-color)] bg-[var(--bg-secondary)] text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--role-primary)]/20 focus:border-[var(--role-primary)] transition"
+            className="w-full px-3.5 py-2.5 rounded-xl border border-[var(--border-color)] bg-[var(--bg-secondary)] text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--role-primary)]/20 focus:border-[var(--role-primary)] transition disabled:opacity-50"
           />
         </div>
 
@@ -122,8 +128,9 @@ export const SignupForm: React.FC<SignupFormProps> = ({ selectedRole, onRoleChan
           </label>
           <select
             value={department}
+            disabled={isLoading || isSuccess}
             onChange={(e) => setDepartment(e.target.value)}
-            className="w-full px-3.5 py-2.5 rounded-xl border border-[var(--border-color)] bg-[var(--bg-secondary)] text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--role-primary)]/20 focus:border-[var(--role-primary)] transition"
+            className="w-full px-3.5 py-2.5 rounded-xl border border-[var(--border-color)] bg-[var(--bg-secondary)] text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--role-primary)]/20 focus:border-[var(--role-primary)] transition disabled:opacity-50"
           >
             <option value="Engineering">Engineering</option>
             <option value="Human Resources">Human Resources</option>
@@ -139,26 +146,31 @@ export const SignupForm: React.FC<SignupFormProps> = ({ selectedRole, onRoleChan
         />
 
         {/* Password */}
-        <PasswordField
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          showStrength
-          required
-        />
+        <div className="disabled:opacity-50">
+          <PasswordField
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            showStrength
+            required
+          />
+        </div>
 
         {/* Confirm Password */}
-        <PasswordField
-          value={confirmPassword}
-          onChange={(e) => setConfirmPassword(e.target.value)}
-          label="Confirm Password"
-          required
-        />
+        <div className="disabled:opacity-50">
+          <PasswordField
+            value={confirmPassword}
+            onChange={(e) => setConfirmPassword(e.target.value)}
+            label="Confirm Password"
+            required
+          />
+        </div>
 
         {/* Terms of Service */}
         <label className="flex items-start gap-2.5 text-xs text-[var(--text-secondary)] font-medium cursor-pointer">
           <input
             type="checkbox"
             checked={agreeTerms}
+            disabled={isLoading || isSuccess}
             onChange={(e) => setAgreeTerms(e.target.checked)}
             className="rounded border-[var(--border-color)] text-[var(--role-primary)] focus:ring-[var(--role-primary)]/20 mt-0.5"
           />
@@ -170,9 +182,10 @@ export const SignupForm: React.FC<SignupFormProps> = ({ selectedRole, onRoleChan
         {/* Submit */}
         <button
           type="submit"
-          className="w-full py-2.5 rounded-xl font-bold bg-[var(--role-primary)] text-white hover:bg-[var(--role-primary)]/90 active:scale-[0.98] transition select-none shadow-md"
+          disabled={isLoading || isSuccess}
+          className="w-full py-2.5 rounded-xl font-bold bg-[var(--role-primary)] text-white hover:bg-[var(--role-primary)]/90 active:scale-[0.98] transition select-none shadow-md disabled:opacity-50"
         >
-          Sign Up
+          {isLoading ? 'Creating Account...' : 'Sign Up'}
         </button>
       </form>
 

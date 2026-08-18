@@ -153,15 +153,43 @@ export const login = async (req: Request, res: Response): Promise<any> => {
       return res.status(401).json({ success: false, message: 'Invalid email or password' });
     }
 
+    const failedRecord = await userRepository.getFailedLogins(lookupEmail);
+    if (failedRecord && failedRecord.lockedUntil) {
+      const now = new Date().toISOString();
+      if (now < failedRecord.lockedUntil) {
+        const remainingMinutes = Math.ceil((new Date(failedRecord.lockedUntil).getTime() - Date.now()) / (60 * 1000));
+        logAudit('anonymous', 'LOCKOUT_BLOCKED', `Blocked login attempt for locked account ${email}`);
+        return res.status(423).json({
+          success: false,
+          message: `This account is temporarily locked due to too many failed attempts. Try again in ${remainingMinutes} minutes.`
+        });
+      }
+    }
+
     try {
       const isMatch = await queueBcryptCompare(password, user.password_hash);
       if (!isMatch) {
+        const attempts = failedRecord ? failedRecord.attempts + 1 : 1;
+        let lockedUntil: string | null = null;
+        if (attempts >= 5) {
+          lockedUntil = new Date(Date.now() + 15 * 60 * 1000).toISOString();
+          logAudit(user.id, 'ACCOUNT_LOCKOUT', `Account ${email} locked for 15 minutes due to 5 failures`);
+        }
+        await userRepository.incrementFailedLogins(lookupEmail, lockedUntil);
+
         logAudit(user.id, 'FAILED_AUTHENTICATION', `Incorrect password for ${email}`);
-        return res.status(401).json({ success: false, message: 'Invalid email or password' });
+        return res.status(401).json({
+          success: false,
+          message: lockedUntil
+            ? 'Too many failed attempts. Your account has been locked for 15 minutes.'
+            : `Invalid email or password. Attempt ${attempts} of 5.`
+        });
       }
     } catch (compareErr) {
       return res.status(500).json({ success: false, message: 'Encryption verification failed' });
     }
+
+    await userRepository.resetFailedLogins(lookupEmail);
 
     if (user.mfa_enabled) {
       try {
