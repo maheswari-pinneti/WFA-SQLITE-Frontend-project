@@ -1,3 +1,3 @@
-import { Department, LeaveRequest, Notification, Task } from './index';
-export { Department, LeaveRequest, Notification, Task };
+import { Department, LeaveRequest, Notification, Task, Organization } from './index';
+export { Department, LeaveRequest, Notification, Task, Organization };
 export default Department;

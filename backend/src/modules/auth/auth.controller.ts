@@ -52,6 +52,76 @@ const queueBcryptCompare = (password: string, hash: string): Promise<boolean> =>
   });
 };
 
+export const register = async (req: Request, res: Response): Promise<any> => {
+  try {
+    const { fullName, email, roleType, department, password } = req.body;
+    const name = fullName;
+    const role = roleType;
+    if (!name || !email || !role || !password) {
+      return res.status(400).json({ success: false, message: 'Name, email, roleType, and password are required' });
+    }
+
+    const emailLower = email.trim().toLowerCase();
+    if (!emailLower.endsWith('@thestackly.com') && !emailLower.endsWith('@company.com')) {
+      return res.status(403).json({ success: false, message: 'Domain access denied. Only corporate email domains permitted.' });
+    }
+
+    const lookupEmail = emailLower.endsWith('@company.com')
+      ? emailLower.replace('@company.com', '@thestackly.com')
+      : emailLower;
+
+    const existingUser = await userRepository.findByEmail(lookupEmail);
+    if (existingUser) {
+      return res.status(400).json({ success: false, message: 'Email already registered' });
+    }
+
+    const salt = bcrypt.genSaltSync(10);
+    const password_hash = bcrypt.hashSync(password, salt);
+    
+    // Auto-assign permissions based on role
+    let permissions: string[] = ['EMPLOYEE_VIEW'];
+    let clearanceLevel = 1;
+    if (role === 'ADMIN') {
+      permissions = ['USER_CREATE', 'USER_UPDATE', 'USER_DELETE', 'EMPLOYEE_VIEW_ALL', 'VIEW_ALL_DATA', 'EMPLOYEE_MANAGE'];
+      clearanceLevel = 5;
+    } else if (role === 'HR') {
+      permissions = ['EMPLOYEE_CREATE', 'EMPLOYEE_UPDATE', 'EMPLOYEE_VIEW_ALL', 'EMPLOYEE_MANAGE'];
+      clearanceLevel = 4;
+    } else if (role === 'MANAGER') {
+      permissions = ['EMPLOYEE_UPDATE', 'EMPLOYEE_VIEW_ALL'];
+      clearanceLevel = 3;
+    } else if (role === 'TEAM_LEAD') {
+      permissions = ['EMPLOYEE_VIEW_ALL'];
+      clearanceLevel = 2;
+    }
+
+    const userId = 'usr-' + Math.random().toString(36).substring(2, 11);
+
+    const newUser = await userRepository.create({
+      id: userId,
+      name,
+      email: lookupEmail,
+      password_hash,
+      role,
+      department,
+      clearanceLevel,
+      permissions,
+      mfa_enabled: 1
+    });
+
+    logAudit(userId, 'REGISTER', `Successfully registered user ${emailLower}`);
+
+    return res.status(201).json({
+      success: true,
+      data: {
+        user: toUser(newUser)
+      }
+    });
+  } catch (err: any) {
+    return res.status(500).json({ success: false, message: err.message });
+  }
+};
+
 export const login = async (req: Request, res: Response): Promise<any> => {
   try {
     const rawEmail = req.body?.email;

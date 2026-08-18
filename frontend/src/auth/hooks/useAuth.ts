@@ -12,6 +12,10 @@ export const useAuth = () => {
 
   const login = (email: string, password?: string) => dispatch(loginUserThunk({ email, password }));
 
+  const signup = async (signupData: any) => {
+    return await authService.signup(signupData);
+  };
+
   const verifyMfa = async (challengeId: string, code: string) => {
     const data = await authService.verifyMfa(challengeId, code);
     dispatch(loginSuccessAction(data));
@@ -32,6 +36,7 @@ export const useAuth = () => {
   return {
     ...authState,
     login,
+    signup,
     verifyMfa,
     resendMfa,
     logout,

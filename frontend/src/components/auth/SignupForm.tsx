@@ -51,13 +51,18 @@ export const SignupForm: React.FC<SignupFormProps> = ({ selectedRole, onRoleChan
     }
 
     setIsSuccess(true);
-    onSubmit({
-      fullName,
-      email,
-      department,
-      roleType: selectedRole,
-      password
-    });
+    try {
+      await onSubmit({
+        fullName,
+        email,
+        department,
+        roleType: selectedRole,
+        password
+      });
+    } catch (err: any) {
+      setIsSuccess(false);
+      setError(err.message || 'Registration failed.');
+    }
   };
 
   return (

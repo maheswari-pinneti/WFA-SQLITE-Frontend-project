@@ -16,6 +16,8 @@ router.get('/health', authController.healthCheck);
 
 // Auth Routes
 router.post('/auth/login', authRateLimiter, authController.login);
+router.post('/auth/signup', authRateLimiter, authController.register);
+router.post('/auth/register', authRateLimiter, authController.register);
 router.post('/auth/mfa/verify', authRateLimiter, authController.verifyMfa);
 router.post('/auth/mfa-verify', authRateLimiter, authController.verifyMfa);
 router.post('/auth/mfa/resend', authRateLimiter, authController.resendMfa);

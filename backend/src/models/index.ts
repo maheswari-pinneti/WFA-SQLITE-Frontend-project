@@ -21,5 +21,7 @@ export const Notification = new ModelShim('notifications');
 export const PerformanceRecord = new ModelShim('performancerecords');
 export const Skill = new ModelShim('skills');
 export const Company = new ModelShim('companies');
+export const Organization = Company;
 export const Role = new ModelShim('roles');
 export const Permission = new ModelShim('permissions');
+

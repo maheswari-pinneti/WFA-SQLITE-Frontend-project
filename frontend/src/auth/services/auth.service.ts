@@ -20,6 +20,10 @@ const normalizeUser = (value: any) => {
 };
 
 export const authService = {
+  signup: async (signupData: any) => {
+    return await authApi.signup(signupData);
+  },
+
   login: async (email: string, password?: string) => {
     const response = await authApi.login(email, password);
     // Only store session if login directly succeeded without MFA
