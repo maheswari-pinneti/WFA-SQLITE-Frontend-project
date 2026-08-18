@@ -311,4 +311,17 @@ describe('E2E User Flow Tests', () => {
           { $set: { status: 'Checked Out' } }
         ).session(session);
 
-        // Force throw an error to trigg
+        // Force throw an error to trigger rollback
+        throw new Error('FORCE_ROLLBACK');
+      });
+    } catch (err) {
+      expect(err.message).toBe('FORCE_ROLLBACK');
+    } finally {
+      await session.endSession();
+    }
+
+    // Verify record state rolled back and remains 'Checked In'
+    const fetchedRecord = await Attendance.findById(record._id);
+    expect(fetchedRecord.status).toBe('Checked In');
+  });
+});

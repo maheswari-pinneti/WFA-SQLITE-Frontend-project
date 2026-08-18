@@ -405,13 +405,13 @@ describe('Workforce Analytics API Integration & Authorization Tests', () => {
 
   describe('Database Schema, FK, and Seeding integrity', () => {
     it('should verify schema collections exist', async () => {
-      const collections = await mongoose.connection.db.listCollections().toArray();
-      const collectionNames = collections.map((c: any) => c.name);
-      expect(collectionNames).toContain('users');
-      expect(collectionNames).toContain('employees');
-      expect(collectionNames).toContain('mfachallenges');
-      expect(collectionNames).toContain('sessions');
-      expect(collectionNames).toContain('refreshtokens');
+      const tables = getDb().prepare("SELECT name FROM sqlite_master WHERE type='table'").all() as any[];
+      const tableNames = tables.map(t => t.name.toLowerCase());
+      expect(tableNames).toContain('users');
+      expect(tableNames).toContain('employees');
+      expect(tableNames).toContain('mfachallenges');
+      expect(tableNames).toContain('sessions');
+      expect(tableNames).toContain('refreshtokens');
     });
 
     it('should verify seeder loaded the deterministic admin and employee structures', async () => {

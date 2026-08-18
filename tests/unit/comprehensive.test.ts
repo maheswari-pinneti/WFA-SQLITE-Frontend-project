@@ -10,7 +10,7 @@ import { authService } from '../../backend/src/services/auth.service.js';
 import { attendanceService } from '../../backend/src/services/attendance.service.js';
 import { analyticsService } from '../../backend/src/services/analytics.service.js';
 import jwt from 'jsonwebtoken';
-import { env } from '../../backend/src/config/env.js';
+import mongoose from '../../backend/src/config/mongoose.js';
 
 let server: any;
 const PORT = 5097;
@@ -53,7 +53,7 @@ describe('WFA Comprehensive Backend Unit and Integration Testing', () => {
     await AttendanceEvent.deleteMany({});
     await IdempotencyRecord.deleteMany({});
     await Correction.deleteMany({});
-    await Employee.deleteMany({ id: { $in: ['e1', 'e2', 'emp-comp-a', 'emp-comp-b', 'usr-tx-test'] } });
+    await Employee.deleteMany({ id: { $in: ['e1', 'e2', 'emp-comp-a', 'emp-comp-b', 'usr-tx-test', 'emp-unique-1', 'emp-unique-2'] } });
     await User.deleteMany({ id: { $in: ['usr-tx-test'] } });
   });
 

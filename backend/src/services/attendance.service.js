@@ -1,4 +1,4 @@
-import mongoose from 'mongoose';
+import mongoose from '../config/mongoose.js';
 import { attendanceRepository } from '../repositories/attendance.repository.js';
 import { employeeRepository } from '../repositories/employee.repository.js';
 import { userRepository } from '../repositories/user.repository.js';

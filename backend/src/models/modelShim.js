@@ -15,6 +15,14 @@ function getTableColumns(tableName) {
   return tableColumnsCache[tableName];
 }
 
+// Convert Mongoose/JS Date objects to ISO strings for SQLite compatibility
+function serializeValue(val) {
+  if (val instanceof Date) {
+    return val.toISOString();
+  }
+  return val;
+}
+
 // Helper to build SQL WHERE clause from Mongo query object
 function buildWhereClause(tableName, query) {
   const clauses = [];
@@ -35,7 +43,7 @@ function buildWhereClause(tableName, query) {
       const targetKey = columns.includes('companyId') ? 'companyId' : (columns.includes('organizationId') ? 'organizationId' : null);
       if (targetKey) {
         clauses.push(`${targetKey} = ?`);
-        params.push(value);
+        params.push(serializeValue(value));
       }
       continue;
     }
@@ -49,15 +57,16 @@ function buildWhereClause(tableName, query) {
       // Check if both columns exist in the table
       const hasCompany = columns.includes('companyId');
       const hasOrg = columns.includes('organizationId');
+      const val = serializeValue(value);
       if (hasCompany && hasOrg) {
         clauses.push(`(companyId = ? OR organizationId = ?)`);
-        params.push(value, value);
+        params.push(val, val);
       } else if (hasCompany) {
         clauses.push(`companyId = ?`);
-        params.push(value);
+        params.push(val);
       } else if (hasOrg) {
         clauses.push(`organizationId = ?`);
-        params.push(value);
+        params.push(val);
       }
     } else if (value instanceof RegExp) {
       const val = value.source.replace('^', '').replace('$', '').replace(/\\/g, '');
@@ -71,20 +80,20 @@ function buildWhereClause(tableName, query) {
             clauses.push(`${key} IS NOT NULL`);
           } else {
             clauses.push(`${key} != ?`);
-            params.push(value[op]);
+            params.push(serializeValue(value[op]));
           }
         } else if (op === '$in') {
           const list = value[op];
           if (Array.isArray(list) && list.length > 0) {
             const placeholders = list.map(() => '?').join(', ');
             clauses.push(`${key} IN (${placeholders})`);
-            params.push(...list);
+            params.push(...list.map(serializeValue));
           }
         }
       });
     } else {
       clauses.push(`${key} = ?`);
-      params.push(value);
+      params.push(serializeValue(value));
     }
   }
 
@@ -113,36 +122,41 @@ function deserializeRow(tableName, row) {
   
   // Expose a save() method on document instance
   result.save = async function() {
-    const db = getDb();
-    const columns = getTableColumns(tableName);
-    const fields = Object.keys(result).filter(k => typeof result[k] !== 'function' && k !== '_id' && k !== 'id' && columns.includes(k));
-    
-    let serializedData = { ...result };
-    if (tableName === 'users' && Array.isArray(serializedData.permissions)) {
-      serializedData.permissions = JSON.stringify(serializedData.permissions);
+    try {
+      const db = getDb();
+      const columns = getTableColumns(tableName);
+      const fields = Object.keys(result).filter(k => typeof result[k] !== 'function' && k !== '_id' && k !== 'id' && columns.includes(k));
+      
+      let serializedData = { ...result };
+      if (tableName === 'users' && Array.isArray(serializedData.permissions)) {
+        serializedData.permissions = JSON.stringify(serializedData.permissions);
+      }
+      if (tableName === 'attendancerecords' && Array.isArray(serializedData.breaks)) {
+        serializedData.breaks = JSON.stringify(serializedData.breaks);
+      }
+      if (tableName === 'idempotencyrecords' && typeof serializedData.response === 'object') {
+        serializedData.response = JSON.stringify(serializedData.response);
+      }
+      
+      let setClause = fields.map(k => `${k} = ?`).join(', ');
+      const values = fields.map(k => serializeValue(serializedData[k]));
+      if (columns.includes('updatedAt')) {
+        setClause += setClause ? ', updatedAt = ?' : 'updatedAt = ?';
+        values.push(new Date().toISOString());
+      }
+      
+      if (tableName === 'idempotencyrecords') {
+        values.push(result.companyId, result.key);
+        db.prepare(`UPDATE ${tableName} SET ${setClause} WHERE companyId = ? AND key = ?`).run(...values);
+      } else {
+        values.push(result.id);
+        db.prepare(`UPDATE ${tableName} SET ${setClause} WHERE id = ?`).run(...values);
+      }
+      return result;
+    } catch (e) {
+      console.error(`[SQLite Error in Document.save] Table: ${tableName}, ID: ${result.id}`, e);
+      throw e;
     }
-    if (tableName === 'attendancerecords' && Array.isArray(serializedData.breaks)) {
-      serializedData.breaks = JSON.stringify(serializedData.breaks);
-    }
-    if (tableName === 'idempotencyrecords' && typeof serializedData.response === 'object') {
-      serializedData.response = JSON.stringify(serializedData.response);
-    }
-    
-    const setClause = fields.map(k => `${k} = ?`).join(', ');
-    const values = fields.map(k => serializedData[k]);
-    if (columns.includes('updatedAt')) {
-      setClause += setClause ? ', updatedAt = ?' : 'updatedAt = ?';
-      values.push(new Date().toISOString());
-    }
-    
-    if (tableName === 'idempotencyrecords') {
-      values.push(result.companyId, result.key);
-      db.prepare(`UPDATE ${tableName} SET ${setClause} WHERE companyId = ? AND key = ?`).run(...values);
-    } else {
-      values.push(result.id);
-      db.prepare(`UPDATE ${tableName} SET ${setClause} WHERE id = ?`).run(...values);
-    }
-    return result;
   };
   
   return result;
@@ -184,12 +198,12 @@ export class ModelShim {
       },
       
       limit(n) {
-        this._limit = n;
+        if (n !== undefined && n !== null) this._limit = n;
         return this;
       },
       
       skip(n) {
-        this._skip = n;
+        if (n !== undefined && n !== null) this._skip = n;
         return this;
       },
       
@@ -202,15 +216,16 @@ export class ModelShim {
       },
       
       then: (resolve, reject) => {
+        let sql = `SELECT * FROM ${this.tableName} ${clause}`;
         try {
-          let sql = `SELECT * FROM ${this.tableName} ${clause}`;
           if (this._sort) sql += ` ${this._sort}`;
-          if (this._limit !== null) sql += ` LIMIT ${this._limit}`;
-          if (this._skip !== null) sql += ` OFFSET ${this._skip}`;
+          if (this._limit !== null && this._limit !== undefined) sql += ` LIMIT ${this._limit}`;
+          if (this._skip !== null && this._skip !== undefined) sql += ` OFFSET ${this._skip}`;
           
           const rows = db.prepare(sql).all(...params);
           resolve(rows.map(row => deserializeRow(this.tableName, row)));
         } catch (e) {
+          console.error(`[SQLite Error in find] SQL: "${sql}", Params:`, params, e);
           reject(e);
         }
       }
@@ -248,14 +263,15 @@ export class ModelShim {
       },
       
       then: (resolve, reject) => {
+        let sql = `SELECT * FROM ${this.tableName} ${clause}`;
         try {
-          let sql = `SELECT * FROM ${this.tableName} ${clause}`;
           if (this._sort) sql += ` ${this._sort}`;
           sql += ` LIMIT 1`;
           
           const row = db.prepare(sql).get(...params);
           resolve(row ? deserializeRow(this.tableName, row) : null);
         } catch (e) {
+          console.error(`[SQLite Error in findOne] SQL: "${sql}", Params:`, params, e);
           reject(e);
         }
       }
@@ -292,7 +308,7 @@ export class ModelShim {
       
       const fields = Object.keys(data).filter(k => k !== '_id' && columns.includes(k));
       const placeholders = fields.map(() => '?').join(', ');
-      const values = fields.map(k => data[k]);
+      const values = fields.map(k => serializeValue(data[k]));
       
       try {
         db.prepare(`
@@ -323,7 +339,7 @@ export class ModelShim {
     return this.create(docs);
   }
 
-  async updateOne(query, update) {
+  async _updateOneInternal(query, update) {
     const db = getDb();
     const { clause, params } = buildWhereClause(this.tableName, query);
     
@@ -342,7 +358,7 @@ export class ModelShim {
       if (this.tableName === 'users' && k === 'permissions' && Array.isArray(v)) return JSON.stringify(v);
       if (this.tableName === 'attendancerecords' && k === 'breaks' && Array.isArray(v)) return JSON.stringify(v);
       if (this.tableName === 'idempotencyrecords' && k === 'response' && typeof v === 'object') return JSON.stringify(v);
-      return v;
+      return serializeValue(v);
     });
     
     if (columns.includes('updatedAt')) {
@@ -355,7 +371,17 @@ export class ModelShim {
     return { nModified: info.changes };
   }
 
-  async updateMany(query, update) {
+  updateOne(query, update) {
+    const builder = {
+      session: () => builder,
+      then: (resolve, reject) => {
+        this._updateOneInternal(query, update).then(resolve, reject);
+      }
+    };
+    return builder;
+  }
+
+  updateMany(query, update) {
     return this.updateOne(query, update);
   }
 
@@ -380,7 +406,7 @@ export class ModelShim {
         if (this.tableName === 'users' && k === 'permissions' && Array.isArray(v)) return JSON.stringify(v);
         if (this.tableName === 'attendancerecords' && k === 'breaks' && Array.isArray(v)) return JSON.stringify(v);
         if (this.tableName === 'idempotencyrecords' && k === 'response' && typeof v === 'object') return JSON.stringify(v);
-        return v;
+        return serializeValue(v);
       });
       if (columns.includes('updatedAt')) {
         setClause += setClause ? ', updatedAt = ?' : 'updatedAt = ?';
@@ -419,15 +445,31 @@ export class ModelShim {
     return deserializeRow(this.tableName, row);
   }
 
-  async deleteOne(query) {
+  async _deleteOneInternal(query) {
     const db = getDb();
     const { clause, params } = buildWhereClause(this.tableName, query);
     const info = db.prepare(`DELETE FROM ${this.tableName} ${clause}`).run(...params);
     return { deletedCount: info.changes };
   }
 
-  async deleteMany(query) {
-    return this.deleteOne(query);
+  deleteOne(query) {
+    const builder = {
+      session: () => builder,
+      then: (resolve, reject) => {
+        this._deleteOneInternal(query).then(resolve, reject);
+      }
+    };
+    return builder;
+  }
+
+  deleteMany(query) {
+    const builder = {
+      session: () => builder,
+      then: (resolve, reject) => {
+        this._deleteOneInternal(query).then(resolve, reject);
+      }
+    };
+    return builder;
   }
 
   async countDocuments(query) {

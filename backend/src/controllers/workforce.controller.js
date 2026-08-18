@@ -115,6 +115,7 @@ export const reviewLeaveRequest = async (req, res) => {
     logAudit(request.employeeId, `LEAVE_${status}`, `${req.user.name} reviewed leave request ${request.id}`, orgId);
     return res.json({ success: true, data: request });
   } catch (err) {
+    console.error('reviewLeaveRequest Error:', err);
     return res.status(500).json({ success: false, message: err.message });
   }
 };

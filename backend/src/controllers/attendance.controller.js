@@ -7,6 +7,7 @@ export const checkIn = async (req, res) => {
     const result = await attendanceService.checkIn(req.user, req.body);
     return res.json({ success: true, data: result.data, idempotentReplay: result.idempotentReplay });
   } catch (err) {
+    console.error('checkIn Error:', err);
     if (err.message.includes('Duplicate') || err.code === 11000) {
       return res.status(409).json({ success: false, message: 'Duplicate attendance request.' });
     }
@@ -22,6 +23,7 @@ export const takeBreak = async (req, res) => {
     const data = await attendanceService.takeBreak(req.user, req.body);
     return res.json({ success: true, data });
   } catch (err) {
+    console.error('takeBreak Error:', err);
     return res.status(400).json({ success: false, message: err.message });
   }
 };
@@ -31,6 +33,7 @@ export const resumeWork = async (req, res) => {
     const data = await attendanceService.resumeWork(req.user, req.body);
     return res.json({ success: true, data });
   } catch (err) {
+    console.error('resumeWork Error:', err);
     return res.status(400).json({ success: false, message: err.message });
   }
 };
@@ -40,6 +43,7 @@ export const checkOut = async (req, res) => {
     const data = await attendanceService.checkOut(req.user, req.body);
     return res.json({ success: true, data });
   } catch (err) {
+    console.error('checkOut Error:', err);
     if (err.message.includes('rejection') || err.message.includes('session')) {
       return res.status(400).json({ success: false, message: err.message });
     }
@@ -52,6 +56,7 @@ export const getRecords = async (req, res) => {
     const data = await attendanceService.getRecords(req.user);
     return res.json({ success: true, data });
   } catch (err) {
+    console.error('getRecords Error:', err);
     return res.status(500).json({ success: false, message: err.message });
   }
 };
@@ -61,6 +66,7 @@ export const getTodayAttendance = async (req, res) => {
     const data = await attendanceService.getTodayAttendance(req.user.id, getOrganizationId(req));
     return res.json({ success: true, data });
   } catch (err) {
+    console.error('getTodayAttendance Error:', err);
     return res.status(500).json({ success: false, message: err.message });
   }
 };
@@ -70,6 +76,7 @@ export const submitCorrection = async (req, res) => {
     const data = await attendanceService.submitCorrection(req.user, req.body);
     return res.json({ success: true, data });
   } catch (err) {
+    console.error('submitCorrection Error:', err);
     return res.status(400).json({ success: false, message: err.message });
   }
 };
@@ -80,6 +87,7 @@ export const reviewCorrection = async (req, res) => {
     await attendanceService.reviewCorrection(req.user, req.params.id, status, managerComment);
     return res.json({ success: true, message: `Request successfully ${status}.` });
   } catch (err) {
+    console.error('reviewCorrection Error:', err);
     if (err.message.includes('not found')) {
       return res.status(404).json({ success: false, message: err.message });
     }
@@ -95,6 +103,7 @@ export const getCorrections = async (req, res) => {
     const data = await attendanceService.getCorrections(req.user);
     return res.json({ success: true, data });
   } catch (err) {
+    console.error('getCorrections Error:', err);
     return res.status(500).json({ success: false, message: err.message });
   }
 };
@@ -104,6 +113,7 @@ export const getShifts = async (req, res) => {
     const data = await attendanceService.getShifts(getOrganizationId(req));
     return res.json({ success: true, data });
   } catch (err) {
+    console.error('getShifts Error:', err);
     return res.status(500).json({ success: false, message: err.message });
   }
 };
@@ -113,6 +123,7 @@ export const getAuditLogs = async (req, res) => {
     const data = await attendanceService.getAuditLogs(req.user);
     return res.json({ success: true, data });
   } catch (err) {
+    console.error('getAuditLogs Error:', err);
     return res.status(500).json({ success: false, message: err.message });
   }
 };
