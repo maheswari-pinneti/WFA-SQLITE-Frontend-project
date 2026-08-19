@@ -31,6 +31,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ selectedRole, onRoleChange
   const [error, setError] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [mfaMethod, setMfaMethod] = useState<'email' | 'sms'>('email');
 
   // OTP Verification states
   const [challengeId, setChallengeId] = useState<string | null>(null);
@@ -104,7 +105,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ selectedRole, onRoleChange
 
     setIsLoading(true);
     try {
-      const res = (await authService.login(email.trim(), password)) as any;
+      const res = (await authService.login(email.trim(), password, mfaMethod)) as any;
       if (res.requiresMfa) {
         setChallengeId(res.challengeId);
         setExpiresAt(res.expiresAt);
@@ -199,7 +200,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ selectedRole, onRoleChange
     if (!challengeId) return;
     setIsLoading(true);
     try {
-      const res = await resendMfa(challengeId);
+      const res = await resendMfa(challengeId, mfaMethod);
       setChallengeId(res.challengeId);
       setExpiresAt(res.expiresAt);
       setOtpValues(['', '', '', '', '', '']);
@@ -218,7 +219,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ selectedRole, onRoleChange
     <div className="auth-space-y-6">
       <AuthHeader
         title={isOtpMode ? 'MFA Verification' : 'Welcome Back'}
-        subtitle={isOtpMode ? 'Enter the 6-digit code sent to your device' : 'Sign in to access your dashboard'}
+        subtitle={isOtpMode ? `Enter the 6-digit code sent to your ${mfaMethod === 'sms' ? 'SMS' : 'Email'}` : 'Sign in to access your dashboard'}
       />
 
       {error && (
@@ -267,6 +268,36 @@ export const LoginForm: React.FC<LoginFormProps> = ({ selectedRole, onRoleChange
               required
               className="auth-input"
             />
+          </div>
+
+          <div className="auth-form-group">
+            <label className="auth-label">
+              MFA Delivery Channel
+            </label>
+            <div style={{ display: 'flex', gap: '1.5rem', marginTop: '0.25rem' }}>
+              <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', color: 'var(--text-secondary)', fontWeight: 500 }}>
+                <input
+                  type="radio"
+                  name="mfaMethod"
+                  value="email"
+                  checked={mfaMethod === 'email'}
+                  onChange={() => setMfaMethod('email')}
+                  style={{ accentColor: 'var(--role-primary)' }}
+                />
+                Email
+              </label>
+              <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', color: 'var(--text-secondary)', fontWeight: 500 }}>
+                <input
+                  type="radio"
+                  name="mfaMethod"
+                  value="sms"
+                  checked={mfaMethod === 'sms'}
+                  onChange={() => setMfaMethod('sms')}
+                  style={{ accentColor: 'var(--role-primary)' }}
+                />
+                SMS
+              </label>
+            </div>
           </div>
 
           <PasswordField
@@ -324,6 +355,36 @@ export const LoginForm: React.FC<LoginFormProps> = ({ selectedRole, onRoleChange
           >
             {isLoading ? 'Verifying...' : 'Verify & Login'}
           </button>
+
+          <div className="auth-form-group" style={{ margin: '1rem 0' }}>
+            <label className="auth-label" style={{ fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+              Resend via:
+            </label>
+            <div style={{ display: 'flex', gap: '1.5rem', marginTop: '0.25rem' }}>
+              <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', fontSize: '0.875rem', color: 'var(--text-secondary)' }}>
+                <input
+                  type="radio"
+                  name="mfaResendMethod"
+                  value="email"
+                  checked={mfaMethod === 'email'}
+                  onChange={() => setMfaMethod('email')}
+                  style={{ accentColor: 'var(--role-primary)' }}
+                />
+                Email
+              </label>
+              <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', fontSize: '0.875rem', color: 'var(--text-secondary)' }}>
+                <input
+                  type="radio"
+                  name="mfaResendMethod"
+                  value="sms"
+                  checked={mfaMethod === 'sms'}
+                  onChange={() => setMfaMethod('sms')}
+                  style={{ accentColor: 'var(--role-primary)' }}
+                />
+                SMS
+              </label>
+            </div>
+          </div>
 
           <div className="auth-controls-row">
             <span style={{ color: 'var(--text-muted)', fontWeight: 500 }}>

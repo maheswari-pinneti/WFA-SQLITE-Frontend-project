@@ -9,10 +9,11 @@ export const authApi = {
     throw new Error(response.data?.message || 'Signup failed');
   },
 
-  login: async (email: string, password?: string): Promise<any> => {
+  login: async (email: string, password?: string, mfaMethod?: string): Promise<any> => {
     const response = await apiClient.post('/v1/auth/login', {
       email: email.trim().toLowerCase(),
-      password
+      password,
+      mfaMethod
     });
     if (response.data && response.data.success) {
       return response.data.data;
@@ -31,9 +32,10 @@ export const authApi = {
     throw new Error(response.data?.message || 'MFA OTP Verification failed');
   },
 
-  resendMfa: async (challengeId: string): Promise<any> => {
+  resendMfa: async (challengeId: string, mfaMethod?: string): Promise<any> => {
     const response = await apiClient.post('/v1/auth/mfa/resend', {
-      challengeId
+      challengeId,
+      mfaMethod
     });
     if (response.data && response.data.success) {
       return response.data.data;

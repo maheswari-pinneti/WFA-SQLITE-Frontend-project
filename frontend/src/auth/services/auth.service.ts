@@ -24,8 +24,8 @@ export const authService = {
     return await authApi.signup(signupData);
   },
 
-  login: async (email: string, password?: string) => {
-    const response = await authApi.login(email, password);
+  login: async (email: string, password?: string, mfaMethod?: string) => {
+    const response = await authApi.login(email, password, mfaMethod);
     if (response && (response as any).token && (response as any).user) {
       const user = normalizeUser((response as any).user);
       if (!user) throw new Error('Login returned an invalid user session.');
@@ -52,8 +52,8 @@ export const authService = {
     return { token, user: normalizedUser };
   },
 
-  resendMfa: async (challengeId: string) => {
-    return await authApi.resendMfa(challengeId);
+  resendMfa: async (challengeId: string, mfaMethod?: string) => {
+    return await authApi.resendMfa(challengeId, mfaMethod);
   },
 
   logout: async () => {

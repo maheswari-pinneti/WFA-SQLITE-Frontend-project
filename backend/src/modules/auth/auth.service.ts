@@ -147,7 +147,7 @@ export const revokeRefreshToken = async (refreshToken: string) => {
   }
 };
 
-export const generateAndSendOtp = async (user: any) => {
+export const generateAndSendOtp = async (user: any, method: string = 'email') => {
   const code = Math.floor(100000 + Math.random() * 900000).toString();
   const salt = bcrypt.genSaltSync(10);
   const otpHash = bcrypt.hashSync(code, salt);
@@ -156,7 +156,11 @@ export const generateAndSendOtp = async (user: any) => {
   const expiresAt = new Date(Date.now() + OTP_EXPIRY_MINUTES * 60 * 1000).toISOString();
   const createdAt = new Date().toISOString();
 
-  console.log(`[MFA DELIVERY] Simulated Email/SMS OTP code for ${user.email} is: ${code}`);
+  if (method === 'sms') {
+    console.log(`[MFA DELIVERY] [SMS] Simulated SMS OTP code for ${user.email} is: ${code}`);
+  } else {
+    console.log(`[MFA DELIVERY] [EMAIL] Simulated Email OTP code for ${user.email} is: ${code}`);
+  }
 
   await userRepository.createMfaChallenge({
     id: challengeId,
@@ -218,7 +222,7 @@ export const verifyOtp = async (challengeId: string, code: string) => {
   }
 };
 
-export const resendOtp = async (challengeId: string) => {
+export const resendOtp = async (challengeId: string, method: string = 'email') => {
   const challenge = await userRepository.findMfaChallengeById(challengeId);
   if (!challenge) {
     return { success: false, message: 'MFA session expired or invalid' };
@@ -244,7 +248,11 @@ export const resendOtp = async (challengeId: string) => {
     return { success: false, message: 'Associated user profile not found.' };
   }
 
-  console.log(`[MFA DELIVERY] Simulated Resent Email/SMS OTP code for ${user.email} is: ${code}`);
+  if (method === 'sms') {
+    console.log(`[MFA DELIVERY] [SMS] Simulated Resent SMS OTP code for ${user.email} is: ${code}`);
+  } else {
+    console.log(`[MFA DELIVERY] [EMAIL] Simulated Resent Email OTP code for ${user.email} is: ${code}`);
+  }
 
   await userRepository.updateMfaChallenge(challengeId, {
     otp_hash: otpHash,

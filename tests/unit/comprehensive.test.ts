@@ -10,7 +10,7 @@ import { authService } from '../../backend/src/services/auth.service.js';
 import { attendanceService } from '../../backend/src/services/attendance.service.js';
 import { analyticsService } from '../../backend/src/services/analytics.service.js';
 import jwt from 'jsonwebtoken';
-import mongoose from '../../backend/src/config/mongoose.js';
+import mongoose from '../../backend/src/database/transaction.js';
 
 let server: any;
 const PORT = 5097;

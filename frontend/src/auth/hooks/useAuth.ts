@@ -21,8 +21,8 @@ export const useAuth = () => {
     dispatch(loginSuccessAction(data));
   };
 
-  const resendMfa = async (challengeId: string) => {
-    return await authService.resendMfa(challengeId);
+  const resendMfa = async (challengeId: string, mfaMethod?: string) => {
+    return await authService.resendMfa(challengeId, mfaMethod);
   };
   
   const logout = () => {

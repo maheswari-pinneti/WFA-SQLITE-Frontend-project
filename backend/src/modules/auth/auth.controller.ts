@@ -193,8 +193,9 @@ export const login = async (req: Request, res: Response): Promise<any> => {
 
     if (user.mfa_enabled) {
       try {
-        const mfaRes = await authService.generateAndSendOtp(user);
-        logAudit(user.id, 'MFA_CHALLENGE', `OTP challenge generated for ${email}`);
+        const mfaMethod = req.body?.mfaMethod || 'email';
+        const mfaRes = await authService.generateAndSendOtp(user, mfaMethod);
+        logAudit(user.id, 'MFA_CHALLENGE', `OTP challenge generated for ${email} via ${mfaMethod}`);
 
         return res.json({
           success: true,
@@ -318,12 +319,13 @@ export const refresh = async (req: Request, res: Response): Promise<any> => {
 
 export const resendMfa = async (req: Request, res: Response): Promise<any> => {
   const challengeId = req.body.challengeId || req.body.tempToken;
+  const mfaMethod = req.body.mfaMethod || 'email';
   if (!challengeId) {
     return res.status(400).json({ success: false, message: 'Challenge ID is required.' });
   }
 
   try {
-    const resendResult = await authService.resendOtp(challengeId);
+    const resendResult = await authService.resendOtp(challengeId, mfaMethod);
     if (!resendResult.success) {
       return res.status(400).json({ success: false, message: resendResult.message });
     }
