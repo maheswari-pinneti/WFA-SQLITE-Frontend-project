@@ -64,6 +64,35 @@ The application will be served locally at:
 
 ---
 
+## ☁️ SQLite Cloud Integration & Diagnostic Commands
+
+Stackly Workforce Analytics natively supports cloud hosting via **SQLite Cloud**.
+
+### 1. Connection Diagnostic
+Verify your SQLite Cloud connection string and credentials at any time by running:
+```bash
+npm run sqlitecloud:test
+```
+
+### 2. Remote Migration & Seeding
+Deploy database tables and push local data up to your cloud instance:
+```bash
+npm run sqlitecloud:migrate
+```
+
+---
+
+## 🔍 Local Database Inspection (DB Browser for SQLite)
+
+For local development and inspection, we recommend using **DB Browser for SQLite** (a desktop GUI client):
+
+1. Download and install **[DB Browser for SQLite](https://github.com/sqlitebrowser/sqlitebrowser)** on your machine.
+2. Run your local server so it generates/populates the local database.
+3. Open the application, click **Open Database**, and select the local file: `database/sqlite/wfa.sqlite`.
+4. Use the GUI to browse tables, inspect seed data, or execute custom SQL queries directly against your local environment.
+
+---
+
 ## 🛡️ Default Seed Credentials
 
 For rapid verification, the database seeds the following user roles (all sharing the default password `StacklyWFA2026!`):
