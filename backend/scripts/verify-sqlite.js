@@ -1,9 +1,11 @@
 import 'dotenv/config';
 import { getDb } from '../src/config/db.js';
+import { connectDatabase } from '../src/database/sqlite-cloud.js';
 
 const verify = async () => {
   try {
     console.log("Verifying SQLite connectivity...");
+    await connectDatabase();
     const db = getDb();
     const result = db.prepare('SELECT 1').get();
     if (result) {

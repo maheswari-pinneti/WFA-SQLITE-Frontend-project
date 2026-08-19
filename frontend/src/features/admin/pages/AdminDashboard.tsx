@@ -111,28 +111,28 @@ export const AdminDashboard: React.FC = () => {
             {/* KPI 1 */}
             <MinimalKpiCard
               title="Total Headcount"
-              value="15,420"
+              value="250"
               icon={<Users size={26} />}
               iconBgColor="emerald"
               trend="+12.4% than last month"
               trendType="positive"
-              onClick={() => openDrillDown('Total Employee Headcount', '15,420 Active Records', 'Global workforce roster', [
-                { label: 'Full-time Permanent', value: 13850 },
-                { label: 'Contractors & Consultants', value: 1570 },
+              onClick={() => openDrillDown('Total Employee Headcount', '250 Active Records', 'Global workforce roster', [
+                { label: 'Full-time Permanent', value: 220 },
+                { label: 'Contractors & Consultants', value: 30 },
               ])}
             />
 
             {/* KPI 2 */}
             <MinimalKpiCard
               title="Active Duty Rate"
-              value="14,850"
+              value="242"
               icon={<ShieldCheck size={26} />}
               iconBgColor="blue"
-              trend="+96.3% active shift"
+              trend="+96.8% active shift"
               trendType="positive"
-              onClick={() => openDrillDown('Active Duty Status', '14,850 Clocked In', 'Real-time shift roster', [
-                { label: 'In-Office Campuses', value: 11200 },
-                { label: 'Remote WFH', value: 3650 },
+              onClick={() => openDrillDown('Active Duty Status', '242 Clocked In', 'Real-time shift roster', [
+                { label: 'In-Office Campuses', value: 180 },
+                { label: 'Remote WFH', value: 62 },
               ])}
             />
 
@@ -239,7 +239,7 @@ export const AdminDashboard: React.FC = () => {
             <div className="space-y-3 text-xs">
               {[
                 { title: 'New employee joined Engineering team', time: '10m ago', user: 'Alex Mercer', badge: 'Onboarding', color: 'text-emerald-400 bg-emerald-500/10' },
-                { title: 'Attendance marked for 14,850 employees', time: '1h ago', user: 'System Automated', badge: 'Attendance', color: 'text-blue-400 bg-blue-500/10' },
+                { title: 'Attendance marked for 242 employees', time: '1h ago', user: 'System Automated', badge: 'Attendance', color: 'text-blue-400 bg-blue-500/10' },
                 { title: 'Leave request approved for Sarah Connor', time: '2h ago', user: 'Elena Rostova (HR)', badge: 'Approval', color: 'text-purple-400 bg-purple-500/10' },
                 { title: 'Quarterly Performance KPI scores updated', time: '3h ago', user: 'David Sterling', badge: 'Performance', color: 'text-amber-400 bg-amber-500/10' },
               ].map((act, idx) => (
