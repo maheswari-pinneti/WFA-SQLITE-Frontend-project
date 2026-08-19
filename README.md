@@ -1116,6 +1116,8 @@ This project is licensed under the MIT License.
 
 ---
 
+---
+
 ## Developed By
 
 <div align="center">
@@ -1126,7 +1128,7 @@ This project is licensed under the MIT License.
 
 <br />
 
-<img src="./public/stackly-logo.png" alt="Stackly Logo" width="180" />
+<img src="./public/logo.png" alt="Stackly Company Logo" width="180" />
 
 <br />
 <br />
@@ -1142,10 +1144,9 @@ Built with React, TypeScript, Express.js, SQLite, REST APIs, RBAC, and modern wo
 ### About the Developer
 
 **Maheswari Pinneti**  
-Frontend Developer  
-**Stackly**
+**Frontend Developer — Stackly**
 
-Responsible for frontend development, UI implementation, API integration, responsive design, dashboard development, workforce analytics interfaces, testing, debugging, and continuous improvement of the Workforce Analytics Platform.
+Responsible for frontend development, UI implementation, responsive design, API integration, dashboard development, workforce analytics interfaces, testing, debugging, and continuous improvement of the Workforce Analytics Platform.
 
 ---
 
@@ -1153,4 +1154,5 @@ Responsible for frontend development, UI implementation, API integration, respon
 
 **© 2026 Maheswari Pinneti | Stackly**
 
+</div>
 </div>
