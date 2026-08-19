@@ -21,6 +21,19 @@ export const seedSqlite = async () => {
     console.warn(`[SQLite Seeder] Warning: schema.sql not found at ${schemaPath}`);
   }
 
+  console.log('[SQLite Seeder] Truncating tables for a fresh seed...');
+  db.exec(`
+    DELETE FROM companies;
+    DELETE FROM departments;
+    DELETE FROM teams;
+    DELETE FROM shifts;
+    DELETE FROM users;
+    DELETE FROM employees;
+    DELETE FROM skills;
+    DELETE FROM performancerecords;
+    DELETE FROM tasks;
+  `);
+
   console.log('[SQLite Seeder] Starting database seeding...');
 
   // Start Transaction
@@ -149,7 +162,7 @@ export const seedSqlite = async () => {
       for (let i = 1; i <= 250; i++) {
         const id = i === 250 ? 'usr-emp-01' : `emp-${i}`;
         const paddedNum = String(i).padStart(4, '0');
-        const joiningYear = 2020 + (i % 7);
+        const joiningYear = 2020 + Math.floor((i - 1) / 36);
         const code = `STK-${joiningYear}-${paddedNum}`;
 
         const firstName = firstNames[(i - 1) % firstNames.length];
