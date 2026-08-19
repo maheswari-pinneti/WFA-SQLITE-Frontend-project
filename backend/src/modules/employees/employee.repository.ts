@@ -1,46 +1,46 @@
-import { getDb } from '../../database/connection.js';
+import { query, execute } from '../../database/sqlite-cloud.js';
 
-function buildSqlFilter(query: any) {
+function buildSqlFilter(filterQuery: any) {
   const clauses: string[] = [];
   const params: any[] = [];
 
-  if (query.organizationId) {
+  if (filterQuery.organizationId) {
     clauses.push("organizationId = ?");
-    params.push(query.organizationId);
+    params.push(filterQuery.organizationId);
   }
 
-  if (query.id) {
+  if (filterQuery.id) {
     clauses.push("id = ?");
-    params.push(query.id);
+    params.push(filterQuery.id);
   }
 
-  if (query.email) {
+  if (filterQuery.email) {
     clauses.push("email = ?");
-    params.push(query.email);
+    params.push(filterQuery.email);
   }
 
-  if (query.department) {
+  if (filterQuery.department) {
     clauses.push("department = ?");
-    params.push(query.department);
+    params.push(filterQuery.department);
   }
 
-  if (query.team) {
+  if (filterQuery.team) {
     clauses.push("team = ?");
-    params.push(query.team);
+    params.push(filterQuery.team);
   }
 
-  if (query.location) {
+  if (filterQuery.location) {
     clauses.push("location = ?");
-    params.push(query.location);
+    params.push(filterQuery.location);
   }
 
-  if (query.designation) {
+  if (filterQuery.designation) {
     clauses.push("designation = ?");
-    params.push(query.designation);
+    params.push(filterQuery.designation);
   }
 
-  if (query.status) {
-    let statusVal = query.status;
+  if (filterQuery.status) {
+    let statusVal = filterQuery.status;
     if (statusVal instanceof RegExp) {
       statusVal = statusVal.source.replace('^', '').replace('$', '');
     }
@@ -49,8 +49,8 @@ function buildSqlFilter(query: any) {
     params.push(statusVal);
   }
 
-  if (query.joinDate) {
-    let joinDateVal = query.joinDate;
+  if (filterQuery.joinDate) {
+    let joinDateVal = filterQuery.joinDate;
     if (joinDateVal instanceof RegExp) {
       joinDateVal = joinDateVal.source.replace('^', '').replace('$', '');
     }
@@ -59,9 +59,9 @@ function buildSqlFilter(query: any) {
     params.push(`${joinDateVal}%`);
   }
 
-  if (query.$or) {
+  if (filterQuery.$or) {
     const orClauses: string[] = [];
-    query.$or.forEach((orQuery: any) => {
+    filterQuery.$or.forEach((orQuery: any) => {
       const key = Object.keys(orQuery)[0];
       if (key) {
         let val = orQuery[key];
@@ -84,19 +84,16 @@ function buildSqlFilter(query: any) {
 
 export class EmployeeRepository {
   async findById(id: string, orgId: string) {
-    const db = getDb();
-    const row = db.prepare('SELECT * FROM employees WHERE id = ? AND organizationId = ?').get(id, orgId);
-    return row || null;
+    const rows = await query('SELECT * FROM employees WHERE id = ? AND organizationId = ?', [id, orgId]);
+    return rows && rows.length > 0 ? rows[0] : null;
   }
 
   async findByEmail(email: string, orgId: string) {
-    const db = getDb();
-    const row = db.prepare('SELECT * FROM employees WHERE email = ? AND organizationId = ?').get(email, orgId);
-    return row || null;
+    const rows = await query('SELECT * FROM employees WHERE email = ? AND organizationId = ?', [email, orgId]);
+    return rows && rows.length > 0 ? rows[0] : null;
   }
 
   async create(employeeData: any) {
-    const db = getDb();
     const timestamp = new Date().toISOString();
     const data = {
       id: employeeData.id,
@@ -119,16 +116,19 @@ export class EmployeeRepository {
       updatedAt: timestamp
     };
 
-    db.prepare(`
+    await execute(`
       INSERT INTO employees (id, employeeCode, name, email, role, department, designation, status, avatar, joinDate, performanceScore, attendanceRate, team, location, organizationId, companyId, createdAt, updatedAt)
-      VALUES (@id, @employeeCode, @name, @email, @role, @department, @designation, @status, @avatar, @joinDate, @performanceScore, @attendanceRate, @team, @location, @organizationId, @companyId, @createdAt, @updatedAt)
-    `).run(data);
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `, [
+      data.id, data.employeeCode, data.name, data.email, data.role, data.department, data.designation,
+      data.status, data.avatar, data.joinDate, data.performanceScore, data.attendanceRate, data.team,
+      data.location, data.organizationId, data.companyId, data.createdAt, data.updatedAt
+    ]);
 
     return this.findById(employeeData.id, data.organizationId);
   }
 
   async update(id: string, orgId: string, updateData: any) {
-    const db = getDb();
     let updates = updateData;
     if (updateData.$set) {
       updates = updateData.$set;
@@ -143,7 +143,7 @@ export class EmployeeRepository {
     values.push(id);
     values.push(orgId);
 
-    db.prepare(`UPDATE employees SET ${setClause}, updatedAt = ? WHERE id = ? AND organizationId = ?`).run(...values);
+    await execute(`UPDATE employees SET ${setClause}, updatedAt = ? WHERE id = ? AND organizationId = ?`, values);
     return this.findById(id, orgId);
   }
 
@@ -151,16 +151,14 @@ export class EmployeeRepository {
     return this.update(id, orgId, { status: 'TERMINATED' });
   }
 
-  async count(query: any) {
-    const db = getDb();
-    const { whereClause, params } = buildSqlFilter(query);
-    const row = db.prepare(`SELECT COUNT(*) as count FROM employees ${whereClause}`).get(...params) as any;
-    return row.count;
+  async count(queryData: any) {
+    const { whereClause, params } = buildSqlFilter(queryData);
+    const rows = await query(`SELECT COUNT(*) as count FROM employees ${whereClause}`, params);
+    return rows && rows.length > 0 ? (rows[0] as any).count : 0;
   }
 
-  async findPaginated(query: any, sortOption: any, skip: number, limit: number) {
-    const db = getDb();
-    const { whereClause, params } = buildSqlFilter(query);
+  async findPaginated(queryData: any, sortOption: any, skip: number, limit: number) {
+    const { whereClause, params } = buildSqlFilter(queryData);
 
     let orderByClause = '';
     const sortFields = Object.keys(sortOption);
@@ -171,56 +169,52 @@ export class EmployeeRepository {
     }
 
     const queryParams = [...params, limit, skip];
-    const rows = db.prepare(`
+    const rows = await query(`
       SELECT * FROM employees 
       ${whereClause} 
       ${orderByClause} 
       LIMIT ? OFFSET ?
-    `).all(...queryParams);
+    `, queryParams);
 
     return rows;
   }
 
   async getDistinctTeams(orgId: string) {
-    const db = getDb();
-    const rows = db.prepare(`
+    const rows = await query(`
       SELECT team as name, department 
       FROM employees 
       WHERE organizationId = ? AND team IS NOT NULL AND team != '' 
       GROUP BY team, department 
       ORDER BY team ASC
-    `).all(orgId);
+    `, [orgId]);
     return rows;
   }
 
   async findTeamMembers(teamId: string, orgId: string) {
-    const db = getDb();
-    const rows = db.prepare(`
+    const rows = await query(`
       SELECT * FROM employees 
       WHERE team = ? AND organizationId = ? 
       ORDER BY employeeCode ASC
-    `).all(teamId, orgId);
+    `, [teamId, orgId]);
     return rows;
   }
 
   async getDistinctDepartments(orgId: string) {
-    const db = getDb();
-    const rows = db.prepare(`
+    const rows = await query(`
       SELECT DISTINCT department 
       FROM employees 
       WHERE organizationId = ? AND department IS NOT NULL AND department != ''
-    `).all(orgId) as any[];
-    return rows.map(r => r.department);
+    `, [orgId]);
+    return rows.map((r: any) => r.department);
   }
 
   async getDistinctLocations(orgId: string) {
-    const db = getDb();
-    const rows = db.prepare(`
+    const rows = await query(`
       SELECT DISTINCT location 
       FROM employees 
       WHERE organizationId = ? AND location IS NOT NULL AND location != ''
-    `).all(orgId) as any[];
-    return rows.map(r => r.location);
+    `, [orgId]);
+    return rows.map((r: any) => r.location);
   }
 }
 

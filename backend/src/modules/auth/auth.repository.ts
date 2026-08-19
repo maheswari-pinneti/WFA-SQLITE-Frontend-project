@@ -1,4 +1,4 @@
-import { getDb } from '../../database/connection.js';
+import { query, execute } from '../../database/sqlite-cloud.js';
 
 export interface UserRow {
   id: string;
@@ -22,9 +22,9 @@ export interface UserRow {
 
 export class UserRepository {
   async findByEmail(email: string): Promise<UserRow | null> {
-    const db = getDb();
-    const row = db.prepare('SELECT * FROM users WHERE email = ?').get(email) as UserRow | undefined;
-    if (!row) return null;
+    const rows = await query('SELECT * FROM users WHERE email = ?', [email]);
+    if (!rows || rows.length === 0) return null;
+    const row = rows[0] as UserRow;
     return {
       ...row,
       permissions: typeof row.permissions === 'string' ? JSON.parse(row.permissions) : row.permissions
@@ -32,9 +32,9 @@ export class UserRepository {
   }
 
   async findById(id: string): Promise<UserRow | null> {
-    const db = getDb();
-    const row = db.prepare('SELECT * FROM users WHERE id = ?').get(id) as UserRow | undefined;
-    if (!row) return null;
+    const rows = await query('SELECT * FROM users WHERE id = ?', [id]);
+    if (!rows || rows.length === 0) return null;
+    const row = rows[0] as UserRow;
     return {
       ...row,
       permissions: typeof row.permissions === 'string' ? JSON.parse(row.permissions) : row.permissions
@@ -42,20 +42,18 @@ export class UserRepository {
   }
 
   async findByScope(orgId: string): Promise<UserRow[]> {
-    const db = getDb();
-    const rows = db.prepare(`
+    const rows = await query(`
       SELECT id, name, email, role, department, team, location, title, clearanceLevel, status, permissions 
       FROM users 
       WHERE organizationId = ?
-    `).all(orgId) as UserRow[];
-    return rows.map(row => ({
+    `, [orgId]);
+    return rows.map((row: any) => ({
       ...row,
       permissions: typeof row.permissions === 'string' ? JSON.parse(row.permissions) : row.permissions
     }));
   }
 
   async create(userData: any): Promise<UserRow | null> {
-    const db = getDb();
     const timestamp = new Date().toISOString();
     const data = {
       id: userData.id,
@@ -77,25 +75,30 @@ export class UserRepository {
       updatedAt: timestamp
     };
 
-    db.prepare(`
+    await execute(`
       INSERT INTO users (id, name, email, password_hash, role, department, team, location, title, clearanceLevel, status, permissions, mfa_enabled, organizationId, companyId, createdAt, updatedAt)
-      VALUES (@id, @name, @email, @password_hash, @role, @department, @team, @location, @title, @clearanceLevel, @status, @permissions, @mfa_enabled, @organizationId, @companyId, @createdAt, @updatedAt)
-    `).run(data);
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `, [
+      data.id, data.name, data.email, data.password_hash, data.role, data.department, data.team,
+      data.location, data.title, data.clearanceLevel, data.status, data.permissions, data.mfa_enabled,
+      data.organizationId, data.companyId, data.createdAt, data.updatedAt
+    ]);
 
     return this.findById(userData.id);
   }
 
   async updateRole(id: string, role: string, orgId: string): Promise<UserRow | null> {
-    const db = getDb();
-    db.prepare('UPDATE users SET role = ?, updatedAt = ? WHERE id = ? AND organizationId = ?')
-      .run(role, new Date().toISOString(), id, orgId);
+    await execute('UPDATE users SET role = ?, updatedAt = ? WHERE id = ? AND organizationId = ?', [
+      role, new Date().toISOString(), id, orgId
+    ]);
     
-    const row = db.prepare(`
+    const rows = await query(`
       SELECT id, name, email, role, department, team, location, title, clearanceLevel, status, permissions 
       FROM users 
       WHERE id = ? AND organizationId = ?
-    `).get(id, orgId) as UserRow | undefined;
-    if (!row) return null;
+    `, [id, orgId]);
+    if (!rows || rows.length === 0) return null;
+    const row = rows[0] as UserRow;
     return {
       ...row,
       permissions: typeof row.permissions === 'string' ? JSON.parse(row.permissions) : row.permissions
@@ -103,10 +106,10 @@ export class UserRepository {
   }
 
   async delete(id: string, orgId: string): Promise<UserRow | null> {
-    const db = getDb();
-    const row = db.prepare('SELECT * FROM users WHERE id = ? AND organizationId = ?').get(id, orgId) as UserRow | undefined;
-    if (!row) return null;
-    db.prepare('DELETE FROM users WHERE id = ? AND organizationId = ?').run(id, orgId);
+    const rows = await query('SELECT * FROM users WHERE id = ? AND organizationId = ?', [id, orgId]);
+    if (!rows || rows.length === 0) return null;
+    const row = rows[0] as UserRow;
+    await execute('DELETE FROM users WHERE id = ? AND organizationId = ?', [id, orgId]);
     return {
       ...row,
       permissions: typeof row.permissions === 'string' ? JSON.parse(row.permissions) : row.permissions
@@ -114,7 +117,6 @@ export class UserRepository {
   }
 
   async createSession(sessionData: any): Promise<any> {
-    const db = getDb();
     const data = {
       id: sessionData.id,
       userId: sessionData.userId,
@@ -126,21 +128,21 @@ export class UserRepository {
       companyId: sessionData.companyId || 'org-stackly',
       updatedAt: new Date().toISOString()
     };
-    db.prepare(`
+    await execute(`
       INSERT INTO sessions (id, userId, deviceFingerprint, ipAddress, createdAt, expiresAt, revokedAt, companyId, updatedAt)
-      VALUES (@id, @userId, @deviceFingerprint, @ipAddress, @createdAt, @expiresAt, @revokedAt, @companyId, @updatedAt)
-    `).run(data);
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `, [
+      data.id, data.userId, data.deviceFingerprint, data.ipAddress, data.createdAt, data.expiresAt, data.revokedAt, data.companyId, data.updatedAt
+    ]);
     return data;
   }
 
   async findSessionById(sessionId: string): Promise<any> {
-    const db = getDb();
-    const row = db.prepare('SELECT * FROM sessions WHERE id = ?').get(sessionId);
-    return row || null;
+    const rows = await query('SELECT * FROM sessions WHERE id = ?', [sessionId]);
+    return rows && rows.length > 0 ? rows[0] : null;
   }
 
   async updateSession(sessionId: string, update: any): Promise<any> {
-    const db = getDb();
     let updates = update;
     if (update.$set) {
       updates = update.$set;
@@ -149,12 +151,11 @@ export class UserRepository {
     const values = Object.values(updates);
     values.push(new Date().toISOString());
     values.push(sessionId);
-    db.prepare(`UPDATE sessions SET ${setClause}, updatedAt = ? WHERE id = ?`).run(...values);
+    await execute(`UPDATE sessions SET ${setClause}, updatedAt = ? WHERE id = ?`, values);
     return { nModified: 1 };
   }
 
   async createRefreshToken(tokenData: any): Promise<any> {
-    const db = getDb();
     const data = {
       token_hash: tokenData.token_hash,
       sessionId: tokenData.sessionId,
@@ -166,21 +167,21 @@ export class UserRepository {
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString()
     };
-    db.prepare(`
+    await execute(`
       INSERT INTO refreshtokens (token_hash, sessionId, tokenFamily, parentHash, expiresAt, revokedAt, companyId, createdAt, updatedAt)
-      VALUES (@token_hash, @sessionId, @tokenFamily, @parentHash, @expiresAt, @revokedAt, @companyId, @createdAt, @updatedAt)
-    `).run(data);
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `, [
+      data.token_hash, data.sessionId, data.tokenFamily, data.parentHash, data.expiresAt, data.revokedAt, data.companyId, data.createdAt, data.updatedAt
+    ]);
     return data;
   }
 
   async findRefreshTokenByHash(tokenHash: string): Promise<any> {
-    const db = getDb();
-    const row = db.prepare('SELECT * FROM refreshtokens WHERE token_hash = ?').get(tokenHash);
-    return row || null;
+    const rows = await query('SELECT * FROM refreshtokens WHERE token_hash = ?', [tokenHash]);
+    return rows && rows.length > 0 ? rows[0] : null;
   }
 
   async updateRefreshToken(tokenHash: string, update: any): Promise<any> {
-    const db = getDb();
     let updates = update;
     if (update.$set) {
       updates = update.$set;
@@ -189,26 +190,25 @@ export class UserRepository {
     const values = Object.values(updates);
     values.push(new Date().toISOString());
     values.push(tokenHash);
-    db.prepare(`UPDATE refreshtokens SET ${setClause}, updatedAt = ? WHERE token_hash = ?`).run(...values);
+    await execute(`UPDATE refreshtokens SET ${setClause}, updatedAt = ? WHERE token_hash = ?`, values);
     return { nModified: 1 };
   }
 
   async revokeTokenFamily(tokenFamily: string, revokedAt: string): Promise<any> {
-    const db = getDb();
-    db.prepare('UPDATE refreshtokens SET revokedAt = ?, updatedAt = ? WHERE tokenFamily = ?')
-      .run(revokedAt, new Date().toISOString(), tokenFamily);
+    await execute('UPDATE refreshtokens SET revokedAt = ?, updatedAt = ? WHERE tokenFamily = ?', [
+      revokedAt, new Date().toISOString(), tokenFamily
+    ]);
     return { nModified: 1 };
   }
 
   async revokeActiveSessionTokens(sessionId: string, revokedAt: string): Promise<any> {
-    const db = getDb();
-    db.prepare('UPDATE refreshtokens SET revokedAt = ?, updatedAt = ? WHERE sessionId = ? AND revokedAt IS NULL')
-      .run(revokedAt, new Date().toISOString(), sessionId);
+    await execute('UPDATE refreshtokens SET revokedAt = ?, updatedAt = ? WHERE sessionId = ? AND revokedAt IS NULL', [
+      revokedAt, new Date().toISOString(), sessionId
+    ]);
     return { nModified: 1 };
   }
 
   async createMfaChallenge(challengeData: any): Promise<any> {
-    const db = getDb();
     const data = {
       id: challengeData.id,
       userId: challengeData.userId,
@@ -225,21 +225,21 @@ export class UserRepository {
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString()
     };
-    db.prepare(`
+    await execute(`
       INSERT INTO mfachallenges (id, userId, otp_hash, expires_at, attempts_count, max_attempts, consumed_at, resend_count, created_at, status, organizationId, companyId, createdAt, updatedAt)
-      VALUES (@id, @userId, @otp_hash, @expires_at, @attempts_count, @max_attempts, @consumed_at, @resend_count, @created_at, @status, @organizationId, @companyId, @createdAt, @updatedAt)
-    `).run(data);
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `, [
+      data.id, data.userId, data.otp_hash, data.expires_at, data.attempts_count, data.max_attempts, data.consumed_at, data.resend_count, data.created_at, data.status, data.organizationId, data.companyId, data.createdAt, data.updatedAt
+    ]);
     return data;
   }
 
   async findMfaChallengeById(challengeId: string): Promise<any> {
-    const db = getDb();
-    const row = db.prepare('SELECT * FROM mfachallenges WHERE id = ?').get(challengeId);
-    return row || null;
+    const rows = await query('SELECT * FROM mfachallenges WHERE id = ?', [challengeId]);
+    return rows && rows.length > 0 ? rows[0] : null;
   }
 
   async updateMfaChallenge(challengeId: string, update: any): Promise<any> {
-    const db = getDb();
     let updates = update;
     if (update.$set) {
       updates = update.$set;
@@ -249,7 +249,7 @@ export class UserRepository {
       const values = Object.values(update.$inc);
       values.push(new Date().toISOString());
       values.push(challengeId);
-      db.prepare(`UPDATE mfachallenges SET ${incClause}, updatedAt = ? WHERE id = ?`).run(...values);
+      await execute(`UPDATE mfachallenges SET ${incClause}, updatedAt = ? WHERE id = ?`, values);
       return { nModified: 1 };
     }
     
@@ -258,32 +258,29 @@ export class UserRepository {
     values.push(new Date().toISOString());
     values.push(challengeId);
     
-    db.prepare(`UPDATE mfachallenges SET ${setClause}, updatedAt = ? WHERE id = ?`).run(...values);
+    await execute(`UPDATE mfachallenges SET ${setClause}, updatedAt = ? WHERE id = ?`, values);
     return { nModified: 1 };
   }
 
   async getFailedLogins(email: string): Promise<{ email: string; attempts: number; lockedUntil: string | null } | null> {
-    const db = getDb();
-    const row = db.prepare('SELECT * FROM failed_logins WHERE email = ?').get(email);
-    return row ? (row as any) : null;
+    const rows = await query('SELECT * FROM failed_logins WHERE email = ?', [email]);
+    return rows && rows.length > 0 ? (rows[0] as any) : null;
   }
 
   async incrementFailedLogins(email: string, lockUntil: string | null = null): Promise<void> {
-    const db = getDb();
     const now = new Date().toISOString();
-    db.prepare(`
+    await execute(`
       INSERT INTO failed_logins (email, attempts, lockedUntil, updatedAt)
       VALUES (?, 1, ?, ?)
       ON CONFLICT(email) DO UPDATE SET
         attempts = attempts + 1,
         lockedUntil = excluded.lockedUntil,
         updatedAt = excluded.updatedAt
-    `).run(email, lockUntil, now);
+    `, [email, lockUntil, now]);
   }
 
   async resetFailedLogins(email: string): Promise<void> {
-    const db = getDb();
-    db.prepare('DELETE FROM failed_logins WHERE email = ?').run(email);
+    await execute('DELETE FROM failed_logins WHERE email = ?', [email]);
   }
 }
 

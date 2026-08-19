@@ -4,6 +4,7 @@ import * as authService from './auth.service.js';
 import { userRepository } from './auth.repository.js';
 import bcrypt from 'bcryptjs';
 import mongoose from '../../database/transaction.js';
+import { healthCheck as dbHealthCheck } from '../../database/sqlite-cloud.js';
 
 const ORGANIZATION_ID = 'org-stackly';
 
@@ -349,15 +350,12 @@ export const resendMfa = async (req: Request, res: Response): Promise<any> => {
 
 export const healthCheck = async (req: Request, res: Response): Promise<any> => {
   try {
-    let dbStatus = "disconnected";
-    if (mongoose.connection && mongoose.connection.readyState === 1) {
-      dbStatus = "connected";
-    }
+    const dbConnected = await dbHealthCheck();
     return res.json({
       success: true,
       status: "healthy",
       api: "healthy",
-      database: dbStatus,
+      database: dbConnected ? "connected" : "disconnected",
       databaseType: "SQLite",
       environment: process.env.NODE_ENV || "development"
     });
@@ -369,6 +367,34 @@ export const healthCheck = async (req: Request, res: Response): Promise<any> => 
       database: "error",
       databaseType: "SQLite",
       environment: process.env.NODE_ENV || "development"
+    });
+  }
+};
+
+export const healthCheckDb = async (req: Request, res: Response): Promise<any> => {
+  try {
+    const isConnected = await dbHealthCheck();
+    if (isConnected) {
+      return res.json({
+        status: "ok",
+        database: "sqlite-cloud",
+        connected: true,
+        timestamp: new Date().toISOString()
+      });
+    } else {
+      return res.status(500).json({
+        status: "error",
+        database: "sqlite-cloud",
+        connected: false,
+        timestamp: new Date().toISOString()
+      });
+    }
+  } catch (err) {
+    return res.status(500).json({
+      status: "error",
+      database: "sqlite-cloud",
+      connected: false,
+      timestamp: new Date().toISOString()
     });
   }
 };

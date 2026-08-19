@@ -13,6 +13,7 @@ const router = express.Router();
 
 // Health Check
 router.get('/health', authController.healthCheck);
+router.get('/health/db', authController.healthCheckDb);
 
 // Auth Routes
 router.post('/auth/login', authRateLimiter, authController.login);

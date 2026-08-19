@@ -1,10 +1,10 @@
-import { getDb } from '../../database/connection.js';
+import { query } from '../../database/sqlite-cloud.js';
 
-function buildWhereClause(query: any) {
+function buildWhereClause(queryData: any) {
   const clauses: string[] = [];
   const params: any[] = [];
   
-  for (const [key, value] of Object.entries(query)) {
+  for (const [key, value] of Object.entries(queryData)) {
     if (value === undefined || value === null) continue;
     
     if (key === 'companyId' || key === 'organizationId') {
@@ -42,32 +42,29 @@ function buildWhereClause(query: any) {
 }
 
 export class AnalyticsRepository {
-  async getEmployeesSummary(query: any) {
-    const db = getDb();
-    const { clause, params } = buildWhereClause(query);
-    const rows = db.prepare(`
+  async getEmployeesSummary(queryData: any) {
+    const { clause, params } = buildWhereClause(queryData);
+    const rows = await query(`
       SELECT id, department, team, role, status, performanceScore, attendanceRate 
       FROM employees 
       ${clause}
-    `).all(...params);
+    `, params);
     return rows;
   }
 
-  async getAttendanceRecords(query: any) {
-    const db = getDb();
-    const { clause, params } = buildWhereClause(query);
-    const rows = db.prepare(`
+  async getAttendanceRecords(queryData: any) {
+    const { clause, params } = buildWhereClause(queryData);
+    const rows = await query(`
       SELECT employeeId, status, workMode, checkInTime, checkOutTime, createdAt 
       FROM attendancerecords 
       ${clause}
-    `).all(...params);
+    `, params);
     return rows;
   }
 
-  async getDepartmentComparison(query: any) {
-    const db = getDb();
-    const { clause, params } = buildWhereClause(query);
-    const rows = db.prepare(`
+  async getDepartmentComparison(queryData: any) {
+    const { clause, params } = buildWhereClause(queryData);
+    const rows = await query(`
       SELECT 
         COALESCE(department, 'Unassigned') as name,
         COUNT(*) as headcount,
@@ -77,52 +74,48 @@ export class AnalyticsRepository {
       ${clause}
       GROUP BY department
       ORDER BY headcount DESC
-    `).all(...params);
+    `, params);
     return rows;
   }
 
-  async getRoleDistribution(query: any) {
-    const db = getDb();
-    const { clause, params } = buildWhereClause(query);
-    const rows = db.prepare(`
+  async getRoleDistribution(queryData: any) {
+    const { clause, params } = buildWhereClause(queryData);
+    const rows = await query(`
       SELECT role as name, COUNT(*) as value
       FROM employees
       ${clause}
       GROUP BY role
       ORDER BY value DESC
-    `).all(...params);
+    `, params);
     return rows;
   }
 
-  async getEmploymentStatus(query: any) {
-    const db = getDb();
-    const { clause, params } = buildWhereClause(query);
-    const rows = db.prepare(`
+  async getEmploymentStatus(queryData: any) {
+    const { clause, params } = buildWhereClause(queryData);
+    const rows = await query(`
       SELECT status as name, COUNT(*) as value
       FROM employees
       ${clause}
       GROUP BY status
       ORDER BY value DESC
-    `).all(...params);
+    `, params);
     return rows;
   }
 
-  async getWorkModeDistribution(query: any) {
-    const db = getDb();
-    const { clause, params } = buildWhereClause(query);
-    const rows = db.prepare(`
+  async getWorkModeDistribution(queryData: any) {
+    const { clause, params } = buildWhereClause(queryData);
+    const rows = await query(`
       SELECT workMode as name, COUNT(DISTINCT employeeId) as value
       FROM attendancerecords
       ${clause}
       GROUP BY workMode
-    `).all(...params);
+    `, params);
     return rows;
   }
 
-  async getPerformanceByQuarter(query: any) {
-    const db = getDb();
-    const { clause, params } = buildWhereClause(query);
-    const rows = db.prepare(`
+  async getPerformanceByQuarter(queryData: any) {
+    const { clause, params } = buildWhereClause(queryData);
+    const rows = await query(`
       SELECT 
         quarter as name,
         ROUND(AVG(kpiScore), 1) as performance,
@@ -132,14 +125,13 @@ export class AnalyticsRepository {
       ${clause}
       GROUP BY quarter
       ORDER BY name ASC
-    `).all(...params);
+    `, params);
     return rows;
   }
 
-  async getTeamProductivity(query: any) {
-    const db = getDb();
-    const { clause, params } = buildWhereClause(query);
-    const rows = db.prepare(`
+  async getTeamProductivity(queryData: any) {
+    const { clause, params } = buildWhereClause(queryData);
+    const rows = await query(`
       SELECT 
         COALESCE(team, 'Unassigned') as name,
         ROUND(AVG(productivityScore), 1) as productivity,
@@ -148,14 +140,13 @@ export class AnalyticsRepository {
       ${clause}
       GROUP BY team
       ORDER BY productivity DESC
-    `).all(...params);
+    `, params);
     return rows;
   }
 
-  async getSkillsMetrics(query: any) {
-    const db = getDb();
-    const { clause, params } = buildWhereClause(query);
-    const rows = db.prepare(`
+  async getSkillsMetrics(queryData: any) {
+    const { clause, params } = buildWhereClause(queryData);
+    const rows = await query(`
       SELECT 
         skillName as name,
         ROUND(AVG(level), 1) as averageLevel,
@@ -166,7 +157,7 @@ export class AnalyticsRepository {
       ${clause}
       GROUP BY skillName
       ORDER BY people DESC
-    `).all(...params);
+    `, params);
     return rows;
   }
 }

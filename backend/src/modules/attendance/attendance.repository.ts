@@ -1,10 +1,10 @@
-import { getDb } from '../../database/connection.js';
+import { query, execute } from '../../database/sqlite-cloud.js';
 
-function buildWhereClause(query: any) {
+function buildWhereClause(queryData: any) {
   const clauses: string[] = [];
   const params: any[] = [];
   
-  for (const [key, value] of Object.entries(query)) {
+  for (const [key, value] of Object.entries(queryData)) {
     if (value === undefined || value === null) continue;
     
     if (key === 'companyId' || key === 'organizationId') {
@@ -43,13 +43,13 @@ function buildWhereClause(query: any) {
 
 export class AttendanceRepository {
   async findActiveSession(employeeId: string, orgId: string) {
-    const db = getDb();
-    const row = db.prepare(`
+    const rows = await query(`
       SELECT * FROM attendancerecords 
       WHERE employeeId = ? AND (companyId = ? OR organizationId = ?) AND status != 'Checked Out'
-    `).get(employeeId, orgId, orgId) as any;
+    `, [employeeId, orgId, orgId]);
     
-    if (!row) return null;
+    if (!rows || rows.length === 0) return null;
+    const row = rows[0] as any;
     return {
       ...row,
       breaks: row.breaks ? JSON.parse(row.breaks) : []
@@ -57,9 +57,9 @@ export class AttendanceRepository {
   }
 
   async findRecordById(id: string, orgId: string) {
-    const db = getDb();
-    const row = db.prepare('SELECT * FROM attendancerecords WHERE id = ? AND (companyId = ? OR organizationId = ?)').get(id, orgId, orgId) as any;
-    if (!row) return null;
+    const rows = await query('SELECT * FROM attendancerecords WHERE id = ? AND (companyId = ? OR organizationId = ?)', [id, orgId, orgId]);
+    if (!rows || rows.length === 0) return null;
+    const row = rows[0] as any;
     return {
       ...row,
       breaks: row.breaks ? JSON.parse(row.breaks) : []
@@ -67,9 +67,9 @@ export class AttendanceRepository {
   }
 
   async findRecordByIdempotencyKey(idempotencyKey: string, orgId: string) {
-    const db = getDb();
-    const row = db.prepare('SELECT * FROM attendancerecords WHERE idempotencyKey = ? AND (companyId = ? OR organizationId = ?)').get(idempotencyKey, orgId, orgId) as any;
-    if (!row) return null;
+    const rows = await query('SELECT * FROM attendancerecords WHERE idempotencyKey = ? AND (companyId = ? OR organizationId = ?)', [idempotencyKey, orgId, orgId]);
+    if (!rows || rows.length === 0) return null;
+    const row = rows[0] as any;
     return {
       ...row,
       breaks: row.breaks ? JSON.parse(row.breaks) : []
@@ -77,7 +77,6 @@ export class AttendanceRepository {
   }
 
   async createRecord(recordData: any) {
-    const db = getDb();
     const timestamp = new Date().toISOString();
     const data = {
       id: recordData.id,
@@ -102,22 +101,23 @@ export class AttendanceRepository {
       updatedAt: timestamp
     };
 
-    db.prepare(`
+    await execute(`
       INSERT INTO attendancerecords (id, employeeId, employeeName, department, date, checkInTime, checkOutTime, breaks, shiftType, workMode, status, latitude, longitude, accuracy, idempotencyKey, team, organizationId, companyId, createdAt, updatedAt)
-      VALUES (@id, @employeeId, @employeeName, @department, @date, @checkInTime, @checkOutTime, @breaks, @shiftType, @workMode, @status, @latitude, @longitude, @accuracy, @idempotencyKey, @team, @organizationId, @companyId, @createdAt, @updatedAt)
-    `).run(data);
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `, [
+      data.id, data.employeeId, data.employeeName, data.department, data.date, data.checkInTime, data.checkOutTime, data.breaks, data.shiftType, data.workMode, data.status, data.latitude, data.longitude, data.accuracy, data.idempotencyKey, data.team, data.organizationId, data.companyId, data.createdAt, data.updatedAt
+    ]);
 
     return this.findRecordById(recordData.id, data.companyId);
   }
 
-  async findRecords(query: any) {
-    const db = getDb();
-    const { clause, params } = buildWhereClause(query);
-    const rows = db.prepare(`
+  async findRecords(queryData: any) {
+    const { clause, params } = buildWhereClause(queryData);
+    const rows = await query(`
       SELECT * FROM attendancerecords 
       ${clause} 
       ORDER BY date DESC, checkInTime DESC
-    `).all(...params) as any[];
+    `, params) as any[];
 
     return rows.map(r => ({
       ...r,
@@ -126,14 +126,14 @@ export class AttendanceRepository {
   }
 
   async findTodayRecord(employeeId: string, todayDate: string, orgId: string) {
-    const db = getDb();
-    const row = db.prepare(`
+    const rows = await query(`
       SELECT * FROM attendancerecords 
       WHERE employeeId = ? AND date = ? AND (companyId = ? OR organizationId = ?) 
       ORDER BY checkInTime DESC
-    `).get(employeeId, todayDate, orgId, orgId) as any;
+    `, [employeeId, todayDate, orgId, orgId]);
     
-    if (!row) return null;
+    if (!rows || rows.length === 0) return null;
+    const row = rows[0] as any;
     return {
       ...row,
       breaks: row.breaks ? JSON.parse(row.breaks) : []
@@ -141,7 +141,6 @@ export class AttendanceRepository {
   }
 
   async createCorrection(correctionData: any) {
-    const db = getDb();
     const timestamp = new Date().toISOString();
     const data = {
       id: correctionData.id,
@@ -162,39 +161,37 @@ export class AttendanceRepository {
       updatedAt: timestamp
     };
 
-    db.prepare(`
+    await execute(`
       INSERT INTO correctionrequests (id, employeeId, employeeName, department, date, requestedCheckIn, requestedCheckOut, reason, status, managerComment, reviewedBy, createdAt, team, organizationId, companyId, updatedAt)
-      VALUES (@id, @employeeId, @employeeName, @department, @date, @requestedCheckIn, @requestedCheckOut, @reason, @status, @managerComment, @reviewedBy, @createdAt, @team, @organizationId, @companyId, @updatedAt)
-    `).run(data);
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `, [
+      data.id, data.employeeId, data.employeeName, data.department, data.date, data.requestedCheckIn, data.requestedCheckOut, data.reason, data.status, data.managerComment, data.reviewedBy, data.createdAt, data.team, data.organizationId, data.companyId, data.updatedAt
+    ]);
 
     return this.findCorrectionById(correctionData.id, data.companyId);
   }
 
   async findCorrectionById(id: string, orgId: string) {
-    const db = getDb();
-    const row = db.prepare('SELECT * FROM correctionrequests WHERE id = ? AND (companyId = ? OR organizationId = ?)').get(id, orgId, orgId);
-    return row || null;
+    const rows = await query('SELECT * FROM correctionrequests WHERE id = ? AND (companyId = ? OR organizationId = ?)', [id, orgId, orgId]);
+    return rows && rows.length > 0 ? rows[0] : null;
   }
 
-  async findCorrections(query: any) {
-    const db = getDb();
-    const { clause, params } = buildWhereClause(query);
-    const rows = db.prepare(`
+  async findCorrections(queryData: any) {
+    const { clause, params } = buildWhereClause(queryData);
+    const rows = await query(`
       SELECT * FROM correctionrequests 
       ${clause} 
       ORDER BY createdAt DESC
-    `).all(...params);
+    `, params);
     return rows;
   }
 
   async findShifts(orgId: string) {
-    const db = getDb();
-    const rows = db.prepare('SELECT * FROM shifts WHERE companyId = ? OR organizationId = ? ORDER BY name ASC').all(orgId, orgId);
+    const rows = await query('SELECT * FROM shifts WHERE companyId = ? OR organizationId = ? ORDER BY name ASC', [orgId, orgId]);
     return rows;
   }
 
   async createAuditLog(logData: any) {
-    const db = getDb();
     const timestamp = logData.timestamp || new Date().toISOString();
     const data = {
       id: logData.id || Math.random().toString(36).slice(2, 11),
@@ -207,23 +204,24 @@ export class AttendanceRepository {
       createdAt: timestamp,
       updatedAt: timestamp
     };
-    db.prepare(`
+    await execute(`
       INSERT INTO audit_logs (id, timestamp, employeeId, action, details, organizationId, companyId, createdAt, updatedAt)
-      VALUES (@id, @timestamp, @employeeId, @action, @details, @organizationId, @companyId, @createdAt, @updatedAt)
-    `).run(data);
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `, [
+      data.id, data.timestamp, data.employeeId, data.action, data.details, data.organizationId, data.companyId, data.createdAt, data.updatedAt
+    ]);
     return data;
   }
 
-  async findAuditLogs(query: any, limit = 250) {
-    const db = getDb();
-    const { clause, params } = buildWhereClause(query);
+  async findAuditLogs(queryData: any, limit = 250) {
+    const { clause, params } = buildWhereClause(queryData);
     const queryParams = [...params, limit];
-    const rows = db.prepare(`
+    const rows = await query(`
       SELECT * FROM audit_logs 
       ${clause} 
       ORDER BY timestamp DESC 
       LIMIT ?
-    `).all(...queryParams);
+    `, queryParams);
     return rows;
   }
 }

@@ -40,7 +40,7 @@ export default defineConfig({
     },
   },
   ssr: {
-    external: ['better-sqlite3']
+    external: ['better-sqlite3', '@sqlitecloud/drivers']
   },
   test: {
     include: ['tests/unit/**/*.test.{ts,tsx}'],
@@ -48,7 +48,7 @@ export default defineConfig({
     globals: true,
     server: {
       deps: {
-        external: ['better-sqlite3']
+        external: ['better-sqlite3', '@sqlitecloud/drivers']
       }
     }
   }

@@ -1,7 +1,7 @@
 import express from 'express';
 import cors from 'cors';
 import apiRouter from './routes/api.routes.js';
-import { initDb, getDb } from './config/db.js';
+import { initDb, getDb, healthCheck } from './config/db.js';
 import { configureResilience, globalRateLimiter } from './middleware/resilience.js';
 import logger from './config/logger.js';
 
@@ -43,11 +43,10 @@ app.get('/live', (req, res) => {
 });
 
 // Readiness Health Check (checks if SQLite database connection is active)
-app.get('/ready', (req, res) => {
+app.get('/ready', async (req, res) => {
   try {
-    const db = getDb();
-    const result = db.prepare('SELECT 1').get();
-    if (result) {
+    const isHealthy = await healthCheck();
+    if (isHealthy) {
       res.status(200).json({ status: 'UP', timestamp: new Date().toISOString() });
     } else {
       throw new Error('Database ping query returned no results');
