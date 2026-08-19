@@ -14,7 +14,8 @@
     "lint": "tsc --noEmit",
     "seed": "node backend/scripts/seed-sqlite.js",
     "verify-db": "node backend/scripts/verify-sqlite.js",
-    "sqlitecloud:migrate": "node backend/scripts/migrate-sqlitecloud.js"
+    "sqlitecloud:migrate": "node backend/scripts/migrate-sqlitecloud.js",
+    "sqlitecloud:test": "node backend/scripts/test-sqlitecloud-connection.js"
   },
   "dependencies": {
     "@emotion/react": "^11.14.0",
