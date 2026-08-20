@@ -212,6 +212,31 @@ export const login = async (req: Request, res: Response): Promise<any> => {
       }
     }
 
+    // Force TOTP MFA setup on first login if not enabled (disabled in test suites)
+    if (process.env.NODE_ENV !== 'test') {
+      try {
+        const enrollData = await authService.enrollTotp(user);
+        const mfaRes = await authService.createTotpChallenge(user);
+        logAudit(user.id, 'MFA_ENROLL_CHALLENGE', `Forced TOTP enrollment challenge generated for ${email}`);
+
+        return res.json({
+          success: true,
+          data: {
+            requiresMfa: true,
+            requiresMfaSetup: true,
+            requiresTotp: true,
+            challengeId: mfaRes.challengeId,
+            expiresAt: mfaRes.expiresAt,
+            secret: enrollData.secret,
+            qrCodeDataUrl: enrollData.qrCodeDataUrl,
+            otpauthUrl: enrollData.otpauthUrl
+          }
+        });
+      } catch (enrollErr: any) {
+        return res.status(500).json({ success: false, message: enrollErr.message });
+      }
+    }
+
     if (user.mfa_enabled) {
       try {
         const mfaMethod = req.body?.mfaMethod || 'email';

@@ -393,8 +393,8 @@ export const verifyTotpChallenge = async (challengeId: string, code: string) => 
   }
 
   const settings = await userRepository.findMfaSettingsByUserId(challenge.userId);
-  if (!settings || !settings.enabled) {
-    return { success: false, message: 'MFA is not enabled for this account.' };
+  if (!settings) {
+    return { success: false, message: 'MFA settings not configured for this account.' };
   }
 
   const rawSecret = decryptSecret(settings.secret_encrypted);
@@ -408,16 +408,40 @@ export const verifyTotpChallenge = async (challengeId: string, code: string) => 
       return { success: false, message: 'MFA code already used. Please wait for the next code.' };
     }
 
-    await userRepository.updateMfaSettings(challenge.userId, {
-      last_used_time_step: currentTimeStep
-    });
+    const now = new Date().toISOString();
+    let recoveryCodes: string[] = [];
+
+    // If setup is pending (not enabled yet), confirm enrollment here
+    if (!settings.enabled) {
+      await userRepository.updateMfaSettings(challenge.userId, {
+        enabled: 1,
+        verified_at: now,
+        last_used_time_step: currentTimeStep
+      });
+
+      // Generate 10 recovery codes
+      const { plaintextCodes, hashedCodes } = generateRecoveryCodes();
+      await userRepository.deleteRecoveryCodes(challenge.userId);
+      const recoveryRecords = hashedCodes.map((hash, idx) => ({
+        id: `rec-${challenge.userId}-${idx}-${Math.random().toString(36).substring(2, 7)}`,
+        user_id: challenge.userId,
+        code_hash: hash,
+        created_at: now
+      }));
+      await userRepository.createRecoveryCodes(recoveryRecords);
+      recoveryCodes = plaintextCodes;
+    } else {
+      await userRepository.updateMfaSettings(challenge.userId, {
+        last_used_time_step: currentTimeStep
+      });
+    }
 
     await userRepository.updateMfaChallenge(challengeId, {
       status: 'Verified',
       consumed_at: now
     });
 
-    return { success: true, userId: challenge.userId };
+    return { success: true, userId: challenge.userId, recoveryCodes };
   }
 
   // If not a TOTP code, check if it matches a recovery code

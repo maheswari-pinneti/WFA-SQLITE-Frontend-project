@@ -29,6 +29,9 @@ export const LoginForm: React.FC<LoginFormProps> = ({ selectedRole, onRoleChange
   const [rememberMe, setRememberMe] = useState(true);
   const [isOtpMode, setIsOtpMode] = useState(false);
   const [requiresTotp, setRequiresTotp] = useState(false);
+  const [requiresMfaSetup, setRequiresMfaSetup] = useState(false);
+  const [setupData, setSetupData] = useState<{ secret: string; qrCodeDataUrl: string; otpauthUrl: string } | null>(null);
+  const [recoveryCodes, setRecoveryCodes] = useState<string[]>([]);
   const [totpCode, setTotpCode] = useState('');
   const [error, setError] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
@@ -69,13 +72,21 @@ export const LoginForm: React.FC<LoginFormProps> = ({ selectedRole, onRoleChange
     const savedChallengeId = sessionStorage.getItem('mfa_challenge_id');
     const savedExpiresAt = sessionStorage.getItem('mfa_expires_at');
     const savedRequiresTotp = sessionStorage.getItem('mfa_requires_totp');
+    const savedRequiresMfaSetup = sessionStorage.getItem('mfa_requires_setup');
     if (savedChallengeId && savedExpiresAt) {
       const remaining = Math.max(0, Math.floor((new Date(savedExpiresAt).getTime() - Date.now()) / 1000));
       if (remaining > 0) {
         setChallengeId(savedChallengeId);
         setExpiresAt(savedExpiresAt);
         setIsOtpMode(true);
-        if (savedRequiresTotp === 'true') {
+        if (savedRequiresMfaSetup === 'true') {
+          setRequiresMfaSetup(true);
+          setRequiresTotp(true);
+          const secret = sessionStorage.getItem('mfa_setup_secret') || '';
+          const qrCodeDataUrl = sessionStorage.getItem('mfa_setup_qr') || '';
+          const otpauthUrl = sessionStorage.getItem('mfa_setup_otpauth') || '';
+          setSetupData({ secret, qrCodeDataUrl, otpauthUrl });
+        } else if (savedRequiresTotp === 'true') {
           setRequiresTotp(true);
         } else {
           setRequiresTotp(false);
@@ -89,6 +100,10 @@ export const LoginForm: React.FC<LoginFormProps> = ({ selectedRole, onRoleChange
         sessionStorage.removeItem('mfa_expires_at');
         sessionStorage.removeItem('mfa_otp_dev_hint');
         sessionStorage.removeItem('mfa_requires_totp');
+        sessionStorage.removeItem('mfa_requires_setup');
+        sessionStorage.removeItem('mfa_setup_secret');
+        sessionStorage.removeItem('mfa_setup_qr');
+        sessionStorage.removeItem('mfa_setup_otpauth');
       }
     }
   }, []);
@@ -121,7 +136,21 @@ export const LoginForm: React.FC<LoginFormProps> = ({ selectedRole, onRoleChange
         sessionStorage.setItem('mfa_challenge_id', res.challengeId);
         sessionStorage.setItem('mfa_expires_at', res.expiresAt);
         
-        if (res.requiresTotp) {
+        if (res.requiresMfaSetup) {
+          setRequiresMfaSetup(true);
+          setRequiresTotp(true);
+          setSetupData({
+            secret: res.secret,
+            qrCodeDataUrl: res.qrCodeDataUrl,
+            otpauthUrl: res.otpauthUrl
+          });
+          sessionStorage.setItem('mfa_requires_setup', 'true');
+          sessionStorage.setItem('mfa_requires_totp', 'true');
+          sessionStorage.setItem('mfa_setup_secret', res.secret);
+          sessionStorage.setItem('mfa_setup_qr', res.qrCodeDataUrl);
+          sessionStorage.setItem('mfa_setup_otpauth', res.otpauthUrl);
+          setTotpCode('');
+        } else if (res.requiresTotp) {
           setRequiresTotp(true);
           sessionStorage.setItem('mfa_requires_totp', 'true');
           setTotpCode('');
@@ -136,12 +165,16 @@ export const LoginForm: React.FC<LoginFormProps> = ({ selectedRole, onRoleChange
           }
         }
         setIsOtpMode(true);
-        setSuccessMsg(res.requiresTotp ? 'Two-Factor verification required.' : 'MFA code generated. Enter the code to continue.');
+        setSuccessMsg(res.requiresMfaSetup ? 'Authenticator setup required.' : res.requiresTotp ? 'Two-Factor verification required.' : 'MFA code generated. Enter the code to continue.');
       } else {
         sessionStorage.removeItem('mfa_challenge_id');
         sessionStorage.removeItem('mfa_expires_at');
         sessionStorage.removeItem('mfa_otp_dev_hint');
         sessionStorage.removeItem('mfa_requires_totp');
+        sessionStorage.removeItem('mfa_requires_setup');
+        sessionStorage.removeItem('mfa_setup_secret');
+        sessionStorage.removeItem('mfa_setup_qr');
+        sessionStorage.removeItem('mfa_setup_otpauth');
         await login(email, password);
         onSuccess();
       }
@@ -161,12 +194,23 @@ export const LoginForm: React.FC<LoginFormProps> = ({ selectedRole, onRoleChange
     setSuccessMsg('');
     setIsLoading(true);
     try {
-      await verifyMfa(challengeId, otpCode);
-      sessionStorage.removeItem('mfa_challenge_id');
-      sessionStorage.removeItem('mfa_expires_at');
-      sessionStorage.removeItem('mfa_otp_dev_hint');
-      sessionStorage.removeItem('mfa_requires_totp');
-      onSuccess();
+      const verifyRes = await verifyMfa(challengeId, otpCode) as any;
+      
+      // If recovery codes are returned (first-time activation), intercept redirection
+      if (verifyRes && verifyRes.recoveryCodes && verifyRes.recoveryCodes.length > 0) {
+        setRecoveryCodes(verifyRes.recoveryCodes);
+        setSuccessMsg('Two-Factor Authentication enabled successfully! Store your recovery codes safely.');
+      } else {
+        sessionStorage.removeItem('mfa_challenge_id');
+        sessionStorage.removeItem('mfa_expires_at');
+        sessionStorage.removeItem('mfa_otp_dev_hint');
+        sessionStorage.removeItem('mfa_requires_totp');
+        sessionStorage.removeItem('mfa_requires_setup');
+        sessionStorage.removeItem('mfa_setup_secret');
+        sessionStorage.removeItem('mfa_setup_qr');
+        sessionStorage.removeItem('mfa_setup_otpauth');
+        onSuccess();
+      }
     } catch (err: any) {
       setError(err.message || 'Verification failed.');
       if (!requiresTotp) {
@@ -353,6 +397,130 @@ export const LoginForm: React.FC<LoginFormProps> = ({ selectedRole, onRoleChange
             {isLoading ? 'Signing in...' : 'Sign In'}
           </button>
         </form>
+      ) : recoveryCodes.length > 0 ? (
+        <div className="auth-space-y-6">
+          <div className="auth-alert-success" style={{ textAlign: 'center', fontWeight: 'bold' }}>
+            🎉 Two-Factor Authentication (2FA) is now configured!
+          </div>
+          <div style={{ padding: '1rem', borderRadius: '12px', background: 'var(--bg-tertiary)', border: '1px solid var(--border-color)', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+            <p style={{ color: 'var(--role-primary)', fontSize: '0.875rem', fontWeight: 'bold', margin: 0 }}>⚠️ IMPORTANT: Store these 10 one-time recovery codes safely!</p>
+            <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', margin: 0 }}>If you lose access to your authenticator app, you can use these codes to log in. Each code can be used only once.</p>
+            
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem', fontFamily: 'monospace', fontWeight: 'bold', textAlign: 'center', marginTop: '0.5rem' }}>
+              {recoveryCodes.map((code, idx) => (
+                <div key={idx} style={{ padding: '0.5rem', background: 'var(--bg-primary)', border: '1px solid var(--border-color)', borderRadius: '6px' }}>
+                  {code}
+                </div>
+              ))}
+            </div>
+            
+            <button
+              type="button"
+              onClick={() => {
+                const text = recoveryCodes.join('\n');
+                navigator.clipboard.writeText(text);
+                alert('Recovery codes copied to clipboard.');
+              }}
+              className="auth-btn-primary"
+              style={{ background: 'var(--border-color)', color: 'var(--text-primary)', border: '1px solid var(--border-color)', marginTop: '0.5rem', cursor: 'pointer' }}
+            >
+              Copy to Clipboard
+            </button>
+          </div>
+          
+          <button
+            type="button"
+            onClick={() => {
+              sessionStorage.removeItem('mfa_challenge_id');
+              sessionStorage.removeItem('mfa_expires_at');
+              sessionStorage.removeItem('mfa_otp_dev_hint');
+              sessionStorage.removeItem('mfa_requires_totp');
+              sessionStorage.removeItem('mfa_requires_setup');
+              sessionStorage.removeItem('mfa_setup_secret');
+              sessionStorage.removeItem('mfa_setup_qr');
+              sessionStorage.removeItem('mfa_setup_otpauth');
+              onSuccess();
+            }}
+            className="auth-btn-primary"
+            style={{ cursor: 'pointer' }}
+          >
+            Proceed to Dashboard
+          </button>
+        </div>
+      ) : requiresMfaSetup ? (
+        <form onSubmit={(e) => { e.preventDefault(); verifyMfaAction(totpCode); }} className="auth-space-y-6">
+          <div style={{ padding: '1rem', borderRadius: '12px', background: 'var(--bg-tertiary)', border: '1px solid var(--border-color)', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1rem' }}>
+            <p style={{ fontSize: '0.8125rem', fontWeight: 'bold', margin: 0, textAlign: 'center' }}>Scan this QR code with Google Authenticator or Microsoft Authenticator</p>
+            {setupData && (
+              <>
+                <img
+                  src={setupData.qrCodeDataUrl}
+                  alt="Setup QR Code"
+                  style={{ width: '9rem', height: '9rem', border: '1px solid var(--border-color)', padding: '0.25rem', borderRadius: '8px', background: 'white' }}
+                />
+                <div style={{ width: '100%', textAlign: 'center' }}>
+                  <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', margin: '0 0 0.25rem 0' }}>Or enter the secret key manually:</p>
+                  <code style={{ fontSize: '0.8125rem', fontWeight: 'bold', display: 'block', background: 'var(--bg-primary)', padding: '0.5rem', borderRadius: '6px', border: '1px solid var(--border-color)', wordBreak: 'break-all', userSelect: 'all' }}>
+                    {setupData.secret}
+                  </code>
+                </div>
+              </>
+            )}
+          </div>
+
+          <div className="auth-form-group">
+            <label htmlFor="setupTotpCode" className="auth-label" style={{ marginBottom: '0.5rem', display: 'block', textAlign: 'center', fontSize: '0.875rem', fontWeight: 600 }}>
+              Enter 6-Digit Authenticator Code
+            </label>
+            <input
+              id="setupTotpCode"
+              type="text"
+              maxLength={6}
+              value={totpCode}
+              onChange={(e) => setTotpCode(e.target.value.replace(/\D/g, ''))}
+              placeholder="000000"
+              required
+              className="auth-input"
+              style={{ textAlign: 'center', letterSpacing: '0.1em', fontSize: '1.25rem', padding: '0.75rem' }}
+              autoFocus
+            />
+          </div>
+
+          <button
+            type="submit"
+            disabled={isLoading || totpCode.length !== 6}
+            className="auth-btn-primary"
+            style={{ cursor: 'pointer' }}
+          >
+            {isLoading ? 'Verifying...' : 'Confirm & Enable 2FA'}
+          </button>
+
+          <div className="auth-controls-row">
+            <span style={{ color: 'var(--text-muted)', fontWeight: 500 }}>
+              Time remaining: {timer > 0 ? `${Math.floor(timer / 60)}:${(timer % 60).toString().padStart(2, '0')}` : 'Expired'}
+            </span>
+            <button
+              type="button"
+              onClick={() => {
+                sessionStorage.removeItem('mfa_challenge_id');
+                sessionStorage.removeItem('mfa_expires_at');
+                sessionStorage.removeItem('mfa_requires_totp');
+                sessionStorage.removeItem('mfa_requires_setup');
+                sessionStorage.removeItem('mfa_setup_secret');
+                sessionStorage.removeItem('mfa_setup_qr');
+                sessionStorage.removeItem('mfa_setup_otpauth');
+                setIsOtpMode(false);
+                setRequiresMfaSetup(false);
+                setRequiresTotp(false);
+                setError('');
+              }}
+              className="auth-link"
+              style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
+            >
+              Back to Login
+            </button>
+          </div>
+        </form>
       ) : (
         <form onSubmit={(e) => { e.preventDefault(); verifyMfaAction(requiresTotp ? totpCode : otpValues.join('')); }} className="auth-space-y-6">
           {requiresTotp ? (
@@ -395,6 +563,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ selectedRole, onRoleChange
             type="submit"
             disabled={isLoading || (requiresTotp ? !totpCode : otpValues.includes(''))}
             className="auth-btn-primary"
+            style={{ cursor: 'pointer' }}
           >
             {isLoading ? 'Verifying...' : 'Verify & Login'}
           </button>

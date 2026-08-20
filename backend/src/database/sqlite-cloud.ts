@@ -15,7 +15,7 @@ let localDb: BetterSqlite3.Database | null = null;
 
 export const connectDatabase = async (): Promise<any> => {
   const cloudUrl = process.env.SQLITE_CLOUD_URL || process.env.SQLITE_CLOUD_CONNECTION_STRING;
-  if (cloudUrl) {
+  if (cloudUrl && process.env.NODE_ENV !== 'test') {
     console.log('[Database] Connecting to SQLite Cloud database...');
     cloudDb = new SQLiteCloudDatabase(cloudUrl);
     return cloudDb;

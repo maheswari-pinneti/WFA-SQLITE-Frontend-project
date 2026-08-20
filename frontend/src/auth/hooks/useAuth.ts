@@ -19,6 +19,7 @@ export const useAuth = () => {
   const verifyMfa = async (challengeId: string, code: string) => {
     const data = await authService.verifyMfa(challengeId, code);
     dispatch(loginSuccessAction(data));
+    return data;
   };
 
   const resendMfa = async (challengeId: string, mfaMethod?: string) => {
