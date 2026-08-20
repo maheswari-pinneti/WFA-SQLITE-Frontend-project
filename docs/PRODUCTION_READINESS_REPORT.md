@@ -48,7 +48,28 @@ Our load and data-growth profiling models distinguish between workforce headcoun
 
 ---
 
-## 4. Single Point of Failure (SPOF) Analysis
+## 4. Frontend Security & UX Verification Matrix
+
+### 1. Route Protection & RBAC Mappings
+- **Route Guards**: Checked that manually entering `/admin/dashboard` as a non-admin role redirects the user to `/unauthorized` with a 403 status trace.
+- **Active Navigation States**: Breadcrumbs, collapsed/expanded sidebars, and user menus update dynamically on session state changes.
+
+### 2. Form States & Double-Submit Protection
+- **Submit Guard**: Buttons are disabled during active API requests to prevent duplicate employee creations or duplicate check-in punches.
+- **Client-side vs Server-side Validation**: Client-side forms validate fields (emails, phone length, empty inputs) instantly, while the backend serves as the final authority on model constraints.
+
+### 3. State Hydration, Cache invalidation, & Request Cancellation
+- **Token Expiry**: On token expiration, the Axios client intercepts the 401 error, invalidates local state, clears localStorage/cache, and triggers automatic redirect to the `/login` route.
+- **API Request Cancellation**: Component unmounts trigger request abort signals to clean up pending responses.
+
+### 4. Accessibility (A11y), Usability, & Themes
+- **Keyboard Navigation**: Navigating Login $\rightarrow$ Dashboard $\rightarrow$ Employee list $\rightarrow$ Logout works using tab ordering and enter key inputs.
+- **Theme Consistency**: Verified that light mode and dark mode classes map correctly to all MUI wrappers, Recharts visualizations, and form components without rendering crashes.
+- **Responsive Breakpoints**: Tested on viewport layouts from small mobile displays up to large desktop monitors.
+
+---
+
+## 5. Single Point of Failure (SPOF) Analysis
 
 - **Application Instance**: Express server. Auto-restarts on failure via Nginx upstream routing or OS process manager (PM2/systemd).
 - **SQLite Database File**: Persistent storage on local disk. If disk is full, writes fail, but data corruption is prevented by WAL rollback journals. Weekly vacuum maintenance recovers space.
@@ -56,7 +77,7 @@ Our load and data-growth profiling models distinguish between workforce headcoun
 
 ---
 
-## 5. Security & Threat Modeling Baseline
+## 6. Security & Threat Modeling Baseline
 - **Threat Actor**: Unauthorized employees attempting horizontal privilege escalation.
 - **Mitigation**: Server-side RBAC validation checks verify scopes for all directory edits and attendance corrections.
 - **Clock Sync**: Server clock is synced with NTP, matching client punch stamps.
@@ -64,14 +85,14 @@ Our load and data-growth profiling models distinguish between workforce headcoun
 
 ---
 
-## 6. Disaster Recovery Runbook & SLA Verification
+## 7. Disaster Recovery Runbook & SLA Verification
 - **RPO (Recovery Point Objective)**: 1 Hour (using hourly scheduled hot backups via `npm run db:backup`).
 - **RTO (Recovery Time Objective)**: 5 Minutes (verified database restoration executes in `< 15s`).
 - **Disk Full Recovery**: Write attempts return `SQLITE_FULL`. Script automatically triggers `VACUUM` and archives old logs.
 
 ---
 
-## 7. Production Go / No-Go Decision Gate
+## 8. Production Go / No-Go Decision Gate
 
 ### 🟢 GO
 The application satisfies all 200 operational readiness checkpoints. 
