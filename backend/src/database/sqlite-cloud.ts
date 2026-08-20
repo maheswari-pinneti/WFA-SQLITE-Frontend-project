@@ -27,6 +27,16 @@ export const connectDatabase = async (): Promise<any> => {
     localDb = new BetterSqlite3(DB_PATH, { timeout: 10000 });
     localDb.pragma('foreign_keys = ON');
     localDb.pragma('journal_mode = WAL');
+    
+    // Validate database integrity on connection setup
+    const integrityResult = localDb.pragma('integrity_check');
+    if (integrityResult && integrityResult[0] && integrityResult[0].integrity_check !== 'ok') {
+      console.warn(`[Database] Warning: SQLite database integrity check returned: ${integrityResult[0].integrity_check}`);
+    }
+    
+    // Checkpoint WAL frames to base database file
+    localDb.pragma('wal_checkpoint(PASSIVE)');
+    
     return localDb;
   }
 };

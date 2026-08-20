@@ -315,3 +315,12 @@ CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
 CREATE INDEX IF NOT EXISTS idx_attendancerecords_date ON attendancerecords(date);
 CREATE INDEX IF NOT EXISTS idx_attendancerecords_emp_date ON attendancerecords(employeeId, date);
 CREATE INDEX IF NOT EXISTS idx_audit_logs_timestamp ON audit_logs(timestamp);
+
+-- Extra performance indexing for operational tables
+CREATE INDEX IF NOT EXISTS idx_skills_emp ON skills(employeeId);
+CREATE INDEX IF NOT EXISTS idx_perf_emp ON performancerecords(employeeId);
+CREATE INDEX IF NOT EXISTS idx_leave_emp ON leaverequests(employeeId);
+CREATE INDEX IF NOT EXISTS idx_employees_created ON employees(createdAt);
+CREATE INDEX IF NOT EXISTS idx_attendancerecords_created ON attendancerecords(createdAt);
+CREATE INDEX IF NOT EXISTS idx_audit_logs_created ON audit_logs(createdAt);
+

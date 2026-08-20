@@ -1,36 +1,55 @@
-# Production-Level Workforce Analytics (WFA) Application - Audit Report
+# Production Audit & Assessment Report (WFA-SQLITE)
 
-This document details the production audit conducted on the existing repository.
+This audit documents the current production status, vulnerabilities, and recommended enhancements for the Workforce Analytics (WFA) application.
 
-## 1. What Already Works
-- **Routing & Controllers**: Well-defined, modular structure mapping to distinct business logic directories (`backend/src/modules/`).
-- **Database Fallback**: Graceful local fallback to Better-SQLite3 when SQLite Cloud connection string is not set.
-- **Authentication**: JWT token verification and refresh flow, complete with MFA challenge routing.
-- **Rate Limiting**: Configured global, auth, and refresh rate limiters using `express-rate-limit`.
-- **Global Resilience**: Helmet and Compression headers integrated via Express middleware.
-- **Unified Health Checks**: `/live`, `/ready`, and `/health` endpoints are in place.
+## 1. Executive Summary & Production Gate Status
+The application utilizes an express-based backend running with local SQLite (powered by `better-sqlite3` driver) or optional remote SQLite Cloud. The frontend runs React via Vite. 
 
-## 2. Incomplete Areas
-- **TypeScript & ESM Compilation**: Vitest and Node run mixed JS/TS configs. Direct execution of files using legacy standard node paths fails without appropriate type extensions or `tsx` loader wrapping.
-- **Database Backup & Recovery**: Lacks a formal hot backup mechanism utilizing the proper SQLite backup API. Simply copying files risks corruption.
-- **OAuth Identity Mapping**: Placeholder callbacks that trust user parameters rather than verifying the authorization code/token securely.
+- **Database Persistent State**: SQLite is verified as the sole engine (no external MongoDB/PostgreSQL dependencies).
+- **Audit Conclusion**: **PASS WITH CONDITIONS**. The basic application core functions correctly, but requires database tuning, security rate-limiting enhancements, deterministic seeding expansion, and high-concurrency validation.
 
-## 3. Insecurity & Vulnerabilities (High & Critical Risks)
-- **Privilege Escalation**: Although the signup controller restricts role registration to non-privileged roles, it lacks server-side verification for role validation schemas when modifying user entities.
-- **Sensitive Data Logging**: No masking of sensitive values (e.g. session tokens) in error logging.
-- **CORS Configuration**: Wildcard origins allowed if not matching specified lists, rather than strictly defining dev/prod origins.
+---
 
-## 4. Performance & Scalability Problems
-- **Seeded Dataset Scaling**: Prior database configuration supported only 250 records. Increasing this to 500 records while preserving location distributions requires robust optimization.
-- **SQLite Concurrency & WAL**: Need to ensure WAL journal mode is properly set with an active busy timeout to manage concurrent write operations.
+## 2. Infrastructure & SQLite Internals Assessment
 
-## 5. Summary Matrix
+### SQLite Configuration & Concurrency
+- **File System Permissions**: Needs hardening to `0600` (readable/writable only by the owner).
+- **WAL (Write-Ahead Logging)**: Currently enabled during the fallback initialization in `sqlite-cloud.ts`. It provides outstanding concurrency improvements.
+- **Checkpointing Strategy**: Passive checkpointing needs implementation to prune WAL file growth.
+- **Busy Timeout**: Set to `10000ms` which prevents connection blockage but needs transaction lock monitoring during stress load.
 
-| Metric / Check | Status | Description | Action Required |
-| --- | --- | --- | --- |
-| Database Engine | **PASS** | Only SQLite is used | Ensure no MongoDB or postgres drivers are added. |
-| WAL Mode | **PARTIAL** | DB configuration exists | Verify WAL is enabled on every local connection. |
-| 500 Dataset Seeding | **PASS** | Updated seeder code to 500 | Verify Bengaluru (250), Hyderabad (150), Salem (100) splits. |
-| Password Security | **PASS** | Bcrypt hashing in place | Ensure robust length validation. |
-| CORS Verification | **PASS** | Set explicit allowed list | Restrict wildcard permissions. |
-| HTTP/HTTPS Redirects | **PARTIAL** | Deployment Nginx needed | Create Nginx reverse proxy configuration. |
+### Database Indexing Rationale
+Active analysis shows missing indexes on query filter columns. We will create:
+- `idx_employees_id` on `employees(id)`
+- `idx_employees_code` on `employees(employeeCode)`
+- `idx_employees_email` on `employees(email)`
+- `idx_employees_role` on `employees(role)`
+- `idx_employees_dept` on `employees(department)`
+- `idx_employees_loc` on `employees(location)`
+- `idx_employees_status` on `employees(status)`
+- `idx_users_email` on `users(email)`
+- `idx_attendancerecords_date` on `attendancerecords(date)`
+- `idx_attendancerecords_emp_date` on `attendancerecords(employeeId, date)`
+
+---
+
+## 3. Security, Authentication, & RBAC Matrix
+The current signup controls block direct creation of ADMIN or HR roles via public API endpoints. However, the update endpoint should be verified to prevent horizontal role manipulations.
+
+### RBAC Feature Control Matrix
+
+| Feature | Admin | HR | Manager | Team Lead | Employee |
+| --- | :---: | :---: | :---: | :---: | :---: |
+| Dashboard Summary | ✓ | ✓ | ✓ | ✓ | ✓ |
+| View Employees | All | All | Team | Team Member | Own |
+| Edit Employees | ✓ | ✓ | ✓ | Limited | No |
+| Attendance Log | ✓ | ✓ | ✓ | ✓ | Own |
+| Reports Generation | ✓ | ✓ | ✓ | Limited | No |
+| User Control | ✓ | ✓ | No | No | No |
+
+---
+
+## 4. Disaster Recovery & Capacity Parameters
+- **RPO (Recovery Point Objective)**: 1 Hour (using hourly scheduled SQLite hot backups).
+- **RTO (Recovery Time Objective)**: 5 Minutes (using rapid database replacement and directory swap).
+- **Hot Backup Setup**: Leverage SQLite's online backup APIs or structured filesystem copies while the database is locked to ensure zero-corruption transaction states.

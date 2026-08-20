@@ -159,9 +159,9 @@ export const seedSqlite = async () => {
 
       for (let i = 1; i <= 500; i++) {
         const id = i === 250 ? 'usr-emp-01' : `emp-${i}`;
-        const paddedNum = String(i).padStart(4, '0');
-        const joiningYear = 2020 + Math.floor((i - 1) / 36);
-        const code = `STK-${joiningYear}-${paddedNum}`;
+        const paddedNum = String(i).padStart(3, '0');
+        const joiningYear = 2020 + (i % 7);
+        const code = `EMP-${paddedNum}`;
 
         const firstName = firstNames[(i - 1) % firstNames.length];
         const lastName = lastNames[Math.floor((i - 1) / firstNames.length) % lastNames.length];

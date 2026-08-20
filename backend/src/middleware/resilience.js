@@ -27,7 +27,7 @@ export const requestIdMiddleware = (req, res, next) => {
   next();
 };
 
-// Global rate limiting to protect the MongoDB database from concurrent spikes
+// Global rate limiting to protect the SQLite database from concurrent spikes
 const globalLimiterInstance = rateLimit({
   windowMs: 1 * 60 * 1000, // 1 minute
   max: 5000, // Limit each IP to 5000 requests per minute to allow spikes of 250 concurrent users making multiple API calls
