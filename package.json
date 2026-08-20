@@ -9,15 +9,17 @@
     "frontend": "vite",
     "build": "node -e \"import('fs').then(fs => { try { fs.rmSync('dist', { recursive: true, force: true }); } catch(e) {} })\" && tsc && vite build",
     "preview": "vite preview",
-    "test": "node -e \"try { require('fs').unlinkSync('backend/database/wfa-test.sqlite'); } catch(e) {}\" && vitest run --no-file-parallelism --test-timeout=20000",
+    "test": "node -e \"try { require('fs').unlinkSync('database/sqlite/wfa-test.sqlite'); } catch(e) {}\" && vitest run --no-file-parallelism --test-timeout=20000",
     "test:coverage": "vitest run --coverage --no-file-parallelism --test-timeout=20000",
     "test:e2e": "playwright test",
     "typecheck": "tsc --noEmit",
     "lint": "tsc --noEmit",
-    "seed": "node backend/scripts/seed-sqlite.js",
-    "verify-db": "node backend/scripts/verify-sqlite.js",
+    "seed": "tsx backend/scripts/seed-sqlite.ts",
+    "verify-db": "tsx backend/scripts/verify-sqlite.js",
     "sqlitecloud:migrate": "node backend/scripts/migrate-sqlitecloud.js",
-    "sqlitecloud:test": "node backend/scripts/test-sqlitecloud-connection.js"
+    "sqlitecloud:test": "node backend/scripts/test-sqlitecloud-connection.js",
+    "db:backup": "tsx backend/scripts/backup-db.ts",
+    "db:restore": "tsx backend/scripts/restore-db.ts"
   },
   "dependencies": {
     "@emotion/react": "^11.14.0",

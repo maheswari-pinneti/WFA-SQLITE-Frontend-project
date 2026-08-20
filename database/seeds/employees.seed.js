@@ -53,16 +53,12 @@ export const seedEmployees = (db, orgId) => {
         const designations = ['Senior Software Engineer', 'Product Manager', 'Account Executive', 'HR Operations Manager', 'Customer Success Director', 'Financial Analyst'];
         const statuses = ['ACTIVE', 'REMOTE', 'ON_LEAVE', 'ACTIVE'];
         const locationsList = [];
-        for (let i = 0; i < 70; i++)
-            locationsList.push('Hyderabad');
-        for (let i = 0; i < 40; i++)
-            locationsList.push('Visakhapatnam');
-        for (let i = 0; i < 50; i++)
-            locationsList.push('Chennai');
-        for (let i = 0; i < 60; i++)
+        for (let i = 0; i < 250; i++)
             locationsList.push('Bengaluru');
-        for (let i = 0; i < 30; i++)
-            locationsList.push('Kochi');
+        for (let i = 0; i < 100; i++)
+            locationsList.push('Salem');
+        for (let i = 0; i < 150; i++)
+            locationsList.push('Hyderabad');
         const firstNames = [
             'Aarav', 'Vihaan', 'Vivaan', 'Ananya', 'Diya', 'Advik', 'Siddharth', 'Ishaan', 'Aanya', 'Aditi',
             'Kabir', 'Rohan', 'Arjun', 'Rahul', 'Pranav', 'Aditya', 'Sai', 'Krishna', 'Karan', 'Sanjay',
@@ -81,11 +77,11 @@ export const seedEmployees = (db, orgId) => {
       INSERT INTO employees (id, employeeCode, name, email, role, department, designation, status, avatar, joinDate, performanceScore, attendanceRate, team, location, organizationId, companyId, createdAt, updatedAt)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `);
-        for (let i = 1; i <= 250; i++) {
+        for (let i = 1; i <= 500; i++) {
             const id = i === 250 ? 'usr-emp-01' : `emp-${i}`;
-            const paddedNum = String(i).padStart(4, '0');
+            const paddedNum = String(i).padStart(3, '0');
+            const code = `EMP-${paddedNum}`;
             const joiningYear = 2020 + (i % 7);
-            const code = `STK-${joiningYear}-${paddedNum}`;
             const firstName = firstNames[(i - 1) % firstNames.length];
             const lastName = lastNames[Math.floor((i - 1) / firstNames.length) % lastNames.length];
             const name = i === 250 ? 'Alex Mercer' : `${firstName} ${lastName}`;
@@ -96,11 +92,16 @@ export const seedEmployees = (db, orgId) => {
             const design = i === 250 ? 'Full Stack Developer' : designations[deptIdx];
             const status = statuses[i % statuses.length];
             const team = i === 250 ? 'Frontend Team' : teamsList[deptIdx];
-            const location = locationsList[i - 1] || 'Hyderabad';
+            let location = 'Bengaluru';
+            if (i > 250 && i <= 400) {
+                location = 'Hyderabad';
+            } else if (i > 400) {
+                location = 'Salem';
+            }
             insertEmp.run(id, code, name, email, role, dept, design, status, 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150', `${joiningYear}-${String((i % 12) + 1).padStart(2, '0')}-15`, 80 + (i % 20), 90 + (i % 10), team, location, orgId, orgId, new Date().toISOString(), new Date().toISOString());
             const perms = ['PROFILE_VIEW', 'PROFILE_UPDATE', 'ATTENDANCE_VIEW_SELF', 'LEAVE_REQUEST', 'PERFORMANCE_VIEW_SELF', 'GOAL_UPDATE', 'DOCUMENT_UPLOAD'];
             insertUser.run(id, name, email, passHash, role, dept, team, location, design, 1, 'ACTIVE', JSON.stringify(perms), 1, orgId, orgId, new Date().toISOString(), new Date().toISOString());
         }
-        console.log('Seeded 250 Employees.');
+        console.log('Seeded 500 Employees.');
     }
 };

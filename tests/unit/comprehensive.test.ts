@@ -11,6 +11,7 @@ import { attendanceService } from '../../backend/src/services/attendance.service
 import { analyticsService } from '../../backend/src/services/analytics.service.js';
 import jwt from 'jsonwebtoken';
 import mongoose from '../../backend/src/database/transaction.js';
+import { seedSqlite } from '../../backend/scripts/seed-sqlite.ts';
 
 let server: any;
 const PORT = 5097;
@@ -20,6 +21,7 @@ const client = axios.create({
 });
 
 beforeAll(async () => {
+  await seedSqlite();
   await initDb();
   
   return new Promise<void>((resolve) => {

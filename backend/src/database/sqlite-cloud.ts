@@ -24,7 +24,7 @@ export const connectDatabase = async (): Promise<any> => {
     if (!fs.existsSync(DB_DIR)) {
       fs.mkdirSync(DB_DIR, { recursive: true });
     }
-    localDb = new BetterSqlite3(DB_PATH);
+    localDb = new BetterSqlite3(DB_PATH, { timeout: 10000 });
     localDb.pragma('foreign_keys = ON');
     localDb.pragma('journal_mode = WAL');
     return localDb;

@@ -6,6 +6,7 @@ import { Attendance, Correction, BreakSession, AttendanceEvent, IdempotencyRecor
 import { User } from '../../backend/src/models/User.js';
 import jwt from 'jsonwebtoken';
 import { env } from '../../backend/src/config/env.js';
+import { seedSqlite } from '../../backend/scripts/seed-sqlite.ts';
 
 let server: any;
 const PORT = 5098;
@@ -32,6 +33,7 @@ const client = axios.create({
 });
 
 beforeAll(async () => {
+  await seedSqlite();
   await initDb();
   await Attendance.deleteMany({});
   await Correction.deleteMany({});

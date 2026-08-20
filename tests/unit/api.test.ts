@@ -3,6 +3,7 @@ import axios from 'axios';
 import { app } from '../../server.js';
 import { initDb, getDb } from '../../backend/src/config/db.js';
 import { Attendance, Correction } from '../../backend/src/models/Attendance.js';
+import { seedSqlite } from '../../backend/scripts/seed-sqlite.ts';
 
 let server: any;
 const PORT = 5099;
@@ -12,6 +13,7 @@ const client = axios.create({
 });
 
 beforeAll(async () => {
+  await seedSqlite();
   await initDb();
   await Attendance.deleteMany({});
   await Correction.deleteMany({});
@@ -357,29 +359,29 @@ describe('Workforce Analytics API Integration & Authorization Tests', () => {
     expect(page1.data.data.employees.length).toBe(25);
     expect(page1.data.data.pagination.page).toBe(1);
     expect(page1.data.data.pagination.pageSize).toBe(25);
-    expect(page1.data.data.pagination.totalItems).toBe(250);
-    expect(page1.data.data.pagination.totalPages).toBe(10);
+    expect(page1.data.data.pagination.totalItems).toBe(500);
+    expect(page1.data.data.pagination.totalPages).toBe(20);
     
-    // Default order should be numerical sequence STK-YYYY-0001 to STK-YYYY-0025
-    expect(page1.data.data.employees[0].employeeCode).toContain('-0001');
-    expect(page1.data.data.employees[24].employeeCode).toContain('-0025');
+    // Default order should be numerical sequence EMP-001 to EMP-025
+    expect(page1.data.data.employees[0].employeeCode).toContain('-001');
+    expect(page1.data.data.employees[24].employeeCode).toContain('-025');
 
-    // 2. Fetch page 2 and confirm correct offset boundaries (STK-YYYY-0026 to STK-YYYY-0050)
+    // 2. Fetch page 2 and confirm correct offset boundaries (EMP-026 to EMP-050)
     const page2 = await client.get('/v1/employees?page=2&pageSize=25', {
       headers: { Authorization: `Bearer ${adminToken}` }
     });
     expect(page2.status).toBe(200);
     expect(page2.data.data.employees.length).toBe(25);
-    expect(page2.data.data.employees[0].employeeCode).toContain('-0026');
-    expect(page2.data.data.employees[24].employeeCode).toContain('-0050');
+    expect(page2.data.data.employees[0].employeeCode).toContain('-026');
+    expect(page2.data.data.employees[24].employeeCode).toContain('-050');
 
     // 3. Search filter by Employee ID
-    const searchId = await client.get('/v1/employees?search=0007', {
+    const searchId = await client.get('/v1/employees?search=007', {
       headers: { Authorization: `Bearer ${adminToken}` }
     });
     expect(searchId.status).toBe(200);
     expect(searchId.data.data.employees.length).toBe(1);
-    expect(searchId.data.data.employees[0].employeeCode).toContain('-0007');
+    expect(searchId.data.data.employees[0].employeeCode).toContain('-007');
 
     // 4. Filter by Location
     const filterLoc = await client.get('/v1/employees?location=Bengaluru&pageSize=250', {

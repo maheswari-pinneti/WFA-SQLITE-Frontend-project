@@ -62,11 +62,9 @@ export const seedEmployees = (db: Database, orgId: string) => {
     const statuses = ['ACTIVE', 'REMOTE', 'ON_LEAVE', 'ACTIVE'];
 
     const locationsList: string[] = [];
-    for (let i = 0; i < 70; i++) locationsList.push('Hyderabad');
-    for (let i = 0; i < 40; i++) locationsList.push('Visakhapatnam');
-    for (let i = 0; i < 50; i++) locationsList.push('Chennai');
-    for (let i = 0; i < 60; i++) locationsList.push('Bengaluru');
-    for (let i = 0; i < 30; i++) locationsList.push('Kochi');
+    for (let i = 0; i < 250; i++) locationsList.push('Bengaluru');
+    for (let i = 0; i < 100; i++) locationsList.push('Salem');
+    for (let i = 0; i < 150; i++) locationsList.push('Hyderabad');
 
     const firstNames = [
       'Aarav', 'Vihaan', 'Vivaan', 'Ananya', 'Diya', 'Advik', 'Siddharth', 'Ishaan', 'Aanya', 'Aditi',
@@ -88,11 +86,11 @@ export const seedEmployees = (db: Database, orgId: string) => {
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `);
 
-    for (let i = 1; i <= 250; i++) {
+    for (let i = 1; i <= 500; i++) {
       const id = i === 250 ? 'usr-emp-01' : `emp-${i}`;
-      const paddedNum = String(i).padStart(4, '0');
+      const paddedNum = String(i).padStart(3, '0');
+      const code = `EMP-${paddedNum}`;
       const joiningYear = 2020 + (i % 7);
-      const code = `STK-${joiningYear}-${paddedNum}`;
 
       const firstName = firstNames[(i - 1) % firstNames.length];
       const lastName = lastNames[Math.floor((i - 1) / firstNames.length) % lastNames.length];
@@ -105,7 +103,12 @@ export const seedEmployees = (db: Database, orgId: string) => {
       const design = i === 250 ? 'Full Stack Developer' : designations[deptIdx];
       const status = statuses[i % statuses.length];
       const team = i === 250 ? 'Frontend Team' : teamsList[deptIdx];
-      const location = locationsList[i - 1] || 'Hyderabad';
+      let location = 'Bengaluru';
+      if (i > 250 && i <= 400) {
+        location = 'Hyderabad';
+      } else if (i > 400) {
+        location = 'Salem';
+      }
 
       insertEmp.run(
         id, code, name, email, role, dept, design, status,
@@ -122,6 +125,6 @@ export const seedEmployees = (db: Database, orgId: string) => {
         new Date().toISOString(), new Date().toISOString()
       );
     }
-    console.log('Seeded 250 Employees.');
+    console.log('Seeded 500 Employees.');
   }
 };

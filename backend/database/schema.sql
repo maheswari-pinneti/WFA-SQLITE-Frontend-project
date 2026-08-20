@@ -302,3 +302,16 @@ CREATE TABLE IF NOT EXISTS audit_logs (
   createdAt TEXT,
   updatedAt TEXT
 );
+
+-- Performance Indexes
+CREATE INDEX IF NOT EXISTS idx_employees_id ON employees(id);
+CREATE INDEX IF NOT EXISTS idx_employees_code ON employees(employeeCode);
+CREATE INDEX IF NOT EXISTS idx_employees_email ON employees(email);
+CREATE INDEX IF NOT EXISTS idx_employees_role ON employees(role);
+CREATE INDEX IF NOT EXISTS idx_employees_dept ON employees(department);
+CREATE INDEX IF NOT EXISTS idx_employees_loc ON employees(location);
+CREATE INDEX IF NOT EXISTS idx_employees_status ON employees(status);
+CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
+CREATE INDEX IF NOT EXISTS idx_attendancerecords_date ON attendancerecords(date);
+CREATE INDEX IF NOT EXISTS idx_attendancerecords_emp_date ON attendancerecords(employeeId, date);
+CREATE INDEX IF NOT EXISTS idx_audit_logs_timestamp ON audit_logs(timestamp);

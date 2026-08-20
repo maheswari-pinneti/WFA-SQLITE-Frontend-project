@@ -49,7 +49,8 @@ export const seedSqlite = async () => {
     }
 
     // 2. Seed departments
-    const deptCount = db.prepare('SELECT COUNT(*) as count FROM departments').get().count;
+    const dbTest = db.prepare('SELECT COUNT(*) as count FROM departments').get();
+    const deptCount = dbTest ? dbTest.count : 0;
     if (deptCount === 0) {
       const insertDept = db.prepare(`
         INSERT INTO departments (id, name, code, managerId, organizationId, companyId, createdAt, updatedAt)
@@ -132,7 +133,7 @@ export const seedSqlite = async () => {
       const designations = ['Senior Software Engineer', 'Product Manager', 'Account Executive', 'HR Operations Manager', 'Customer Success Director', 'Financial Analyst'];
       const statuses = ['ACTIVE', 'REMOTE', 'ON_LEAVE', 'ACTIVE'];
 
-      const locationsList = [];
+      const locationsList: string[] = [];
       for (let i = 0; i < 250; i++) locationsList.push('Bengaluru');
       for (let i = 0; i < 100; i++) locationsList.push('Salem');
       for (let i = 0; i < 150; i++) locationsList.push('Hyderabad');
@@ -159,9 +160,9 @@ export const seedSqlite = async () => {
 
       for (let i = 1; i <= 500; i++) {
         const id = i === 250 ? 'usr-emp-01' : `emp-${i}`;
-        const paddedNum = String(i).padStart(4, '0');
-        const joiningYear = 2020 + Math.floor((i - 1) / 36);
-        const code = `STK-${joiningYear}-${paddedNum}`;
+        const paddedNum = String(i).padStart(3, '0');
+        const code = `EMP-${paddedNum}`;
+        const joiningYear = 2020 + (i % 7);
 
         const firstName = firstNames[(i - 1) % firstNames.length];
         const lastName = lastNames[Math.floor((i - 1) / firstNames.length) % lastNames.length];
@@ -174,7 +175,12 @@ export const seedSqlite = async () => {
         const design = i === 250 ? 'Full Stack Developer' : designations[deptIdx];
         const status = statuses[i % statuses.length];
         const team = i === 250 ? 'Frontend Team' : teamsList[deptIdx];
-        const location = locationsList[i - 1];
+        let location = 'Bengaluru';
+        if (i > 250 && i <= 400) {
+          location = 'Hyderabad';
+        } else if (i > 400) {
+          location = 'Salem';
+        }
 
         // Insert employee
         insertEmp.run(
@@ -206,7 +212,7 @@ export const seedSqlite = async () => {
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `);
 
-      employees.forEach((employee, index) => {
+      employees.forEach((employee: any, index: number) => {
         skills.slice(0, 5).forEach((skill, skillIndex) => {
           const level = 2 + ((index + skillIndex) % 4);
           insertSkill.run(
@@ -238,7 +244,7 @@ export const seedSqlite = async () => {
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `);
 
-      employees.forEach((employee, index) => {
+      employees.forEach((employee: any, index: number) => {
         quarters.forEach((q) => {
           const kpi = 70 + ((index + q.charCodeAt(6)) % 26);
           const target = 85;
@@ -271,7 +277,7 @@ export const seedSqlite = async () => {
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `);
 
-      employees.slice(0, 40).forEach((employee, index) => {
+      employees.slice(0, 40).forEach((employee: any, index: number) => {
         insertTask.run(
           `task-seed-${index}`,
           `Deliver Sprint Feature Module ${index + 1}`,
@@ -297,7 +303,7 @@ export const seedSqlite = async () => {
 };
 
 // Check if run directly
-if (process.argv[1] && process.argv[1].endsWith('seed-sqlite.js')) {
+if (process.argv[1] && process.argv[1].endsWith('seed-sqlite.ts')) {
   try {
     await seedSqlite();
     process.exit(0);
