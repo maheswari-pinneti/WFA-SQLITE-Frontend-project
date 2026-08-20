@@ -6,3 +6,10 @@ dist-ssr
 .env
 .env.*
 !.env.example
+
+# SQLite Databases & Backups
+*.sqlite
+*.sqlite-wal
+*.sqlite-shm
+database/sqlite/*.sqlite*
+database/backups/*.sqlite
