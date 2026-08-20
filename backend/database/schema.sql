@@ -324,3 +324,30 @@ CREATE INDEX IF NOT EXISTS idx_employees_created ON employees(createdAt);
 CREATE INDEX IF NOT EXISTS idx_attendancerecords_created ON attendancerecords(createdAt);
 CREATE INDEX IF NOT EXISTS idx_audit_logs_created ON audit_logs(createdAt);
 
+-- TOTP MFA Settings Table
+CREATE TABLE IF NOT EXISTS mfa_settings (
+  id TEXT PRIMARY KEY,
+  user_id TEXT UNIQUE NOT NULL,
+  enabled INTEGER DEFAULT 0,
+  secret_encrypted TEXT NOT NULL,
+  verified_at TEXT,
+  created_at TEXT,
+  updated_at TEXT,
+  last_used_time_step INTEGER DEFAULT 0,
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+-- MFA One-Time Recovery Codes Table
+CREATE TABLE IF NOT EXISTS mfa_recovery_codes (
+  id TEXT PRIMARY KEY,
+  user_id TEXT NOT NULL,
+  code_hash TEXT NOT NULL,
+  used_at TEXT,
+  created_at TEXT,
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+CREATE INDEX IF NOT EXISTS idx_mfa_settings_user ON mfa_settings(user_id);
+CREATE INDEX IF NOT EXISTS idx_mfa_recovery_user ON mfa_recovery_codes(user_id);
+
+

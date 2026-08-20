@@ -28,6 +28,8 @@ export const LoginForm: React.FC<LoginFormProps> = ({ selectedRole, onRoleChange
   const [password, setPassword] = useState('StacklyWFA2026!');
   const [rememberMe, setRememberMe] = useState(true);
   const [isOtpMode, setIsOtpMode] = useState(false);
+  const [requiresTotp, setRequiresTotp] = useState(false);
+  const [totpCode, setTotpCode] = useState('');
   const [error, setError] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -66,20 +68,27 @@ export const LoginForm: React.FC<LoginFormProps> = ({ selectedRole, onRoleChange
   useEffect(() => {
     const savedChallengeId = sessionStorage.getItem('mfa_challenge_id');
     const savedExpiresAt = sessionStorage.getItem('mfa_expires_at');
+    const savedRequiresTotp = sessionStorage.getItem('mfa_requires_totp');
     if (savedChallengeId && savedExpiresAt) {
       const remaining = Math.max(0, Math.floor((new Date(savedExpiresAt).getTime() - Date.now()) / 1000));
       if (remaining > 0) {
         setChallengeId(savedChallengeId);
         setExpiresAt(savedExpiresAt);
         setIsOtpMode(true);
-        const devHint = sessionStorage.getItem('mfa_otp_dev_hint');
-        if (devHint) {
-          setOtpValues(devHint.split(''));
+        if (savedRequiresTotp === 'true') {
+          setRequiresTotp(true);
+        } else {
+          setRequiresTotp(false);
+          const devHint = sessionStorage.getItem('mfa_otp_dev_hint');
+          if (devHint) {
+            setOtpValues(devHint.split(''));
+          }
         }
       } else {
         sessionStorage.removeItem('mfa_challenge_id');
         sessionStorage.removeItem('mfa_expires_at');
         sessionStorage.removeItem('mfa_otp_dev_hint');
+        sessionStorage.removeItem('mfa_requires_totp');
       }
     }
   }, []);
@@ -111,18 +120,28 @@ export const LoginForm: React.FC<LoginFormProps> = ({ selectedRole, onRoleChange
         setExpiresAt(res.expiresAt);
         sessionStorage.setItem('mfa_challenge_id', res.challengeId);
         sessionStorage.setItem('mfa_expires_at', res.expiresAt);
-        setOtpValues(['', '', '', '', '', '']);
-        if (res.otpDevHint) {
-          const otpStr = res.otpDevHint.toString();
-          setOtpValues(otpStr.split(''));
-          sessionStorage.setItem('mfa_otp_dev_hint', otpStr);
+        
+        if (res.requiresTotp) {
+          setRequiresTotp(true);
+          sessionStorage.setItem('mfa_requires_totp', 'true');
+          setTotpCode('');
+        } else {
+          setRequiresTotp(false);
+          sessionStorage.setItem('mfa_requires_totp', 'false');
+          setOtpValues(['', '', '', '', '', '']);
+          if (res.otpDevHint) {
+            const otpStr = res.otpDevHint.toString();
+            setOtpValues(otpStr.split(''));
+            sessionStorage.setItem('mfa_otp_dev_hint', otpStr);
+          }
         }
         setIsOtpMode(true);
-        setSuccessMsg('MFA code generated. Enter the code to continue.');
+        setSuccessMsg(res.requiresTotp ? 'Two-Factor verification required.' : 'MFA code generated. Enter the code to continue.');
       } else {
         sessionStorage.removeItem('mfa_challenge_id');
         sessionStorage.removeItem('mfa_expires_at');
         sessionStorage.removeItem('mfa_otp_dev_hint');
+        sessionStorage.removeItem('mfa_requires_totp');
         await login(email, password);
         onSuccess();
       }
@@ -146,10 +165,15 @@ export const LoginForm: React.FC<LoginFormProps> = ({ selectedRole, onRoleChange
       sessionStorage.removeItem('mfa_challenge_id');
       sessionStorage.removeItem('mfa_expires_at');
       sessionStorage.removeItem('mfa_otp_dev_hint');
+      sessionStorage.removeItem('mfa_requires_totp');
       onSuccess();
     } catch (err: any) {
       setError(err.message || 'Verification failed.');
-      setOtpValues(['', '', '', '', '', '']);
+      if (!requiresTotp) {
+        setOtpValues(['', '', '', '', '', '']);
+      } else {
+        setTotpCode('');
+      }
     } finally {
       setIsLoading(false);
     }
@@ -330,75 +354,114 @@ export const LoginForm: React.FC<LoginFormProps> = ({ selectedRole, onRoleChange
           </button>
         </form>
       ) : (
-        <form onSubmit={(e) => { e.preventDefault(); verifyMfaAction(otpValues.join('')); }} className="auth-space-y-6">
-          <div style={{ display: 'flex', justifyContent: 'space-between', gap: '0.5rem' }}>
-            {otpValues.map((val, idx) => (
+        <form onSubmit={(e) => { e.preventDefault(); verifyMfaAction(requiresTotp ? totpCode : otpValues.join('')); }} className="auth-space-y-6">
+          {requiresTotp ? (
+            <div className="auth-form-group">
+              <label htmlFor="totpCode" className="auth-label" style={{ marginBottom: '0.5rem', display: 'block', textAlign: 'center', fontSize: '0.875rem', fontWeight: 600 }}>
+                Authenticator / Recovery Code
+              </label>
               <input
-                key={idx}
-                ref={otpRefs[idx]}
+                id="totpCode"
                 type="text"
-                maxLength={1}
-                value={val}
-                onChange={(e) => handleOtpChange(idx, e.target.value)}
-                onKeyDown={(e) => handleOtpKeyDown(idx, e)}
-                onPaste={handleOtpPaste}
-                style={{ width: '3rem', height: '3rem' }}
+                value={totpCode}
+                onChange={(e) => setTotpCode(e.target.value.toUpperCase())}
+                placeholder="6-digit code or recovery code"
+                required
                 className="auth-input"
+                style={{ textAlign: 'center', letterSpacing: '0.1em', fontSize: '1.25rem', padding: '0.75rem', textTransform: 'uppercase' }}
+                autoFocus
               />
-            ))}
-          </div>
+            </div>
+          ) : (
+            <div style={{ display: 'flex', justifyContent: 'space-between', gap: '0.5rem' }}>
+              {otpValues.map((val, idx) => (
+                <input
+                  key={idx}
+                  ref={otpRefs[idx]}
+                  type="text"
+                  maxLength={1}
+                  value={val}
+                  onChange={(e) => handleOtpChange(idx, e.target.value)}
+                  onKeyDown={(e) => handleOtpKeyDown(idx, e)}
+                  onPaste={handleOtpPaste}
+                  style={{ width: '3rem', height: '3rem' }}
+                  className="auth-input"
+                />
+              ))}
+            </div>
+          )}
 
           <button
             type="submit"
-            disabled={isLoading || otpValues.includes('')}
+            disabled={isLoading || (requiresTotp ? !totpCode : otpValues.includes(''))}
             className="auth-btn-primary"
           >
             {isLoading ? 'Verifying...' : 'Verify & Login'}
           </button>
 
-          <div className="auth-form-group" style={{ margin: '1rem 0' }}>
-            <label className="auth-label" style={{ fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-              Resend via:
-            </label>
-            <div style={{ display: 'flex', gap: '1.5rem', marginTop: '0.25rem' }}>
-              <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', fontSize: '0.875rem', color: 'var(--text-secondary)' }}>
-                <input
-                  type="radio"
-                  name="mfaResendMethod"
-                  value="email"
-                  checked={mfaMethod === 'email'}
-                  onChange={() => setMfaMethod('email')}
-                  style={{ accentColor: 'var(--role-primary)' }}
-                />
-                Email
+          {!requiresTotp && (
+            <div className="auth-form-group" style={{ margin: '1rem 0' }}>
+              <label className="auth-label" style={{ fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                Resend via:
               </label>
-              <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', fontSize: '0.875rem', color: 'var(--text-secondary)' }}>
-                <input
-                  type="radio"
-                  name="mfaResendMethod"
-                  value="sms"
-                  checked={mfaMethod === 'sms'}
-                  onChange={() => setMfaMethod('sms')}
-                  style={{ accentColor: 'var(--role-primary)' }}
-                />
-                SMS
-              </label>
+              <div style={{ display: 'flex', gap: '1.5rem', marginTop: '0.25rem' }}>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', fontSize: '0.875rem', color: 'var(--text-secondary)' }}>
+                  <input
+                    type="radio"
+                    name="mfaResendMethod"
+                    value="email"
+                    checked={mfaMethod === 'email'}
+                    onChange={() => setMfaMethod('email')}
+                    style={{ accentColor: 'var(--role-primary)' }}
+                  />
+                  Email
+                </label>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', fontSize: '0.875rem', color: 'var(--text-secondary)' }}>
+                  <input
+                    type="radio"
+                    name="mfaResendMethod"
+                    value="sms"
+                    checked={mfaMethod === 'sms'}
+                    onChange={() => setMfaMethod('sms')}
+                    style={{ accentColor: 'var(--role-primary)' }}
+                  />
+                  SMS
+                </label>
+              </div>
             </div>
-          </div>
+          )}
 
           <div className="auth-controls-row">
             <span style={{ color: 'var(--text-muted)', fontWeight: 500 }}>
               Time remaining: {timer > 0 ? `${Math.floor(timer / 60)}:${(timer % 60).toString().padStart(2, '0')}` : 'Expired'}
             </span>
-            <button
-              type="button"
-              onClick={handleResendOtp}
-              disabled={isLoading || timer > 30}
-              className="auth-link"
-              style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
-            >
-              Resend Code
-            </button>
+            {!requiresTotp ? (
+              <button
+                type="button"
+                onClick={handleResendOtp}
+                disabled={isLoading || timer > 30}
+                className="auth-link"
+                style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
+              >
+                Resend Code
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={() => {
+                  sessionStorage.removeItem('mfa_challenge_id');
+                  sessionStorage.removeItem('mfa_expires_at');
+                  sessionStorage.removeItem('mfa_requires_totp');
+                  setIsOtpMode(false);
+                  setRequiresTotp(false);
+                  setError('');
+                }}
+                className="auth-link"
+                style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
+              >
+                Back to Login
+              </button>
+            )}
           </div>
         </form>
       )}

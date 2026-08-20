@@ -192,6 +192,26 @@ export const login = async (req: Request, res: Response): Promise<any> => {
 
     await userRepository.resetFailedLogins(lookupEmail);
 
+    const mfaSettings = await userRepository.findMfaSettingsByUserId(user.id);
+    if (mfaSettings && mfaSettings.enabled) {
+      try {
+        const mfaRes = await authService.createTotpChallenge(user);
+        logAudit(user.id, 'MFA_CHALLENGE', `TOTP MFA challenge generated for ${email}`);
+
+        return res.json({
+          success: true,
+          data: {
+            requiresMfa: true,
+            requiresTotp: true,
+            challengeId: mfaRes.challengeId,
+            expiresAt: mfaRes.expiresAt
+          }
+        });
+      } catch (mfaErr: any) {
+        return res.status(500).json({ success: false, message: mfaErr.message });
+      }
+    }
+
     if (user.mfa_enabled) {
       try {
         const mfaMethod = req.body?.mfaMethod || 'email';
@@ -242,7 +262,18 @@ export const verifyMfa = async (req: Request, res: Response): Promise<any> => {
   }
 
   try {
-    const verifyResult = await authService.verifyOtp(challengeId, code);
+    const challenge = await userRepository.findMfaChallengeById(challengeId);
+    if (!challenge) {
+      return res.status(400).json({ success: false, message: 'MFA session expired or invalid' });
+    }
+
+    let verifyResult;
+    if (challenge.otp_hash === 'totp-mfa') {
+      verifyResult = await authService.verifyTotpChallenge(challengeId, code);
+    } else {
+      verifyResult = await authService.verifyOtp(challengeId, code);
+    }
+
     if (!verifyResult.success) {
       logAudit('anonymous', 'FAILED_MFA_VERIFICATION', `Failed MFA verification for challenge ${challengeId}: ${verifyResult.message}`);
       return res.status(400).json({ success: false, message: verifyResult.message });
@@ -398,3 +429,214 @@ export const healthCheckDb = async (req: Request, res: Response): Promise<any> =
     });
   }
 };
+
+export const enrollTotpMfa = async (req: any, res: Response): Promise<any> => {
+  try {
+    const user = req.user;
+    if (!user) {
+      return res.status(401).json({ success: false, message: 'Unauthorized' });
+    }
+
+    const mfaData = await authService.enrollTotp(user);
+    logAudit(user.id, 'MFA_ENROLLMENT_STARTED', `User ${user.email} initiated TOTP MFA enrollment`);
+
+    return res.json({
+      success: true,
+      data: {
+        secret: mfaData.secret,
+        qrCodeDataUrl: mfaData.qrCodeDataUrl,
+        otpauthUrl: mfaData.otpauthUrl
+      }
+    });
+  } catch (err: any) {
+    return res.status(400).json({ success: false, message: err.message });
+  }
+};
+
+export const confirmEnrollMfa = async (req: any, res: Response): Promise<any> => {
+  try {
+    const user = req.user;
+    const { code } = req.body;
+    if (!user) {
+      return res.status(401).json({ success: false, message: 'Unauthorized' });
+    }
+    if (!code) {
+      return res.status(400).json({ success: false, message: 'Verification code is required' });
+    }
+
+    const confirmRes = await authService.confirmTotpEnroll(user.id, code);
+    logAudit(user.id, 'MFA_ENROLLMENT_COMPLETED', `User ${user.email} completed TOTP MFA setup successfully`);
+
+    return res.json({
+      success: true,
+      data: {
+        recoveryCodes: confirmRes.recoveryCodes
+      }
+    });
+  } catch (err: any) {
+    return res.status(400).json({ success: false, message: err.message });
+  }
+};
+
+export const disableTotpMfa = async (req: any, res: Response): Promise<any> => {
+  try {
+    const user = req.user;
+    const { password, code } = req.body;
+
+    if (!user) {
+      return res.status(401).json({ success: false, message: 'Unauthorized' });
+    }
+
+    const fullUser = await userRepository.findById(user.id);
+    if (!fullUser) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+
+    // Verify Password
+    const isMatch = await queueBcryptCompare(password, fullUser.password_hash);
+    if (!isMatch) {
+      return res.status(400).json({ success: false, message: 'Invalid password' });
+    }
+
+    // Verify Code
+    const settings = await userRepository.findMfaSettingsByUserId(user.id);
+    if (!settings || !settings.enabled) {
+      return res.status(400).json({ success: false, message: 'MFA is not enabled.' });
+    }
+
+    const rawSecret = decryptSecret(settings.secret_encrypted);
+    const isValidTotp = await verifyTotpCode(code, rawSecret);
+    
+    // Fallback to recovery code verification if code does not match TOTP
+    let isValidCode = isValidTotp;
+    if (!isValidCode) {
+      const recoveryRecords = await userRepository.findRecoveryCodes(user.id);
+      const unusedRecovery = recoveryRecords.filter(r => !r.used_at);
+      const matchedHash = verifyRecoveryCode(code, unusedRecovery.map(r => r.code_hash));
+      if (matchedHash) {
+        await userRepository.useRecoveryCode(user.id, matchedHash);
+        isValidCode = true;
+      }
+    }
+
+    if (!isValidCode) {
+      return res.status(400).json({ success: false, message: 'Unable to verify authentication code.' });
+    }
+
+    await authService.disableTotp(user.id);
+    logAudit(user.id, 'MFA_DISABLED', `User ${user.email} disabled TOTP MFA`);
+
+    return res.json({ success: true, message: 'Two-Factor Authentication disabled successfully.' });
+  } catch (err: any) {
+    return res.status(400).json({ success: false, message: err.message });
+  }
+};
+
+export const regenerateRecoveryCodes = async (req: any, res: Response): Promise<any> => {
+  try {
+    const user = req.user;
+    const { password } = req.body;
+
+    if (!user) {
+      return res.status(401).json({ success: false, message: 'Unauthorized' });
+    }
+
+    const fullUser = await userRepository.findById(user.id);
+    if (!fullUser) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+
+    // Verify Password
+    const isMatch = await queueBcryptCompare(password, fullUser.password_hash);
+    if (!isMatch) {
+      return res.status(400).json({ success: false, message: 'Invalid password' });
+    }
+
+    const codes = await authService.regenerateRecoveryCodesForUser(user.id);
+    logAudit(user.id, 'MFA_RECOVERY_CODES_REGENERATED', `User ${user.email} regenerated recovery codes`);
+
+    return res.json({
+      success: true,
+      data: {
+        recoveryCodes: codes
+      }
+    });
+  } catch (err: any) {
+    return res.status(400).json({ success: false, message: err.message });
+  }
+};
+
+export const getMfaStatus = async (req: any, res: Response): Promise<any> => {
+  try {
+    const user = req.user;
+    if (!user) {
+      return res.status(401).json({ success: false, message: 'Unauthorized' });
+    }
+
+    const settings = await userRepository.findMfaSettingsByUserId(user.id);
+    return res.json({
+      success: true,
+      data: {
+        enabled: settings ? !!settings.enabled : false,
+        verifiedAt: settings ? settings.verified_at : null
+      }
+    });
+  } catch (err: any) {
+    return res.status(500).json({ success: false, message: err.message });
+  }
+};
+
+export const adminResetMfa = async (req: any, res: Response): Promise<any> => {
+  try {
+    const adminUser = req.user;
+    const { userId } = req.params;
+
+    if (!adminUser || adminUser.role !== 'ADMIN') {
+      return res.status(403).json({ success: false, message: 'Only administrators can reset MFA settings.' });
+    }
+
+    const targetUser = await userRepository.findById(userId);
+    if (!targetUser) {
+      return res.status(404).json({ success: false, message: 'User profile not found.' });
+    }
+
+    await authService.disableTotp(userId);
+    logAudit(adminUser.id, 'MFA_RESET', `Administrator reset MFA credentials for user ${targetUser.email}`);
+
+    return res.json({ success: true, message: `MFA credentials reset for ${targetUser.name}.` });
+  } catch (err: any) {
+    return res.status(500).json({ success: false, message: err.message });
+  }
+};
+
+export const adminGetMfaUsers = async (req: any, res: Response): Promise<any> => {
+  try {
+    const adminUser = req.user;
+    if (!adminUser || adminUser.role !== 'ADMIN') {
+      return res.status(403).json({ success: false, message: 'Access denied.' });
+    }
+
+    const users = await userRepository.findByScope('org-stackly');
+    const records = [];
+
+    for (const u of users) {
+      const settings = await userRepository.findMfaSettingsByUserId(u.id);
+      records.push({
+        id: u.id,
+        name: u.name,
+        email: u.email,
+        role: u.role,
+        mfaEnabled: settings ? !!settings.enabled : false,
+        mfaVerifiedAt: settings ? settings.verified_at : null
+      });
+    }
+
+    return res.json({
+      success: true,
+      data: records
+    });
+  } catch (err: any) {
+    return res.status(500).json({ success: false, message: err.message });
+  }
+};
+

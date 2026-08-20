@@ -2,7 +2,16 @@ import crypto from 'crypto';
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
 import { userRepository } from './auth.repository.js';
-import { env } from '../../config/env';
+import { env } from '../../config/env.js';
+import {
+  generateTotpSecret,
+  encryptSecret,
+  decryptSecret,
+  generateQrCode,
+  verifyTotpCode,
+  generateRecoveryCodes,
+  verifyRecoveryCode
+} from './totp.js';
 
 const JWT_SECRET = env.JWT_SECRET || 'wfa_platform_secret_jwt_key_2026';
 const ACCESS_TOKEN_EXPIRY = '15m';
@@ -269,3 +278,203 @@ export const resendOtp = async (challengeId: string, method: string = 'email') =
     otpDevHint: process.env.NODE_ENV !== 'production' ? code : undefined
   };
 };
+
+export const createTotpChallenge = async (user: any) => {
+  const challengeId = crypto.randomUUID();
+  const expiresAt = new Date(Date.now() + OTP_EXPIRY_MINUTES * 60 * 1000).toISOString();
+  
+  await userRepository.createMfaChallenge({
+    id: challengeId,
+    userId: user.id,
+    otp_hash: 'totp-mfa',
+    expires_at: expiresAt,
+    attempts_count: 0,
+    max_attempts: MAX_ATTEMPTS,
+    consumed_at: null,
+    resend_count: 0,
+    status: 'Pending'
+  });
+
+  return {
+    challengeId,
+    expiresAt
+  };
+};
+
+export const enrollTotp = async (user: any) => {
+  const existing = await userRepository.findMfaSettingsByUserId(user.id);
+  if (existing && existing.enabled) {
+    throw new Error('MFA is already enabled on this account.');
+  }
+
+  const rawSecret = generateTotpSecret();
+  const encryptedSecret = encryptSecret(rawSecret);
+
+  if (existing) {
+    await userRepository.updateMfaSettings(user.id, {
+      secret_encrypted: encryptedSecret,
+      enabled: 0
+    });
+  } else {
+    await userRepository.createMfaSettings({
+      user_id: user.id,
+      secret_encrypted: encryptedSecret,
+      enabled: 0
+    });
+  }
+
+  const { otpauthUrl, qrCodeDataUrl } = await generateQrCode(user.email, rawSecret);
+  return {
+    secret: rawSecret,
+    qrCodeDataUrl,
+    otpauthUrl
+  };
+};
+
+export const confirmTotpEnroll = async (userId: string, code: string) => {
+  const settings = await userRepository.findMfaSettingsByUserId(userId);
+  if (!settings) {
+    throw new Error('MFA setup settings not found. Start setup first.');
+  }
+
+  if (settings.enabled) {
+    throw new Error('MFA is already enabled.');
+  }
+
+  const rawSecret = decryptSecret(settings.secret_encrypted);
+  const isValid = await verifyTotpCode(code, rawSecret);
+  if (!isValid) {
+    throw new Error('Invalid verification code.');
+  }
+
+  const now = new Date().toISOString();
+  await userRepository.updateMfaSettings(userId, {
+    enabled: 1,
+    verified_at: now
+  });
+
+  // Generate 10 recovery codes
+  const { plaintextCodes, hashedCodes } = generateRecoveryCodes();
+  
+  // Clear any existing recovery codes first
+  await userRepository.deleteRecoveryCodes(userId);
+  
+  const recoveryRecords = hashedCodes.map((hash, idx) => ({
+    id: `rec-${userId}-${idx}-${Math.random().toString(36).substring(2, 7)}`,
+    user_id: userId,
+    code_hash: hash,
+    created_at: now
+  }));
+  await userRepository.createRecoveryCodes(recoveryRecords);
+
+  return {
+    success: true,
+    recoveryCodes: plaintextCodes
+  };
+};
+
+export const verifyTotpChallenge = async (challengeId: string, code: string) => {
+  const challenge = await userRepository.findMfaChallengeById(challengeId);
+  if (!challenge) {
+    return { success: false, message: 'Unable to verify authentication code.' };
+  }
+
+  if (challenge.status === 'Verified' || challenge.consumed_at) {
+    return { success: false, message: 'Challenge has already been verified.' };
+  }
+
+  if (challenge.attempts_count >= challenge.max_attempts) {
+    return { success: false, message: 'Too many incorrect attempts. Please sign in again.' };
+  }
+
+  const now = new Date().toISOString();
+  if (now > challenge.expires_at) {
+    return { success: false, message: 'Challenge session has expired.' };
+  }
+
+  const settings = await userRepository.findMfaSettingsByUserId(challenge.userId);
+  if (!settings || !settings.enabled) {
+    return { success: false, message: 'MFA is not enabled for this account.' };
+  }
+
+  const rawSecret = decryptSecret(settings.secret_encrypted);
+  const currentTimeStep = Math.floor(Date.now() / 1000 / 30);
+
+  // Check if it is a valid TOTP
+  const isTotpMatch = await verifyTotpCode(code, rawSecret);
+  if (isTotpMatch) {
+    // Replay protection: verify that this time step hasn't been used yet
+    if (settings.last_used_time_step >= currentTimeStep) {
+      return { success: false, message: 'MFA code already used. Please wait for the next code.' };
+    }
+
+    await userRepository.updateMfaSettings(challenge.userId, {
+      last_used_time_step: currentTimeStep
+    });
+
+    await userRepository.updateMfaChallenge(challengeId, {
+      status: 'Verified',
+      consumed_at: now
+    });
+
+    return { success: true, userId: challenge.userId };
+  }
+
+  // If not a TOTP code, check if it matches a recovery code
+  const recoveryRecords = await userRepository.findRecoveryCodes(challenge.userId);
+  const unusedRecoveryRecords = recoveryRecords.filter(r => !r.used_at);
+  const matchedHash = verifyRecoveryCode(code, unusedRecoveryRecords.map(r => r.code_hash));
+
+  if (matchedHash) {
+    await userRepository.useRecoveryCode(challenge.userId, matchedHash);
+    await userRepository.updateMfaChallenge(challengeId, {
+      status: 'Verified',
+      consumed_at: now
+    });
+    return { success: true, userId: challenge.userId, usedRecoveryCode: true };
+  }
+
+  // Failed attempt
+  const nextAttemptsCount = challenge.attempts_count + 1;
+  const nextStatus = nextAttemptsCount >= challenge.max_attempts ? 'Blocked' : 'Pending';
+
+  await userRepository.updateMfaChallenge(challengeId, {
+    attempts_count: nextAttemptsCount,
+    status: nextStatus
+  });
+
+  if (nextStatus === 'Blocked') {
+    return { success: false, message: 'Too many incorrect attempts. Please sign in again.' };
+  }
+
+  return { success: false, message: 'Unable to verify authentication code.' };
+};
+
+export const disableTotp = async (userId: string) => {
+  await userRepository.deleteMfaSettings(userId);
+  await userRepository.deleteRecoveryCodes(userId);
+  return { success: true };
+};
+
+export const regenerateRecoveryCodesForUser = async (userId: string) => {
+  const settings = await userRepository.findMfaSettingsByUserId(userId);
+  if (!settings || !settings.enabled) {
+    throw new Error('MFA is not enabled for this user.');
+  }
+
+  const { plaintextCodes, hashedCodes } = generateRecoveryCodes();
+  const now = new Date().toISOString();
+
+  await userRepository.deleteRecoveryCodes(userId);
+
+  const recoveryRecords = hashedCodes.map((hash, idx) => ({
+    id: `rec-${userId}-${idx}-${Math.random().toString(36).substring(2, 7)}`,
+    user_id: userId,
+    code_hash: hash,
+    created_at: now
+  }));
+  await userRepository.createRecoveryCodes(recoveryRecords);
+
+  return plaintextCodes;
+};
+

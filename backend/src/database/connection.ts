@@ -23,6 +23,35 @@ export const initDb = async (): Promise<void> => {
           )
         `);
 
+        // Ensure MFA tables exist
+        await execute(`
+          CREATE TABLE IF NOT EXISTS mfa_settings (
+            id TEXT PRIMARY KEY,
+            user_id TEXT UNIQUE NOT NULL,
+            enabled INTEGER DEFAULT 0,
+            secret_encrypted TEXT NOT NULL,
+            verified_at TEXT,
+            created_at TEXT,
+            updated_at TEXT,
+            last_used_time_step INTEGER DEFAULT 0,
+            FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+          )
+        `);
+
+        await execute(`
+          CREATE TABLE IF NOT EXISTS mfa_recovery_codes (
+            id TEXT PRIMARY KEY,
+            user_id TEXT NOT NULL,
+            code_hash TEXT NOT NULL,
+            used_at TEXT,
+            created_at TEXT,
+            FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+          )
+        `);
+
+        await execute(`CREATE INDEX IF NOT EXISTS idx_mfa_settings_user ON mfa_settings(user_id)`);
+        await execute(`CREATE INDEX IF NOT EXISTS idx_mfa_recovery_user ON mfa_recovery_codes(user_id)`);
+
         // Perform health check write test
         const isHealthy = await healthCheck();
         if (!isHealthy) {

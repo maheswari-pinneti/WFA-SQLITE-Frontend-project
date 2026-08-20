@@ -27,6 +27,17 @@ router.post('/auth/logout', authenticateToken, authController.logout);
 router.get('/auth/me', authenticateToken, authController.getMe);
 router.post('/auth/refresh', authRateLimiter, authController.refresh);
 
+// TOTP MFA Routes
+router.get('/auth/mfa/totp/status', authenticateToken, authController.getMfaStatus);
+router.post('/auth/mfa/totp/enroll', authenticateToken, authController.enrollTotpMfa);
+router.post('/auth/mfa/totp/enroll/verify', authenticateToken, authController.confirmEnrollMfa);
+router.post('/auth/mfa/totp/disable', authenticateToken, authController.disableTotpMfa);
+router.post('/auth/mfa/totp/recovery-codes/regenerate', authenticateToken, authController.regenerateRecoveryCodes);
+
+// Admin MFA Management
+router.get('/admin/mfa/users', authenticateToken, authController.adminGetMfaUsers);
+router.post('/admin/mfa/users/:userId/reset', authenticateToken, authController.adminResetMfa);
+
 // Employees Directory
 router.get('/employees', authenticateToken, enforceScope, employeeController.getEmployees);
 router.put('/employees/:id/status', authenticateToken, enforceScope, authorizePermissions(['EMPLOYEE_UPDATE', 'EMPLOYEE_MANAGE']), employeeController.updateEmployeeStatus);

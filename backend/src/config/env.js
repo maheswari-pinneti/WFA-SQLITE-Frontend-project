@@ -28,10 +28,16 @@ if (fs.existsSync(envPath)) {
 const NODE_ENV = process.env.NODE_ENV || 'development';
 const JWT_SECRET = process.env.JWT_SECRET || 'wfa_platform_secret_jwt_key_2026';
 const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET || 'wfa_platform_secret_refresh_key_2026';
+const TOTP_ENCRYPTION_KEY = process.env.TOTP_ENCRYPTION_KEY || 'wfa_totp_dev_default_key_32bytes!';
+
+if (NODE_ENV === 'production' && (!process.env.TOTP_ENCRYPTION_KEY || process.env.TOTP_ENCRYPTION_KEY.length < 32)) {
+  throw new Error('PRODUCTION ERROR: TOTP_ENCRYPTION_KEY must be a cryptographically secure key of at least 32 characters in production.');
+}
 
 export const env = {
   NODE_ENV,
   JWT_SECRET,
   JWT_REFRESH_SECRET,
+  TOTP_ENCRYPTION_KEY,
   PORT: process.env.PORT || 5001
 };
