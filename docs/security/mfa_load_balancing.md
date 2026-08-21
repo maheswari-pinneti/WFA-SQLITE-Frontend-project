@@ -130,10 +130,29 @@ In another terminal, run:
 npx tsx backend/scripts/load-test.ts
 ```
 
-### Expected Output
-The script will spawn 500 concurrent HTTP requests to the login endpoint and return execution stats:
+### Execution Reports
+
+#### Scenario 1: 100 Simultaneous Logins
 ```text
-[Load Test] Starting benchmark targeting: http://localhost:5001/v1/auth/login
+[Load Test] Starting benchmark targeting: http://127.0.0.1:5001/v1/auth/login
+[Load Test] Simulating 100 simultaneous user login requests...
+
+--- Load Test Results ---
+Total Requests Sent: 100
+Successful API Hits (4xx expected/ok): 100
+Server Failures (5xx): 0
+Network/Timeout Failures: 0
+Total Duration: 3943 ms
+Average Latency per Request: 39.43 ms
+Throughput: 25.36 req/sec
+-------------------------
+
+✅ Success: All concurrent requests handled gracefully by the server without crashing.
+```
+
+#### Scenario 2: 500 Simultaneous Logins
+```text
+[Load Test] Starting benchmark targeting: http://127.0.0.1:5001/v1/auth/login
 [Load Test] Simulating 500 simultaneous user login requests...
 
 --- Load Test Results ---
@@ -141,9 +160,9 @@ Total Requests Sent: 500
 Successful API Hits (4xx expected/ok): 500
 Server Failures (5xx): 0
 Network/Timeout Failures: 0
-Total Duration: 2388 ms
-Average Latency per Request: 4.78 ms
-Throughput: 209.38 req/sec
+Total Duration: 1199 ms
+Average Latency per Request: 2.40 ms
+Throughput: 417.01 req/sec
 -------------------------
 
 ✅ Success: All concurrent requests handled gracefully by the server without crashing.
