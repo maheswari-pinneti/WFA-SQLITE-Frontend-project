@@ -52,7 +52,7 @@ export const globalRateLimiter = (req, res, next) => {
 // Tight rate limiting for authentication/login requests to prevent brute-force attacks
 const authLimiterInstance = rateLimit({
   windowMs: 1 * 60 * 1000, // 1 minute
-  max: 30, // Limit each IP to 30 login requests per minute in production
+  max: 1000, // Limit each IP to 1000 login requests per minute in production to allow large corporate spikes
   standardHeaders: true,
   legacyHeaders: false,
   handler: (req, res) => {
