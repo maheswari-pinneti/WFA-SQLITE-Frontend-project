@@ -27,6 +27,7 @@ export const connectDatabase = async (): Promise<any> => {
     localDb = new BetterSqlite3(DB_PATH, { timeout: 10000 });
     localDb.pragma('foreign_keys = ON');
     localDb.pragma('journal_mode = WAL');
+    localDb.pragma('synchronous = NORMAL');
     
     // Validate database integrity on connection setup
     const integrityResult = localDb.pragma('integrity_check');
