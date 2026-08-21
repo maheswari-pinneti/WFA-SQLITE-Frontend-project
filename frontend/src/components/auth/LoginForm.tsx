@@ -450,7 +450,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ selectedRole, onRoleChange
       ) : requiresMfaSetup ? (
         <form onSubmit={(e) => { e.preventDefault(); verifyMfaAction(totpCode); }} className="auth-space-y-6">
           <div style={{ padding: '1rem', borderRadius: '12px', background: 'var(--bg-tertiary)', border: '1px solid var(--border-color)', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1rem' }}>
-            <p style={{ fontSize: '0.8125rem', fontWeight: 'bold', margin: 0, textAlign: 'center', color: 'var(--role-primary)' }}>⚠️ Scan this QR code with Microsoft Authenticator ONLY. (Google Authenticator is restricted by corporate policy.)</p>
+            <p style={{ fontSize: '0.8125rem', fontWeight: 'bold', margin: 0, textAlign: 'center' }}>Scan this QR code with Google Authenticator or Microsoft Authenticator</p>
             {setupData && (
               <>
                 <img

@@ -799,7 +799,7 @@ export const Profile: React.FC = () => {
                 <p className="font-extrabold text-center text-xs">MFA Setup Procedure</p>
                 {setupData && (
                   <div className="space-y-4 flex flex-col items-center">
-                    <p className="text-[10px] text-slate-400 text-center font-bold">⚠️ Scan this QR code using Microsoft Authenticator ONLY. (Google Authenticator is blocked by organizational policy.)</p>
+                    <p className="text-[10px] text-slate-400 text-center">Scan this QR code using Google Authenticator or Microsoft Authenticator.</p>
                     <img src={setupData.qrCodeDataUrl} alt="Setup QR Code" className="w-40 h-40 border border-[var(--border-color)] p-2 rounded-lg bg-white" />
                     <div className="w-full text-center">
                       <p className="text-[10px] text-slate-400">Manual Setup Secret Key:</p>
