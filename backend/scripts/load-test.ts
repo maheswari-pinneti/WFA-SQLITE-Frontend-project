@@ -1,7 +1,7 @@
 import axios from 'axios';
 
-const TARGET_URL = process.env.API_URL || 'http://localhost:5001/v1/auth/login';
-const CONCURRENT_USERS = 500;
+const TARGET_URL = process.env.API_URL || 'http://127.0.0.1:5001/v1/auth/login';
+const CONCURRENT_USERS = parseInt(process.env.CONCURRENT_USERS || '100');
 
 async function runLoadTest() {
   console.log(`[Load Test] Starting benchmark targeting: ${TARGET_URL}`);
