@@ -2,7 +2,7 @@ import mongoose from '../../database/transaction.js';
 import { attendanceRepository } from './attendance.repository.js';
 import { employeeRepository } from '../employees/employee.repository.js';
 import { userRepository } from '../auth/auth.repository.js';
-import { Attendance, Correction, BreakSession, AttendanceEvent, IdempotencyRecord, Employee, AuditLog, Shift } from '../../models/index.js';
+import { Attendance, Correction, BreakSession, AttendanceEvent, IdempotencyRecord, Employee, AuditLog, Shift, Location } from '../../models/index.js';
 import { logAudit } from '../../database/connection.js';
 import * as notificationService from '../notifications/notification.service.js';
 
@@ -59,8 +59,16 @@ export class AttendanceService {
       if (accuracy !== undefined && (!Number.isFinite(Number(accuracy)) || Number(accuracy) > MAX_LOCATION_ACCURACY_METERS)) {
         throw new Error('Location accuracy is insufficient for Office check-in.');
       }
-      const distance = getDistance(latitude, longitude, OFFICE_COORDS.lat, OFFICE_COORDS.lng);
-      if (distance > ALLOWED_RADIUS_METERS) {
+      // Fetch location configurations dynamically from SQLite
+      const employeeLocationName = identity.location || 'Bengaluru';
+      const locConfig = await Location.findOne({ name: employeeLocationName, companyId: orgId });
+      
+      const targetLat = locConfig && locConfig.latitude !== null && locConfig.latitude !== undefined ? Number(locConfig.latitude) : OFFICE_COORDS.lat;
+      const targetLng = locConfig && locConfig.longitude !== null && locConfig.longitude !== undefined ? Number(locConfig.longitude) : OFFICE_COORDS.lng;
+      const allowedRadius = locConfig && locConfig.geofenceRadius !== null && locConfig.geofenceRadius !== undefined ? Number(locConfig.geofenceRadius) : ALLOWED_RADIUS_METERS;
+
+      const distance = getDistance(latitude, longitude, targetLat, targetLng);
+      if (distance > allowedRadius) {
         logAudit(employeeId, 'GEOFENCE_VIOLATION', `Office check-in rejected: ${Math.round(distance)}m away`, orgId);
         notificationService.triggerAlarm(employeeId, identity.name, 'GEOFENCE_VIOLATION', `Office check-in rejected: ${Math.round(distance)}m away`);
         throw new Error(`Geofencing validation failed. You are outside the office boundary (${Math.round(distance)}m away).`);

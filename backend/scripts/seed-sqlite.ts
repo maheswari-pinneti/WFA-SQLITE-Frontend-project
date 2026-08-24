@@ -21,12 +21,17 @@ export const seedSqlite = async () => {
     console.warn(`[SQLite Seeder] Warning: schema.sql not found at ${schemaPath}`);
   }
 
+  try { db.exec('ALTER TABLE locations ADD COLUMN latitude REAL;'); } catch (e) {}
+  try { db.exec('ALTER TABLE locations ADD COLUMN longitude REAL;'); } catch (e) {}
+  try { db.exec('ALTER TABLE locations ADD COLUMN geofenceRadius INTEGER DEFAULT 100;'); } catch (e) {}
+
   console.log('[SQLite Seeder] Truncating tables for a fresh seed...');
   db.exec(`
     DELETE FROM companies;
     DELETE FROM departments;
     DELETE FROM teams;
     DELETE FROM shifts;
+    DELETE FROM locations;
     DELETE FROM users;
     DELETE FROM employees;
     DELETE FROM skills;
@@ -104,6 +109,24 @@ export const seedSqlite = async () => {
         insertShift.run(...shift);
       }
       console.log('Seeded Shifts.');
+    }
+
+    // 4.5. Seed locations
+    const locCount = db.prepare('SELECT COUNT(*) as count FROM locations').get().count;
+    if (locCount === 0) {
+      const insertLoc = db.prepare(`
+        INSERT INTO locations (id, name, address, city, country, latitude, longitude, geofenceRadius, organizationId, companyId, createdAt, updatedAt)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `);
+      const locs = [
+        ['loc-blr', 'Bengaluru', 'Bengaluru Office', 'Bengaluru', 'India', 12.9716, 77.5946, 100, ORGANIZATION_ID, ORGANIZATION_ID, new Date().toISOString(), new Date().toISOString()],
+        ['loc-hyd', 'Hyderabad', 'Hyderabad Office', 'Hyderabad', 'India', 17.3850, 78.4867, 150, ORGANIZATION_ID, ORGANIZATION_ID, new Date().toISOString(), new Date().toISOString()],
+        ['loc-salem', 'Salem', 'Salem Office', 'Salem', 'India', 11.6643, 78.1460, 100, ORGANIZATION_ID, ORGANIZATION_ID, new Date().toISOString(), new Date().toISOString()]
+      ];
+      for (const loc of locs) {
+        insertLoc.run(...loc);
+      }
+      console.log('Seeded Locations.');
     }
 
     // 5. Seed Users & Employees
