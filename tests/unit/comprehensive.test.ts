@@ -60,7 +60,7 @@ describe('WFA Comprehensive Backend Unit and Integration Testing', () => {
   });
 
   describe('Database Unit Tests & Unique Constraints', () => {
-    it('should successfully establish MongoDB connection', () => {
+    it('should successfully establish database connection', () => {
       expect(mongoose.connection.readyState).toBe(1); // 1 = Connected
     });
 

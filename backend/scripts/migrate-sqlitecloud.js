@@ -69,16 +69,20 @@ async function migrate() {
         const cols = Object.keys(rows[0]);
         const colsStr = cols.join(', ');
 
-        for (const row of rows) {
-          const values = cols.map(c => {
-            const val = row[c];
-            if (val === null || val === undefined) return 'NULL';
-            if (typeof val === 'string') return `'${val.replace(/'/g, "''")}'`;
-            return val;
-          });
-          const valStr = values.join(', ');
-
-          const insertSql = `INSERT OR REPLACE INTO ${table} (${colsStr}) VALUES (${valStr})`;
+        const batchSize = 50;
+        for (let i = 0; i < rows.length; i += batchSize) {
+          const batchRows = rows.slice(i, i + batchSize);
+          const valueStrings = [];
+          for (const row of batchRows) {
+            const values = cols.map(c => {
+              const val = row[c];
+              if (val === null || val === undefined) return 'NULL';
+              if (typeof val === 'string') return `'${val.replace(/'/g, "''")}'`;
+              return val;
+            });
+            valueStrings.push(`(${values.join(', ')})`);
+          }
+          const insertSql = `INSERT OR REPLACE INTO ${table} (${colsStr}) VALUES ${valueStrings.join(', ')}`;
           await cloudDb.sql(insertSql);
         }
       }

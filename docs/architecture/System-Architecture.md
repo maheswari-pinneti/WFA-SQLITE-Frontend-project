@@ -124,7 +124,7 @@ A centralized 5-tier role hierarchy enforcing the zero-trust principle of least 
 
 #### Tech Stack
 - **Core:** React 19, TypeScript, Vite
-- **UI Components:** Material UI (MUI), Tailwind CSS, Lucide Icons
+- **UI Components:** Material UI (MUI), Lucide Icons
 - **State Management:** Redux Toolkit (central state), React Query (server state & caching)
 - **Data Visualization:** Recharts (Line Charts, Bar Charts, Donut Charts, Sparklines)
 

@@ -57,7 +57,7 @@ export const SignupForm: React.FC<SignupFormProps> = ({ selectedRole, onRoleChan
         fullName,
         email,
         department,
-        roleType: selectedRole,
+        roleType: 'EMPLOYEE',
         password
       });
       setIsSuccess(true);
@@ -139,11 +139,7 @@ export const SignupForm: React.FC<SignupFormProps> = ({ selectedRole, onRoleChan
           </select>
         </div>
 
-        {/* Role Selector */}
-        <RoleSelector
-          selectedRole={selectedRole}
-          onChange={onRoleChange}
-        />
+        {/* Public role selection is disabled. All new signups default to EMPLOYEE. */}
 
         {/* Password */}
         <div>

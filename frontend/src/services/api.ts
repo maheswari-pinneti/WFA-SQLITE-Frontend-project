@@ -1,19 +1,25 @@
 import axios from 'axios';
 import { STORAGE_KEYS } from '../shared/constants/constants';
 
+let accessToken: string | null = null;
+
+export const setAccessToken = (token: string | null) => {
+  accessToken = token;
+};
+
 export const apiClient = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL || '',
   timeout: 10000,
   headers: {
     'Content-Type': 'application/json',
   },
+  withCredentials: true,
 });
 
 apiClient.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem(STORAGE_KEYS.AUTH_TOKEN);
-    if (token && config.headers) {
-      config.headers.Authorization = `Bearer ${token}`;
+    if (accessToken && config.headers) {
+      config.headers.Authorization = `Bearer ${accessToken}`;
     }
     return config;
   },
@@ -43,40 +49,32 @@ apiClient.interceptors.response.use(
       }
 
       originalRequest._retry = true;
-      const refreshToken = localStorage.getItem(STORAGE_KEYS.REFRESH_TOKEN);
+      isRefreshing = true;
 
-      if (refreshToken) {
-        isRefreshing = true;
-        try {
-          const res = await axios.post(`${apiClient.defaults.baseURL || ''}/v1/auth/refresh`, { refreshToken });
-          if (res.data && res.data.success && res.data.data?.token) {
-            const newToken = res.data.data.token;
-            const newRefreshToken = res.data.data.refreshToken;
-            
-            localStorage.setItem(STORAGE_KEYS.AUTH_TOKEN, newToken);
-            if (newRefreshToken) {
-              localStorage.setItem(STORAGE_KEYS.REFRESH_TOKEN, newRefreshToken);
-            }
-            
-            apiClient.defaults.headers.common['Authorization'] = `Bearer ${newToken}`;
-            originalRequest.headers.Authorization = `Bearer ${newToken}`;
-            
-            refreshQueue.forEach((callback) => callback(newToken));
-            refreshQueue = [];
-            
-            isRefreshing = false;
-            return apiClient(originalRequest);
-          }
-        } catch (refreshError) {
-          console.error('Failed to auto-refresh access token:', refreshError);
-        } finally {
+      try {
+        const res = await axios.post(`${apiClient.defaults.baseURL || ''}/v1/auth/refresh`, {}, { withCredentials: true });
+        if (res.data && res.data.success && res.data.data?.token) {
+          const newToken = res.data.data.token;
+          
+          setAccessToken(newToken);
+          
+          apiClient.defaults.headers.common['Authorization'] = `Bearer ${newToken}`;
+          originalRequest.headers.Authorization = `Bearer ${newToken}`;
+          
+          refreshQueue.forEach((callback) => callback(newToken));
+          refreshQueue = [];
+          
           isRefreshing = false;
+          return apiClient(originalRequest);
         }
+      } catch (refreshError) {
+        console.error('Failed to auto-refresh access token:', refreshError);
+      } finally {
+        isRefreshing = false;
       }
 
-      // If refresh failed or no refresh token is present, perform secure logout redirect
-      localStorage.removeItem(STORAGE_KEYS.AUTH_TOKEN);
-      localStorage.removeItem(STORAGE_KEYS.REFRESH_TOKEN);
+      // If refresh failed, perform secure logout redirect
+      setAccessToken(null);
       localStorage.removeItem(STORAGE_KEYS.USER_DATA);
       window.location.assign('/login');
     }

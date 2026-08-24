@@ -15,16 +15,15 @@ const initialState: AuthState = {
 export const initializeAuthThunk = createAsyncThunk(
   'auth/initializeAuth',
   async () => {
-    const session = authService.getStoredSession();
-    if (!session) {
-      return { user: null, token: null };
-    }
     try {
+      const refreshResult = await authService.refreshSilent();
+      const token = refreshResult.token;
+      
       const response = await apiClient.get('/v1/auth/me');
       if (response.data && response.data.success && response.data.data) {
         return {
           user: response.data.data,
-          token: session.token
+          token
         };
       } else {
         await authService.logout();

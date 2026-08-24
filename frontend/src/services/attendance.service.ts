@@ -151,7 +151,11 @@ class AttendanceService {
       employeeId: params.employeeId,
       employeeName: params.employeeName,
       department: params.department,
-      date: serverTime.toISOString().split('T')[0],
+      date: (() => {
+        const format = serverTime.toLocaleDateString('en-US', { timeZone: 'Asia/Kolkata' });
+        const [month, day, year] = format.split('/');
+        return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+      })(),
       checkInTime: serverTime.toISOString(),
       checkOutTime: null,
       breaks: [],

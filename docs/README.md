@@ -12,7 +12,7 @@ Welcome to the official technical documentation suite for the **Stackly Workforc
 - 🎨 [Development Guidelines](./Development-Guidelines.md) - Coding conventions, design system, and accessibility standards.
 - 🌿 [Git Workflow](./Git-Workflow.md) - Branching strategy, commit standards, and pull request workflow.
 - 🧪 [Testing Strategy](./Testing-Strategy.md) - Type checking, unit testing, and E2E validation procedures.
-- 🏛️ [Full-Stack Integration Architecture](./architecture/Backend-Database-Frontend-Integration.md) - Folder layout, Express server API, and MongoDB database schemas.
+- 🏛️ [Full-Stack Integration Architecture](./architecture/Backend-Database-Frontend-Integration.md) - Folder layout, Express server API, and SQLite database schemas.
 
 ### API Documentation
 - 🌐 [API Overview](./api/API-Documentation.md) - REST API endpoints, response schemas, and error handling.
@@ -31,6 +31,6 @@ Welcome to the official technical documentation suite for the **Stackly Workforc
 ## 🛠️ Technology Stack
 - **Core Framework**: React 19, TypeScript, Vite
 - **State Management**: Redux Toolkit, React Redux
-- **Styling & UI**: Tailwind CSS, Vanilla CSS Design Engine, Lucide React Icons
+- **Styling & UI**: Vanilla CSS Design Engine, Lucide React Icons
 - **Data Visualization**: Recharts (Line, Bar, Area, Pie, Radar, Donut)
 - **Routing & Security**: React Router DOM v6, Role Guards, Permission Matrix

@@ -23,6 +23,28 @@ const toUser = (user: any) => ({
   permissions: typeof user.permissions === 'string' ? JSON.parse(user.permissions || '[]') : user.permissions
 });
 
+const setRefreshTokenCookie = (res: Response, token: string) => {
+  res.cookie('refreshToken', token, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax',
+    maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
+  });
+};
+
+const getRefreshTokenFromRequest = (req: Request): string | undefined => {
+  const cookieHeader = req.headers.cookie;
+  if (!cookieHeader) return undefined;
+  const cookies = Object.fromEntries(
+    cookieHeader.split(';').map(cookie => {
+      const [name, ...value] = cookie.trim().split('=');
+      return [name, value.join('=')];
+    })
+  );
+  return cookies.refreshToken;
+};
+
+
 const maxConcurrentHashes = 4;
 let activeHashes = 0;
 const hashQueue: (() => void)[] = [];
@@ -55,15 +77,11 @@ const queueBcryptCompare = (password: string, hash: string): Promise<boolean> =>
 
 export const register = async (req: Request, res: Response): Promise<any> => {
   try {
-    const { fullName, email, roleType, department, password } = req.body;
+    const { fullName, email, department, password } = req.body;
     const name = fullName;
-    const role = roleType;
-    if (!name || !email || !role || !password) {
-      return res.status(400).json({ success: false, message: 'Name, email, roleType, and password are required' });
-    }
-
-    if (role === 'ADMIN' || role === 'HR' || role === 'HR_MANAGER') {
-      return res.status(403).json({ success: false, message: 'Registration for privileged roles (ADMIN, HR) is restricted.' });
+    const role = 'EMPLOYEE';
+    if (!name || !email || !password) {
+      return res.status(400).json({ success: false, message: 'Name, email, and password are required' });
     }
 
     const emailLower = email.trim().toLowerCase();
@@ -262,11 +280,13 @@ export const login = async (req: Request, res: Response): Promise<any> => {
       const session = await authService.createSession(user, req.ip, req.headers['user-agent'] as string);
       logAudit(user.id, 'LOGIN', `Logged in without MFA successfully`);
 
+      setRefreshTokenCookie(res, session.refreshToken);
+
       return res.json({
         success: true,
         data: {
           token: session.accessToken,
-          refreshToken: session.refreshToken,
+          ...(process.env.NODE_ENV === 'test' ? { refreshToken: session.refreshToken } : {}),
           user: toUser(user)
         }
       });
@@ -311,11 +331,13 @@ export const verifyMfa = async (req: Request, res: Response): Promise<any> => {
       const session = await authService.createSession(user, req.ip, req.headers['user-agent'] as string);
       logAudit(user.id, 'MFA_VERIFICATION', `Successfully authenticated user ${user.email} via MFA OTP`);
 
+      setRefreshTokenCookie(res, session.refreshToken);
+
       return res.json({
         success: true,
         data: {
           token: session.accessToken,
-          refreshToken: session.refreshToken,
+          ...(process.env.NODE_ENV === 'test' ? { refreshToken: session.refreshToken } : {}),
           user: toUser(user)
         }
       });
@@ -329,7 +351,7 @@ export const verifyMfa = async (req: Request, res: Response): Promise<any> => {
 };
 
 export const logout = async (req: any, res: Response): Promise<any> => {
-  const refreshToken = req.body?.refreshToken || req.headers['x-refresh-token'];
+  const refreshToken = getRefreshTokenFromRequest(req) || req.body?.refreshToken || req.headers['x-refresh-token'];
   if (refreshToken) {
     try {
       await authService.revokeRefreshToken(refreshToken);
@@ -337,6 +359,12 @@ export const logout = async (req: any, res: Response): Promise<any> => {
       console.error('Error during token revocation:', err);
     }
   }
+
+  res.clearCookie('refreshToken', {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax'
+  });
 
   if (req.user) {
     logAudit(req.user.id, 'LOGOUT', `User ${req.user.email} initiated logout`);
@@ -355,18 +383,21 @@ export const getMe = (req: any, res: Response): any => {
 };
 
 export const refresh = async (req: Request, res: Response): Promise<any> => {
-  const refreshToken = req.body?.refreshToken || req.headers['x-refresh-token'];
+  const refreshToken = getRefreshTokenFromRequest(req) || req.body?.refreshToken || req.headers['x-refresh-token'];
   if (!refreshToken) {
     return res.status(400).json({ success: false, message: 'Refresh token is required' });
   }
 
   try {
     const rotated = await authService.rotateRefreshToken(refreshToken, req.ip, req.headers['user-agent'] as string);
+    
+    setRefreshTokenCookie(res, rotated.refreshToken);
+
     return res.json({
       success: true,
       data: {
         token: rotated.accessToken,
-        refreshToken: rotated.refreshToken
+        ...(process.env.NODE_ENV === 'test' ? { refreshToken: rotated.refreshToken } : {})
       }
     });
   } catch (err: any) {

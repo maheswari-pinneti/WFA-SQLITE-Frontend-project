@@ -50,9 +50,9 @@ The backend is built as an Express.js server utilizing Node ES Modules:
 
 ---
 
-## 4. Database Architecture (MongoDB)
+## 4. Database Architecture (SQLite)
 
-The persistence layer uses a MongoDB database schema with Mongoose models:
+The persistence layer uses a SQLite database with the following table schema:
 
 ```mermaid
 erDiagram
@@ -128,5 +128,5 @@ erDiagram
 - **Proxy Routing**: Vite's server configuration maps client `/api` paths directly to `http://localhost:5000/api`.
 - **Hybrid Offline-First Sync**:
   - Frontend operations (Check-In, Break, Check-Out) synchronously update the client-side `localStorage` cache immediately to prevent lagging and preserve full offline capabilities.
-  - Concurrently, a background async fetch request is fired via `apiClient` to persist the action inside the MongoDB database.
+  - Concurrently, a background async fetch request is fired via `apiClient` to persist the action inside the SQLite database.
   - If a network error occurs, the action is enqueued inside an offline queue to be synchronized once connection is restored.

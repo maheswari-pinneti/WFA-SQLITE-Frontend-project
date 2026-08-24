@@ -1,6 +1,6 @@
 import { authApi } from '../../api/endpoints/auth.api';
 import { STORAGE_KEYS } from '../../shared/constants/constants';
-import { apiClient } from '../../services/api';
+import { apiClient, setAccessToken } from '../../services/api';
 import { Role } from '../../security/roles/roles';
 
 const normalizeUser = (value: any) => {
@@ -29,10 +29,7 @@ export const authService = {
     if (response && (response as any).token && (response as any).user) {
       const user = normalizeUser((response as any).user);
       if (!user) throw new Error('Login returned an invalid user session.');
-      localStorage.setItem(STORAGE_KEYS.AUTH_TOKEN, (response as any).token);
-      if ((response as any).refreshToken) {
-        localStorage.setItem(STORAGE_KEYS.REFRESH_TOKEN, (response as any).refreshToken);
-      }
+      setAccessToken((response as any).token);
       localStorage.setItem(STORAGE_KEYS.USER_DATA, JSON.stringify(user));
       return { ...(response as any), user };
     }
@@ -41,13 +38,10 @@ export const authService = {
 
   verifyMfa: async (challengeId: string, code: string) => {
     const data = await authApi.verifyMfa(challengeId, code);
-    const { token, refreshToken, user } = data;
+    const { token, user } = data;
     const normalizedUser = normalizeUser(user);
     if (!token || !normalizedUser) throw new Error('MFA returned an invalid user session.');
-    localStorage.setItem(STORAGE_KEYS.AUTH_TOKEN, token);
-    if (refreshToken) {
-      localStorage.setItem(STORAGE_KEYS.REFRESH_TOKEN, refreshToken);
-    }
+    setAccessToken(token);
     localStorage.setItem(STORAGE_KEYS.USER_DATA, JSON.stringify(normalizedUser));
     return { token, user: normalizedUser };
   },
@@ -56,28 +50,34 @@ export const authService = {
     return await authApi.resendMfa(challengeId, mfaMethod);
   },
 
+  refreshSilent: async () => {
+    const response = await apiClient.post('/v1/auth/refresh');
+    if (response.data && response.data.success && response.data.data?.token) {
+      const { token } = response.data.data;
+      setAccessToken(token);
+      return { token };
+    }
+    throw new Error('Failed to refresh session');
+  },
+
   logout: async () => {
-    const refreshToken = localStorage.getItem(STORAGE_KEYS.REFRESH_TOKEN) || undefined;
     try {
-      await authApi.logout(refreshToken);
+      await authApi.logout();
     } catch (err) {
       console.error('Logout request failed:', err);
     }
-    localStorage.removeItem(STORAGE_KEYS.AUTH_TOKEN);
-    localStorage.removeItem(STORAGE_KEYS.REFRESH_TOKEN);
+    setAccessToken(null);
     localStorage.removeItem(STORAGE_KEYS.USER_DATA);
   },
 
   getStoredSession: () => {
-    const token = localStorage.getItem(STORAGE_KEYS.AUTH_TOKEN);
     const userData = localStorage.getItem(STORAGE_KEYS.USER_DATA);
 
-    if (token && userData) {
+    if (userData) {
       try {
         const user = normalizeUser(JSON.parse(userData));
         if (!user) return null;
         return {
-          token,
           user
         };
       } catch {

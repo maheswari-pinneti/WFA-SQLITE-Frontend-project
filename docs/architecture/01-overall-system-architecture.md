@@ -1,6 +1,6 @@
 # 🌐 Overall Full-Stack System Architecture
 
-This diagram illustrates the overall system architecture of the Workforce Analytics Platform, depicting the separation from the presentation views down to backend routing, security middleware, services, and the MongoDB persistence layer.
+This diagram illustrates the overall system architecture of the Workforce Analytics Platform, depicting the separation from the presentation views down to backend routing, security middleware, services, and the SQLite persistence layer.
 
 ```mermaid
 flowchart TB
@@ -29,7 +29,7 @@ flowchart TB
         AUDIT["Audit Service"]
     end
     
-    subgraph DATABASE["DATABASE — MongoDB"]
+    subgraph DATABASE["DATABASE — SQLite / SQLite Cloud"]
         USERS["Users / Roles / Permissions"]
         EMP["Employees"]
         ORG["Organizations / Departments / Teams"]
@@ -78,4 +78,4 @@ flowchart TB
 ### Core Architecture Description
 1. **Presentation Layer (Frontend)**: Structured as a React SPA with Vite, routing handles role guards and permission checks. TanStack React Query handles network states while Redux manages local state (e.g. active check-in profiles, auth, sidebar).
 2. **API & Security (Backend)**: Express API routes requests through authentication (JWT validation) and authorization (RBAC and DBAC checking) middleware.
-3. **Database (MongoDB)**: Persists document collections structured via Mongoose schemas, supporting indexing, validations, and query optimizations.
+3. **Database (SQLite)**: Persists relational tables with strict schemas, relational foreign key constraints, and query optimization via indexes.

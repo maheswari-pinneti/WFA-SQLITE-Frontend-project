@@ -830,7 +830,7 @@ GET    /api/v1/reports/jobs/{id}           # Poll Report Job Status & Download U
 | Operational Area | Implemented Enterprise Controls |
 | :--- | :--- |
 | **Reliability** | Timeout budgets (3s max); circuit breakers for downstream services; exponential backoff retries with jitter; graceful fallbacks. |
-| **Security** | OWASP Top 10 mitigation; Strict Content Security Policy (CSP); CSRF tokens; automated dependency vulnerability scanning. |
+| **Security** | OWASP Top 10 mitigation; Strict Content Security Policy (CSP); automated dependency vulnerability scanning. |
 | **Privacy** | Field-level data masking for PII/Salary; export row thresholds; strict retention & purge schedules; anonymized analytics data. |
 | **Observability** | Structured JSON logging with `traceId`; Prometheus metrics scraping; Grafana dashboards; real-time alert triggers. |
 | **SLO Targets** | API Availability >= 99.95%; Dashboard P95 Latency < 100ms; Report Generation Success Rate >= 99.9%. |

@@ -3,7 +3,7 @@
 **Version:** 3.4.0  
 **Prepared By:** Maheswari Pinneti, Frontend Developer  
 **Target Platform:** Enterprise Web Applications  
-**Core Framework:** React 19 + TypeScript + Redux Toolkit + React Query + Tailwind CSS + Material UI (MUI v6)  
+**Core Framework:** React 19 + TypeScript + Redux Toolkit + React Query + Material UI (MUI v6)  
 
 ---
 
@@ -35,7 +35,7 @@ The **Workforce Analytics Intelligence Platform** frontend is a multi-tenant, mi
 ### 1.2 Architectural Goals
 * **Sub-100ms UI Responsiveness:** Aggressive client-side caching, virtualized data grids, and state decoupling to maintain immediate feedback loops.
 * **Strict 5-Tier RBAC:** Zero-trust presentation layer rendering where UI elements, navigation options, routes, and data columns are conditionally compiled/rendered according to authenticated user claims.
-* **Design System Uniformity:** A unified design language built on custom Tailwind CSS utility tokens integrated seamlessly with Material UI (MUI v6) theme overrides.
+* **Design System Uniformity:** A unified design language built on custom CSS variables integrated seamlessly with Material UI (MUI v6) theme overrides.
 * **Resilient Offline & Partial State Hydration:** React Query (TanStack Query v5) server-state caching combined with Redux Toolkit for seamless handling of background refetches, optimistic UI updates, and graceful error boundaries.
 
 ---
@@ -50,7 +50,7 @@ The **Workforce Analytics Intelligence Platform** frontend is a multi-tenant, mi
 | **Client State** | Redux Toolkit | `^2.2.0` | Centralized global application state (Auth, Permissions, Preferences, UI Layouts). |
 | **Server State** | TanStack React Query | `^5.28.0` | Server data fetching, caching, deduplication, optimistic updates, background polling. |
 | **UI Components** | Material UI (MUI) | `^6.0.0` | DataGrid Pro, Date Pickers, Complex Dialogs, Steppers, Accessibility-first primitives. |
-| **Utility Styling** | Tailwind CSS | `^3.4.0` | Dynamic responsive layouts, glassmorphism UI components, custom utility tokens. |
+| **Utility Styling** | Vanilla CSS | N/A | Dynamic responsive layouts, glassmorphism UI components, custom utility tokens. |
 | **Data Viz** | Recharts / D3.js | `^2.12.0` | High-performance SVG/Canvas charting (Line, Bar, Donut, Heatmaps, Scatter plots). |
 | **Forms & Validation** | React Hook Form + Zod | `^7.51.0` | Uncontrolled high-performance forms with strict schema validation. |
 | **Routing** | React Router | `^6.22.0` | Nested layout routes, code-split lazy loading, role-based guard middleware. |
@@ -74,7 +74,7 @@ src/
 │   ├── images/
 │   ├── icons/
 │   └── styles/
-│       └── globals.css         # Tailwind & Base Theme Overrides
+│       └── globals.css         # Global Styles & Base Theme Overrides
 ├── components/                 # Shared Generic UI Components (Atomic Layer)
 │   ├── ui/                     # Pure UI Primitives (Buttons, Cards, Inputs, Modals)
 │   │   ├── Button/
@@ -141,7 +141,7 @@ src/
 ## 4. Design System & Component Library Specifications
 
 ### 4.1 Color System & Design Tokens
-The platform utilizes a dual-theme (Dark/Light Mode) system powered by HSL CSS Variables exposed to both Tailwind CSS and Material UI.
+The platform utilizes a dual-theme (Dark/Light Mode) system powered by HSL CSS Variables exposed to both custom styles and Material UI.
 
 ```css
 :root {

@@ -2,7 +2,7 @@
 ## Enterprise Sidebar Navigation Architecture & Specifications
 
 **Author:** Senior Frontend Architect & UI/UX Engineer  
-**Stack:** React 19, TypeScript, Material UI, Tailwind CSS, Redux Toolkit, React Router DOM  
+**Stack:** React 19, TypeScript, Material UI, Redux Toolkit, React Router DOM  
 **Access Control:** Role-Based Access Control (RBAC) + Permission-Based Navigation  
 **Design Theme:** Dark Enterprise (`#0B1120`), Glassmorphism (`backdrop-blur-md`), Modern SaaS Dashboard  
 

@@ -38,7 +38,7 @@ for (const q of queriesToExplain) {
     // Bind dummy parameters depending on how many "?" markers exist
     const paramCount = q.sql.split('?').length - 1;
     const dummyParams = Array(paramCount).fill('1');
-    const plans = stmt.all(...dummyParams);
+    const plans = stmt.all(...dummyParams) as any[];
     for (const plan of plans) {
       console.log(` - Detail: ${plan.detail}`);
     }

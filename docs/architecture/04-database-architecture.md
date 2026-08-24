@@ -1,10 +1,10 @@
 # 🗄️ Database Architecture
 
-This document describes the MongoDB database schemas, collections structure, relationships, indexes, and document fields in the Workforce Analytics system.
+This document describes the SQLite database tables, schema structure, relationships, indexes, and columns in the Workforce Analytics system.
 
-The database uses MongoDB for persistence, utilizing the Mongoose ODM to enforce strict schemas, type verification, and indexes in JavaScript.
+The database uses SQLite (local file database during development, and SQLite Cloud for production persistence), utilizing relational constraints, foreign keys, and indexes.
 
-## 1. Document Collections Overview
+## 1. Database Tables Overview
 
 ```mermaid
 erDiagram
@@ -115,16 +115,16 @@ erDiagram
     }
 ```
 
-## 2. Collections and Indexes
+## 2. Tables and Indexes
 
-### Users Collection (`users`)
+### Users Table (`users`)
 - **Key Fields**: `id`, `email`, `password_hash`, `role`, `companyId`.
 - **Indexes**:
   - `id`: Unique index for internal lookup references.
   - `email`: Unique index for authentication queries.
   - `companyId`: Index for multi-tenant isolation query scoping.
 
-### Employees Collection (`employees`)
+### Employees Table (`employees`)
 - **Key Fields**: `id`, `employeeCode`, `name`, `email`, `department`, `location`, `companyId`.
 - **Indexes**:
   - `id`: Unique lookup index.
@@ -133,13 +133,13 @@ erDiagram
   - `department`: Scoped queries for department filters.
   - `location`: Queries filtering employees by office branch.
 
-### Attendance Collection (`attendancerecords`)
+### Attendance Table (`attendancerecords`)
 - **Key Fields**: `id`, `employeeId`, `date`, `status`, `idempotencyKey`.
 - **Indexes**:
   - `employeeId` + `date`: Compound index for daily logs lookup.
   - `idempotencyKey`: Unique index to prevent duplicate check-in API processing.
 
-### Correction Requests Collection (`correctionrequests`)
+### Correction Requests Table (`correctionrequests`)
 - **Key Fields**: `id`, `employeeId`, `date`, `status`.
 - **Indexes**:
   - `employeeId`: Speeds up retrieval of individual submission logs.

@@ -21,6 +21,12 @@ function getDistance(lat1: number, lon1: number, lat2: number, lon2: number): nu
   return R * (2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)));
 }
 
+const getKolkataDate = (): string => {
+  const format = new Date().toLocaleDateString('en-US', { timeZone: 'Asia/Kolkata' });
+  const [month, day, year] = format.split('/');
+  return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+};
+
 export class AttendanceService {
   async findIdentity(employeeId: string, orgId: string): Promise<any> {
     let identity = await employeeRepository.findById(employeeId, orgId);
@@ -92,7 +98,7 @@ export class AttendanceService {
         }
 
         const id = Math.random().toString(36).slice(2, 11);
-        const date = new Date().toISOString().split('T')[0];
+        const date = getKolkataDate();
         const checkInTime = new Date().toISOString();
 
         const record = await Attendance.create([{
@@ -140,7 +146,7 @@ export class AttendanceService {
       });
 
       logAudit(employeeId, 'CHECK_IN', `Checked in using ${workMode} mode on ${shiftType} shift`, orgId);
-      notificationService.triggerGoogleCalendarNotification(employeeId, identity.name, 'Office Login Check-In', new Date().toISOString().split('T')[0]);
+      notificationService.triggerGoogleCalendarNotification(employeeId, identity.name, 'Office Login Check-In', getKolkataDate());
       
       return { data: result.data, idempotentReplay: false };
     } catch (err) {
@@ -379,7 +385,7 @@ export class AttendanceService {
   }
 
   async getTodayAttendance(userId: string, orgId: string): Promise<any> {
-    const todayDate = new Date().toISOString().split('T')[0];
+    const todayDate = getKolkataDate();
     return Attendance.findOne({ employeeId: userId, date: todayDate, companyId: orgId });
   }
 
