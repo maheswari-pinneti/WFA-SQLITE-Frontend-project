@@ -4,11 +4,11 @@ import { Check, X, ShieldAlert, AlertCircle, Filter } from 'lucide-react';
 import { useAuth } from '../../auth/hooks/useAuth';
 import { Role } from '../../security/roles/roles';
 import { attendanceService } from '../../services/attendance.service';
-import { syncLocalData, addNotification } from '../../store/attendanceSlice';
+import { fetchAttendanceDataThunk, addNotification } from '../../store/attendanceSlice';
 import { RootState } from '../../app/store';
 
 export const ManagerApprovals: React.FC = () => {
-  const dispatch = useDispatch();
+  const dispatch = useDispatch<any>();
   const { user, role } = useAuth();
   const { corrections } = useSelector((state: RootState) => state.attendance);
 
@@ -21,7 +21,7 @@ export const ManagerApprovals: React.FC = () => {
   const managerDept = user?.department || 'Engineering & Technology';
 
   useEffect(() => {
-    dispatch(syncLocalData({ employeeId }));
+    dispatch(fetchAttendanceDataThunk(employeeId));
   }, [dispatch, employeeId]);
 
   // Enforce access control permissions:
@@ -66,7 +66,7 @@ export const ManagerApprovals: React.FC = () => {
     try {
       await attendanceService.reviewCorrectionRemote(reqId, status, reqComment || `${status} by ${reviewerName}`);
       dispatch(addNotification({ message: `Request successfully ${status.toLowerCase()}!`, type: 'success' }));
-      dispatch(syncLocalData({ employeeId }));
+      dispatch(fetchAttendanceDataThunk(employeeId));
     } catch (err: any) {
       dispatch(addNotification({ message: err.message, type: 'warning' }));
     }

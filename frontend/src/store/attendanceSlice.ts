@@ -28,25 +28,37 @@ const initialState: AttendanceState = {
 
 export const fetchAttendanceDataThunk = createAsyncThunk(
   'attendance/fetchData',
-  async (employeeId: string, { dispatch }) => {
+  async (employeeId: string) => {
+    let records = [];
+    let corrections = [];
+    let auditLogs = [];
+    let isOffline = false;
+
     try {
       const recordsRes = await apiClient.get('/v1/attendance/records');
       if (recordsRes.data && recordsRes.data.success) {
-        attendanceService.saveRecords(recordsRes.data.data);
+        records = recordsRes.data.data;
       }
 
       const correctionsRes = await apiClient.get('/v1/attendance/corrections');
       if (correctionsRes.data && correctionsRes.data.success) {
-        attendanceService.saveCorrections(correctionsRes.data.data);
+        corrections = correctionsRes.data.data;
       }
+
       const auditRes = await apiClient.get('/v1/attendance/audit-logs');
       if (auditRes.data && auditRes.data.success) {
-        localStorage.setItem('wfa_attendance_audit', JSON.stringify(auditRes.data.data));
+        auditLogs = auditRes.data.data;
       }
     } catch (err) {
       console.warn('Offline or unable to fetch from server, fallback to local storage cache.', err);
+      isOffline = true;
+      // Fallback to local storage if offline
+      records = attendanceService.getRecords();
+      corrections = attendanceService.getCorrections();
+      auditLogs = attendanceService.getAuditLogs();
     }
-    dispatch(syncLocalData({ employeeId }));
+
+    return { records, corrections, auditLogs, isOffline, employeeId };
   }
 );
 
@@ -78,6 +90,28 @@ const attendanceSlice = createSlice({
       state.notifications = [];
     }
   },
+  extraReducers: (builder) => {
+    builder
+      .addCase(fetchAttendanceDataThunk.pending, (state) => {
+        state.isLoading = true;
+        state.error = null;
+      })
+      .addCase(fetchAttendanceDataThunk.fulfilled, (state, action) => {
+        state.isLoading = false;
+        state.records = action.payload.records;
+        state.corrections = action.payload.corrections;
+        state.auditLogs = action.payload.auditLogs;
+        state.isOffline = action.payload.isOffline;
+        state.offlineQueueLength = attendanceService.getOfflineQueue().length;
+        
+        const active = state.records.find((r) => r.employeeId === action.payload.employeeId && r.status !== 'Checked Out');
+        state.activeRecord = active || null;
+      })
+      .addCase(fetchAttendanceDataThunk.rejected, (state, action) => {
+        state.isLoading = false;
+        state.error = action.error.message || 'Failed to fetch attendance data';
+      });
+  }
 });
 
 export const { setOfflineState, syncLocalData, addNotification, clearNotifications } = attendanceSlice.actions;

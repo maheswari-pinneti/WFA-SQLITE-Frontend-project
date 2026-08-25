@@ -105,7 +105,7 @@ const verify = async () => {
     console.log("API: healthy");
     console.log("Database: connected");
     console.log(`DatabaseType: ${isCloud ? 'SQLite Cloud' : 'SQLite Local'}`);
-    
+    process.exit(0);
   } catch (err) {
     console.error("\nVERIFICATION STATUS: FAILED");
     console.error("---------------------------");

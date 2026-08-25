@@ -70,6 +70,7 @@ const verifyDataset = async () => {
     }
 
     console.log("\nDATASET SEED VERIFICATION: SUCCESS");
+    process.exit(0);
   } catch (err) {
     console.error("\nDATASET SEED VERIFICATION: FAILED");
     console.error(`Error details: ${err instanceof Error ? err.message : String(err)}`);

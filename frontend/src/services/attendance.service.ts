@@ -433,26 +433,18 @@ class AttendanceService {
 
   async checkInRemote(params: Parameters<AttendanceService['checkIn']>[0]): Promise<AttendanceRecord> {
     const response = await apiClient.post('/v1/attendance/check-in', params);
-    const record = this.unwrapResponse<AttendanceRecord>(response);
-    const records = this.getRecords().filter((item) => item.id !== record.id);
-    this.saveRecords([...records, record]);
-    return record;
+    return this.unwrapResponse<AttendanceRecord>(response);
   }
 
   async transitionRemote(action: 'break' | 'resume' | 'check-out', employeeId: string): Promise<AttendanceRecord> {
     const response = await apiClient.post(`/v1/attendance/${action}`, { employeeId });
-    const record = this.unwrapResponse<AttendanceRecord>(response);
-    const records = this.getRecords().filter((item) => item.id !== record.id);
-    this.saveRecords([...records, record]);
-    return record;
+    return this.unwrapResponse<AttendanceRecord>(response);
   }
 
   async submitCorrectionRemote(params: Parameters<AttendanceService['submitCorrectionRequest']>[0]): Promise<CorrectionRequest> {
     const response = await apiClient.post('/v1/attendance/corrections', params);
     const result = this.unwrapResponse<{ id: string; status: CorrectionRequest['status'] }>(response);
-    const request: CorrectionRequest = { ...params, ...result, createdAt: new Date().toISOString() };
-    this.saveCorrections([request, ...this.getCorrections().filter((item) => item.id !== request.id)]);
-    return request;
+    return { ...params, ...result, createdAt: new Date().toISOString() };
   }
 
   async reviewCorrectionRemote(reqId: string, status: 'Approved' | 'Rejected', comment: string): Promise<void> {

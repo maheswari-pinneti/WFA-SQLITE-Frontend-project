@@ -3,11 +3,11 @@ import { useDispatch, useSelector } from 'react-redux';
 import { Calendar, Send, CheckCircle2, XCircle } from 'lucide-react';
 import { useAuth } from '../../auth/hooks/useAuth';
 import { attendanceService } from '../../services/attendance.service';
-import { syncLocalData, addNotification } from '../../store/attendanceSlice';
+import { fetchAttendanceDataThunk, addNotification } from '../../store/attendanceSlice';
 import { RootState } from '../../app/store';
 
 export const CorrectionRequests: React.FC = () => {
-  const dispatch = useDispatch();
+  const dispatch = useDispatch<any>();
   const { user } = useAuth();
   
   const [date, setDate] = useState('');
@@ -22,7 +22,7 @@ export const CorrectionRequests: React.FC = () => {
   const { corrections } = useSelector((state: RootState) => state.attendance);
 
   useEffect(() => {
-    dispatch(syncLocalData({ employeeId }));
+    dispatch(fetchAttendanceDataThunk(employeeId));
   }, [dispatch, employeeId]);
 
   // Filter requests to show only current employee's requests
@@ -48,7 +48,7 @@ export const CorrectionRequests: React.FC = () => {
       dispatch(addNotification({ message: 'Correction request submitted for approval.', type: 'success' }));
       setDate('');
       setReason('');
-      dispatch(syncLocalData({ employeeId }));
+      dispatch(fetchAttendanceDataThunk(employeeId));
     } catch (err: any) {
       dispatch(addNotification({ message: err.message, type: 'warning' }));
     }

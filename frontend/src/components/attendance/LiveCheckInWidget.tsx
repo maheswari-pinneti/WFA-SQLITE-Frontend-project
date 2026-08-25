@@ -87,20 +87,16 @@ export const LiveCheckInWidget: React.FC<LiveCheckInWidgetProps> = ({
     }
 
     try {
-      await attendanceService.checkInRemote(payload);
+      const record = await attendanceService.checkInRemote(payload);
       dispatch(addNotification({ message: 'Checked in successfully!', type: 'success' }));
       
       // Overtime or Late arrival warning push
-      const updatedRecords = attendanceService.getRecords();
-      const current = updatedRecords.find((r) => r.employeeId === employeeId && r.status !== 'Checked Out');
-      if (current) {
-        const stats = attendanceService.calculateHours(current);
-        if (stats.lateArrival) {
-          dispatch(addNotification({ message: 'Late arrival registered for this shift.', type: 'warning' }));
-        }
+      const stats = attendanceService.calculateHours(record);
+      if (stats.lateArrival) {
+        dispatch(addNotification({ message: 'Late arrival registered for this shift.', type: 'warning' }));
       }
       
-      dispatch(syncLocalData({ employeeId }));
+      dispatch(fetchAttendanceDataThunk(employeeId));
     } catch (err: any) {
       dispatch(addNotification({ message: err.message, type: 'warning' }));
     }
@@ -120,7 +116,7 @@ export const LiveCheckInWidget: React.FC<LiveCheckInWidgetProps> = ({
     try {
       await attendanceService.transitionRemote('break', employeeId);
       dispatch(addNotification({ message: 'Break started.', type: 'info' }));
-      dispatch(syncLocalData({ employeeId }));
+      dispatch(fetchAttendanceDataThunk(employeeId));
     } catch (err: any) {
       dispatch(addNotification({ message: err.message, type: 'warning' }));
     }
@@ -140,7 +136,7 @@ export const LiveCheckInWidget: React.FC<LiveCheckInWidgetProps> = ({
     try {
       await attendanceService.transitionRemote('resume', employeeId);
       dispatch(addNotification({ message: 'Resumed work.', type: 'success' }));
-      dispatch(syncLocalData({ employeeId }));
+      dispatch(fetchAttendanceDataThunk(employeeId));
     } catch (err: any) {
       dispatch(addNotification({ message: err.message, type: 'warning' }));
     }
@@ -160,7 +156,7 @@ export const LiveCheckInWidget: React.FC<LiveCheckInWidgetProps> = ({
     try {
       await attendanceService.transitionRemote('check-out', employeeId);
       dispatch(addNotification({ message: 'Checked out successfully!', type: 'success' }));
-      dispatch(syncLocalData({ employeeId }));
+      dispatch(fetchAttendanceDataThunk(employeeId));
     } catch (err: any) {
       dispatch(addNotification({ message: err.message, type: 'warning' }));
     }
@@ -173,7 +169,7 @@ export const LiveCheckInWidget: React.FC<LiveCheckInWidgetProps> = ({
     } else {
       dispatch(addNotification({ message: `Successfully synced ${res.syncedCount} actions!`, type: 'success' }));
     }
-    dispatch(syncLocalData({ employeeId }));
+    dispatch(fetchAttendanceDataThunk(employeeId));
   };
 
   // Stats for the active record or default placeholder
