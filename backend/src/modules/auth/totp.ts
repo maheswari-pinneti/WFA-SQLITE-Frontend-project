@@ -1,9 +1,11 @@
 import crypto from 'crypto';
-import { generateSecret, generateURI, verify, NobleCryptoPlugin } from 'otplib';
+import { TOTP, NobleCryptoPlugin, ScureBase32Plugin } from 'otplib';
 import QRCode from 'qrcode';
 import { env } from '../../config/env.js';
 
 const nobleCrypto = new NobleCryptoPlugin();
+const base32Plugin = new ScureBase32Plugin();
+const totpInstance = new TOTP({ crypto: nobleCrypto, base32: base32Plugin });
 
 // Derive 32-byte key from environment configuration key
 const getEncryptionKey = (): Buffer => {
@@ -52,7 +54,7 @@ export const decryptSecret = (encryptedText: string): string => {
  * Generate a new cryptographically secure TOTP secret key
  */
 export const generateTotpSecret = (): string => {
-  return generateSecret({ crypto: nobleCrypto });
+  return totpInstance.generateSecret();
 };
 
 /**
@@ -60,7 +62,7 @@ export const generateTotpSecret = (): string => {
  */
 export const generateQrCode = async (email: string, secret: string): Promise<{ otpauthUrl: string; qrCodeDataUrl: string }> => {
   const issuer = process.env.MFA_ISSUER || 'WorkforceAnalytics';
-  const otpauthUrl = generateURI({ secret, label: email, issuer });
+  const otpauthUrl = totpInstance.toURI({ secret, label: email, issuer });
   const qrCodeDataUrl = await QRCode.toDataURL(otpauthUrl);
   return { otpauthUrl, qrCodeDataUrl };
 };
@@ -72,8 +74,12 @@ export const verifyTotpCode = async (code: string, secret: string): Promise<bool
   if (!code || code.length !== 6 || !/^\d+$/.test(code)) {
     return false;
   }
-  const result = await verify({ token: code, secret, crypto: nobleCrypto, window: 1 });
-  return result.valid;
+  try {
+    const result = await totpInstance.verify(code, { secret, window: 1 });
+    return result.valid;
+  } catch (err) {
+    return false;
+  }
 };
 
 /**

@@ -3,10 +3,11 @@ import { enrollTotp, confirmTotpEnroll, verifyTotpChallenge, createTotpChallenge
 import { userRepository } from '../../backend/src/modules/auth/auth.repository.js';
 import { verifyTotpCode } from '../../backend/src/modules/auth/totp.js';
 import { initDb, getDb } from '../../backend/src/config/db.js';
-import { generate } from 'otplib';
-import { NobleCryptoPlugin } from 'otplib';
+import { TOTP, NobleCryptoPlugin, ScureBase32Plugin } from 'otplib';
 
 const nobleCrypto = new NobleCryptoPlugin();
+const base32Plugin = new ScureBase32Plugin();
+const totpInstance = new TOTP({ crypto: nobleCrypto, base32: base32Plugin });
 
 const mockUser = {
   id: 'test-user-mfa-id',
@@ -67,7 +68,7 @@ describe('TOTP MFA Operational Unit Tests', () => {
   });
 
   it('3. Verification & Enabling: Should confirm enrollment with valid TOTP code', async () => {
-    const correctCode = await generate({ secret, crypto: nobleCrypto });
+    const correctCode = await totpInstance.generate({ secret });
     const result = await confirmTotpEnroll(mockUser.id, correctCode);
     expect(result.success).toBe(true);
     expect(result.recoveryCodes.length).toBe(10);
@@ -81,7 +82,7 @@ describe('TOTP MFA Operational Unit Tests', () => {
     const challenge = await createTotpChallenge(mockUser);
     expect(challenge.challengeId).toBeDefined();
 
-    const correctCode = await generate({ secret, crypto: nobleCrypto });
+    const correctCode = await totpInstance.generate({ secret });
     const verifyRes = await verifyTotpChallenge(challenge.challengeId, correctCode);
     expect(verifyRes.success).toBe(true);
     expect(verifyRes.userId).toBe(mockUser.id);
@@ -92,7 +93,7 @@ describe('TOTP MFA Operational Unit Tests', () => {
     getDb().prepare('UPDATE mfa_settings SET last_used_time_step = 0 WHERE user_id = ?').run(mockUser.id);
     
     const challenge = await createTotpChallenge(mockUser);
-    const correctCode = await generate({ secret, crypto: nobleCrypto });
+    const correctCode = await totpInstance.generate({ secret });
     
     const verifyRes1 = await verifyTotpChallenge(challenge.challengeId, correctCode);
     expect(verifyRes1.success).toBe(true);
@@ -108,7 +109,7 @@ describe('TOTP MFA Operational Unit Tests', () => {
 
     const challenge1 = await createTotpChallenge(mockUser);
     const challenge2 = await createTotpChallenge(mockUser);
-    const correctCode = await generate({ secret, crypto: nobleCrypto });
+    const correctCode = await totpInstance.generate({ secret });
 
     const verifyRes1 = await verifyTotpChallenge(challenge1.challengeId, correctCode);
     expect(verifyRes1.success).toBe(true);
