@@ -75,8 +75,12 @@ apiClient.interceptors.response.use(
 
       // If refresh failed, perform secure logout redirect
       setAccessToken(null);
-      localStorage.removeItem(STORAGE_KEYS.USER_DATA);
+      sessionStorage.removeItem(STORAGE_KEYS.USER_DATA);
       window.location.assign('/login');
+    }
+
+    if (error.response?.data?.message) {
+      error.message = error.response.data.message;
     }
 
     return Promise.reject(error);

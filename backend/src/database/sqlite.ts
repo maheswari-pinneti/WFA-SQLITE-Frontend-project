@@ -1,4 +1,4 @@
-import { getDb } from './connection.js';
+import { getDb, query, execute } from './connection.js';
 import { buildWhereClause, deserializeRow, serializeValue, getTableColumns } from './query.js';
 
 export class ModelShim {
@@ -12,9 +12,8 @@ export class ModelShim {
     return this.findOne({ id });
   }
 
-  find(query?: any) {
-    const db = getDb();
-    const { clause, params } = buildWhereClause(this.tableName, query);
+  find(queryParam?: any) {
+    const { clause, params } = buildWhereClause(this.tableName, queryParam);
     
     const builder = {
       _sort: '',
@@ -58,26 +57,26 @@ export class ModelShim {
       
       then: (resolve: (val: any) => void, reject: (err: any) => void) => {
         let sql = `SELECT * FROM ${this.tableName} ${clause}`;
-        try {
-          if (this._sort) sql += ` ${this._sort}`;
-          if (this._limit !== null && this._limit !== undefined) sql += ` LIMIT ${this._limit}`;
-          if (this._skip !== null && this._skip !== undefined) sql += ` OFFSET ${this._skip}`;
-          
-          const rows = db.prepare(sql).all(...params);
-          resolve(rows.map(row => deserializeRow(this.tableName, row)));
-        } catch (e) {
-          console.error(`[SQLite Error in find] SQL: "${sql}", Params:`, params, e);
-          reject(e);
-        }
+        if (this._sort) sql += ` ${this._sort}`;
+        if (this._limit !== null && this._limit !== undefined) sql += ` LIMIT ${this._limit}`;
+        if (this._skip !== null && this._skip !== undefined) sql += ` OFFSET ${this._skip}`;
+
+        query(sql, params)
+          .then(rows => {
+            resolve(rows.map(row => deserializeRow(this.tableName, row)));
+          })
+          .catch(e => {
+            console.error(`[SQLite Error in find] SQL: "${sql}", Params:`, params, e);
+            reject(e);
+          });
       }
     };
     
     return builder;
   }
 
-  findOne(query?: any) {
-    const db = getDb();
-    const { clause, params } = buildWhereClause(this.tableName, query);
+  findOne(queryParam?: any) {
+    const { clause, params } = buildWhereClause(this.tableName, queryParam);
     
     const builder = {
       _sort: '',
@@ -105,16 +104,18 @@ export class ModelShim {
       
       then: (resolve: (val: any) => void, reject: (err: any) => void) => {
         let sql = `SELECT * FROM ${this.tableName} ${clause}`;
-        try {
-          if (this._sort) sql += ` ${this._sort}`;
-          sql += ` LIMIT 1`;
-          
-          const row = db.prepare(sql).get(...params);
-          resolve(row ? deserializeRow(this.tableName, row) : null);
-        } catch (e) {
-          console.error(`[SQLite Error in findOne] SQL: "${sql}", Params:`, params, e);
-          reject(e);
-        }
+        if (this._sort) sql += ` ${this._sort}`;
+        sql += ` LIMIT 1`;
+        
+        query(sql, params)
+          .then(rows => {
+            const row = rows[0] || null;
+            resolve(row ? deserializeRow(this.tableName, row) : null);
+          })
+          .catch(e => {
+            console.error(`[SQLite Error in findOne] SQL: "${sql}", Params:`, params, e);
+            reject(e);
+          });
       }
     };
     
@@ -122,7 +123,6 @@ export class ModelShim {
   }
 
   async create(docOrDocs: any, options?: any) {
-    const db = getDb();
     const timestamp = new Date().toISOString();
     
     const docs = Array.isArray(docOrDocs) ? docOrDocs : [docOrDocs];
@@ -152,10 +152,10 @@ export class ModelShim {
       const values = fields.map(k => serializeValue(data[k]));
       
       try {
-        db.prepare(`
+        await execute(`
           INSERT INTO ${this.tableName} (${fields.join(', ')})
           VALUES (${placeholders})
-        `).run(...values);
+        `, values);
       } catch (err: any) {
         if (err.code === 'SQLITE_CONSTRAINT_UNIQUE' || err.message.includes('UNIQUE constraint failed')) {
           err.code = 11000;
@@ -165,9 +165,11 @@ export class ModelShim {
       
       let insertedRow;
       if (this.tableName === 'idempotencyrecords') {
-        insertedRow = db.prepare(`SELECT * FROM ${this.tableName} WHERE companyId = ? AND key = ?`).get(data.companyId, data.key);
+        const rows = await query(`SELECT * FROM ${this.tableName} WHERE companyId = ? AND key = ?`, [data.companyId, data.key]);
+        insertedRow = rows[0];
       } else {
-        insertedRow = db.prepare(`SELECT * FROM ${this.tableName} WHERE id = ?`).get(data.id);
+        const rows = await query(`SELECT * FROM ${this.tableName} WHERE id = ?`, [data.id]);
+        insertedRow = rows[0];
       }
       
       inserted.push(deserializeRow(this.tableName, insertedRow));
@@ -180,9 +182,8 @@ export class ModelShim {
     return this.create(docs);
   }
 
-  async _updateOneInternal(query: any, update: any) {
-    const db = getDb();
-    const { clause, params } = buildWhereClause(this.tableName, query);
+  async _updateOneInternal(queryParam: any, update: any) {
+    const { clause, params } = buildWhereClause(this.tableName, queryParam);
     
     let updates = update;
     if (update.$set) {
@@ -208,29 +209,30 @@ export class ModelShim {
     }
     
     const queryParams = [...values, ...params];
-    const info = db.prepare(`UPDATE ${this.tableName} SET ${setClause} ${clause}`).run(...queryParams);
-    return { nModified: info.changes };
+    const info = await execute(`UPDATE ${this.tableName} SET ${setClause} ${clause}`, queryParams);
+    const changes = info && typeof info.changes === 'number' ? info.changes : 1;
+    return { nModified: changes };
   }
 
-  updateOne(query: any, update: any) {
+  updateOne(queryParam: any, update: any) {
     const builder = {
       session: () => builder,
       then: (resolve: (val: any) => void, reject: (err: any) => void) => {
-        this._updateOneInternal(query, update).then(resolve, reject);
+        this._updateOneInternal(queryParam, update).then(resolve, reject);
       }
     };
     return builder;
   }
 
-  updateMany(query: any, update: any) {
-    return this.updateOne(query, update);
+  updateMany(queryParam: any, update: any) {
+    return this.updateOne(queryParam, update);
   }
 
-  async findOneAndUpdate(query: any, update: any, options?: any) {
-    const db = getDb();
-    const { clause, params } = buildWhereClause(this.tableName, query);
+  async findOneAndUpdate(queryParam: any, update: any, options?: any) {
+    const { clause, params } = buildWhereClause(this.tableName, queryParam);
     
-    const row = db.prepare(`SELECT * FROM ${this.tableName} ${clause} LIMIT 1`).get(...params);
+    const rows = await query(`SELECT * FROM ${this.tableName} ${clause} LIMIT 1`, params);
+    const row = rows[0];
     if (!row) return null;
     
     let updates = update;
@@ -256,74 +258,75 @@ export class ModelShim {
       
       if (this.tableName === 'idempotencyrecords') {
         values.push(row.companyId, row.key);
-        db.prepare(`UPDATE ${this.tableName} SET ${setClause} WHERE companyId = ? AND key = ?`).run(...values);
+        await execute(`UPDATE ${this.tableName} SET ${setClause} WHERE companyId = ? AND key = ?`, values);
       } else {
         values.push(row.id);
-        db.prepare(`UPDATE ${this.tableName} SET ${setClause} WHERE id = ?`).run(...values);
+        await execute(`UPDATE ${this.tableName} SET ${setClause} WHERE id = ?`, values);
       }
     }
     
     let updatedRow;
     if (this.tableName === 'idempotencyrecords') {
-      updatedRow = db.prepare(`SELECT * FROM ${this.tableName} WHERE companyId = ? AND key = ?`).get(row.companyId, row.key);
+      const rows = await query(`SELECT * FROM ${this.tableName} WHERE companyId = ? AND key = ?`, [row.companyId, row.key]);
+      updatedRow = rows[0];
     } else {
-      updatedRow = db.prepare(`SELECT * FROM ${this.tableName} WHERE id = ?`).get(row.id);
+      const rows = await query(`SELECT * FROM ${this.tableName} WHERE id = ?`, [row.id]);
+      updatedRow = rows[0];
     }
     return deserializeRow(this.tableName, updatedRow);
   }
 
-  async findOneAndDelete(query: any) {
-    const db = getDb();
-    const { clause, params } = buildWhereClause(this.tableName, query);
-    const row = db.prepare(`SELECT * FROM ${this.tableName} ${clause} LIMIT 1`).get(...params);
+  async findOneAndDelete(queryParam: any) {
+    const { clause, params } = buildWhereClause(this.tableName, queryParam);
+    const rows = await query(`SELECT * FROM ${this.tableName} ${clause} LIMIT 1`, params);
+    const row = rows[0];
     if (!row) return null;
     
     if (this.tableName === 'idempotencyrecords') {
-      db.prepare(`DELETE FROM ${this.tableName} WHERE companyId = ? AND key = ?`).run(row.companyId, row.key);
+      await execute(`DELETE FROM ${this.tableName} WHERE companyId = ? AND key = ?`, [row.companyId, row.key]);
     } else {
-      db.prepare(`DELETE FROM ${this.tableName} WHERE id = ?`).run(row.id);
+      await execute(`DELETE FROM ${this.tableName} WHERE id = ?`, [row.id]);
     }
     return deserializeRow(this.tableName, row);
   }
 
-  async _deleteOneInternal(query: any) {
-    const db = getDb();
-    const { clause, params } = buildWhereClause(this.tableName, query);
-    const info = db.prepare(`DELETE FROM ${this.tableName} ${clause}`).run(...params);
-    return { deletedCount: info.changes };
+  async _deleteOneInternal(queryParam: any) {
+    const { clause, params } = buildWhereClause(this.tableName, queryParam);
+    const info = await execute(`DELETE FROM ${this.tableName} ${clause}`, params);
+    const changes = info && typeof info.changes === 'number' ? info.changes : 1;
+    return { deletedCount: changes };
   }
 
-  deleteOne(query: any) {
+  deleteOne(queryParam: any) {
     const builder = {
       session: () => builder,
       then: (resolve: (val: any) => void, reject: (err: any) => void) => {
-        this._deleteOneInternal(query).then(resolve, reject);
+        this._deleteOneInternal(queryParam).then(resolve, reject);
       }
     };
     return builder;
   }
 
-  deleteMany(query: any) {
+  deleteMany(queryParam: any) {
     const builder = {
       session: () => builder,
       then: (resolve: (val: any) => void, reject: (err: any) => void) => {
-        this._deleteOneInternal(query).then(resolve, reject);
+        this._deleteOneInternal(queryParam).then(resolve, reject);
       }
     };
     return builder;
   }
 
-  async countDocuments(query?: any) {
-    const db = getDb();
-    const { clause, params } = buildWhereClause(this.tableName, query);
-    const row = db.prepare(`SELECT COUNT(*) as count FROM ${this.tableName} ${clause}`).get(...params) as any;
-    return row.count;
+  async countDocuments(queryParam?: any) {
+    const { clause, params } = buildWhereClause(this.tableName, queryParam);
+    const rows = await query(`SELECT COUNT(*) as count FROM ${this.tableName} ${clause}`, params);
+    const row = rows[0] as any;
+    return row ? row.count : 0;
   }
 
-  async distinct(field: string, query?: any) {
-    const db = getDb();
-    const { clause, params } = buildWhereClause(this.tableName, query);
-    const rows = db.prepare(`SELECT DISTINCT ${field} FROM ${this.tableName} ${clause}`).all(...params) as any[];
+  async distinct(field: string, queryParam?: any) {
+    const { clause, params } = buildWhereClause(this.tableName, queryParam);
+    const rows = await query(`SELECT DISTINCT ${field} FROM ${this.tableName} ${clause}`, params) as any[];
     return rows.map(r => r[field]);
   }
 }

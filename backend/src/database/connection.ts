@@ -3,8 +3,8 @@ import { connectDatabase, query, execute, healthCheck } from './sqlite-cloud.js'
 export const ORGANIZATION_ID = 'org-stackly';
 let initPromise: Promise<void> | null = null;
 
-// Re-export getDb for any remaining legacy calls (returns raw local/cloud db client)
-export { getDatabase as getDb } from './sqlite-cloud.js';
+// Re-export getDb and query/execute helpers
+export { getDatabase as getDb, query, execute } from './sqlite-cloud.js';
 
 export const initDb = async (): Promise<void> => {
   if (!initPromise) {

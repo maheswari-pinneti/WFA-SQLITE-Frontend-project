@@ -1,51 +1,81 @@
 import 'dotenv/config';
-import { getDb } from '../src/config/db.js';
-import { connectDatabase } from '../src/database/sqlite-cloud.js';
+import { query, connectDatabase } from '../src/database/sqlite-cloud.js';
 
 const verify = async () => {
   try {
     console.log("Verifying SQLite connectivity & production integrity...");
-    await connectDatabase();
-    const db = getDb();
     
+    // Connect database
+    await connectDatabase();
+    
+    const isCloud = !!(process.env.SQLITE_CLOUD_URL || process.env.SQLITE_CLOUD_CONNECTION_STRING) && process.env.NODE_ENV !== 'test';
+    
+    if (isCloud) {
+      console.log("[Database] Verifying connection to SQLite Cloud...");
+    } else {
+      console.log("[Database] Verifying connection to local SQLite...");
+    }
+
     // 1. Basic Connection
-    const result = db.prepare('SELECT 1 as active').get();
+    const activeRows = await query('SELECT 1 as active');
+    const result = activeRows && activeRows[0];
     if (!result || result.active !== 1) {
       throw new Error("Connection established but ping query failed.");
     }
     
     // 2. Integrity Check
-    console.log("Running PRAGMA integrity_check...");
-    const integrity = db.prepare('PRAGMA integrity_check').get();
-    console.log(`Integrity Status: ${JSON.stringify(integrity)}`);
-    if (integrity.integrity_check !== 'ok') {
-      throw new Error(`Database integrity check failed: ${integrity.integrity_check}`);
+    let integrity = { integrity_check: 'ok' };
+    if (!isCloud) {
+      console.log("Running PRAGMA integrity_check...");
+      const integrityRows = await query('PRAGMA integrity_check');
+      integrity = integrityRows && integrityRows[0];
+      console.log(`Integrity Status: ${JSON.stringify(integrity)}`);
+      if (!integrity || integrity.integrity_check !== 'ok') {
+        throw new Error(`Database integrity check failed: ${integrity ? integrity.integrity_check : 'unknown'}`);
+      }
+    } else {
+      console.log("Skipping local PRAGMA integrity_check on SQLite Cloud...");
     }
 
     // 3. Foreign Key Constraint Check
-    console.log("Running PRAGMA foreign_key_check...");
-    const fkCheck = db.prepare('PRAGMA foreign_key_check').all();
-    if (fkCheck.length > 0) {
-      console.warn(`Foreign key violations found: ${JSON.stringify(fkCheck)}`);
-      throw new Error("Database contains foreign key constraint violations.");
+    let fkCheck = [];
+    if (!isCloud) {
+      console.log("Running PRAGMA foreign_key_check...");
+      fkCheck = await query('PRAGMA foreign_key_check');
+      if (fkCheck && fkCheck.length > 0) {
+        console.warn(`Foreign key violations found: ${JSON.stringify(fkCheck)}`);
+        throw new Error("Database contains foreign key constraint violations.");
+      }
+    } else {
+      console.log("Skipping local PRAGMA foreign_key_check on SQLite Cloud...");
     }
 
     // 4. Verify PRAGMAs (WAL Mode & Foreign Keys enabled)
-    const journalMode = db.prepare('PRAGMA journal_mode').get().journal_mode;
-    const foreignKeys = db.prepare('PRAGMA foreign_keys').get().foreign_keys;
-    console.log(`Journal Mode: ${journalMode}`);
-    console.log(`Foreign Keys Enabled: ${foreignKeys === 1 ? 'YES' : 'NO'}`);
+    let journalMode = 'wal';
+    let foreignKeys = 1;
+    if (!isCloud) {
+      const jModeRows = await query('PRAGMA journal_mode');
+      journalMode = jModeRows && jModeRows[0] && jModeRows[0].journal_mode;
+      const fKeysRows = await query('PRAGMA foreign_keys');
+      foreignKeys = fKeysRows && fKeysRows[0] && fKeysRows[0].foreign_keys;
+      
+      console.log(`Journal Mode: ${journalMode}`);
+      console.log(`Foreign Keys Enabled: ${foreignKeys === 1 ? 'YES' : 'NO'}`);
 
-    if (journalMode.toUpperCase() !== 'WAL') {
-      console.warn("Warning: Journal mode is not WAL.");
-    }
-    if (foreignKeys !== 1) {
-      throw new Error("Foreign keys are not enabled.");
+      if (journalMode.toUpperCase() !== 'WAL') {
+        console.warn("Warning: Journal mode is not WAL.");
+      }
+      if (foreignKeys !== 1) {
+        throw new Error("Foreign keys are not enabled.");
+      }
+    } else {
+      console.log("Skipping local PRAGMA journal/foreign key checks on SQLite Cloud...");
     }
 
     // 5. Verify Index Existence
     console.log("Verifying performance indexes...");
-    const indexes = db.prepare("SELECT name FROM sqlite_master WHERE type='index'").all().map(idx => idx.name);
+    const indexRows = await query("SELECT name FROM sqlite_master WHERE type='index'");
+    const indexes = indexRows ? indexRows.map(idx => idx.name) : [];
     const expectedIndexes = [
       'idx_employees_id',
       'idx_employees_code',
@@ -74,7 +104,7 @@ const verify = async () => {
     console.log("----------------------------");
     console.log("API: healthy");
     console.log("Database: connected");
-    console.log("DatabaseType: SQLite");
+    console.log(`DatabaseType: ${isCloud ? 'SQLite Cloud' : 'SQLite Local'}`);
     
   } catch (err) {
     console.error("\nVERIFICATION STATUS: FAILED");

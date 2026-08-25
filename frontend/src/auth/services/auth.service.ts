@@ -30,7 +30,7 @@ export const authService = {
       const user = normalizeUser((response as any).user);
       if (!user) throw new Error('Login returned an invalid user session.');
       setAccessToken((response as any).token);
-      localStorage.setItem(STORAGE_KEYS.USER_DATA, JSON.stringify(user));
+      sessionStorage.setItem(STORAGE_KEYS.USER_DATA, JSON.stringify(user));
       return { ...(response as any), user };
     }
     return response;
@@ -42,7 +42,7 @@ export const authService = {
     const normalizedUser = normalizeUser(user);
     if (!token || !normalizedUser) throw new Error('MFA returned an invalid user session.');
     setAccessToken(token);
-    localStorage.setItem(STORAGE_KEYS.USER_DATA, JSON.stringify(normalizedUser));
+    sessionStorage.setItem(STORAGE_KEYS.USER_DATA, JSON.stringify(normalizedUser));
     return { token, user: normalizedUser };
   },
 
@@ -67,11 +67,11 @@ export const authService = {
       console.error('Logout request failed:', err);
     }
     setAccessToken(null);
-    localStorage.removeItem(STORAGE_KEYS.USER_DATA);
+    sessionStorage.removeItem(STORAGE_KEYS.USER_DATA);
   },
 
   getStoredSession: () => {
-    const userData = localStorage.getItem(STORAGE_KEYS.USER_DATA);
+    const userData = sessionStorage.getItem(STORAGE_KEYS.USER_DATA);
 
     if (userData) {
       try {
