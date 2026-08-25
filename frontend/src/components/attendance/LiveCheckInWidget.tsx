@@ -16,7 +16,7 @@ export const LiveCheckInWidget: React.FC<LiveCheckInWidgetProps> = ({
   employeeName: propName,
   department: propDept
 }) => {
-  const dispatch = useDispatch();
+  const dispatch = useDispatch<any>();
   const { user } = useAuth();
   
   // Local state for shift selection, work mode, and simulation options
