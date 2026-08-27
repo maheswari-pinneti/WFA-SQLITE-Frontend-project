@@ -212,11 +212,29 @@ export const LoginForm: React.FC<LoginFormProps> = ({ selectedRole, onRoleChange
         onSuccess();
       }
     } catch (err: any) {
-      setError(err.message || 'Verification failed.');
-      if (!requiresTotp) {
-        setOtpValues(['', '', '', '', '', '']);
+      const errMsg = err.message || 'Verification failed.';
+      setError(errMsg);
+      
+      const isPermanentFailure = 
+        errMsg.toLowerCase().includes('too many') || 
+        errMsg.toLowerCase().includes('expired') || 
+        errMsg.toLowerCase().includes('invalid session');
+        
+      if (isPermanentFailure) {
+        setTimeout(() => {
+          setIsOtpMode(false);
+          setRequiresMfaSetup(false);
+          setRequiresTotp(false);
+          setChallengeId('');
+          setError('');
+          setSuccessMsg('');
+        }, 3000);
       } else {
-        setTotpCode('');
+        if (!requiresTotp) {
+          setOtpValues(['', '', '', '', '', '']);
+        } else {
+          setTotpCode('');
+        }
       }
     } finally {
       setIsLoading(false);
