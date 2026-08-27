@@ -414,6 +414,57 @@ export const LoginForm: React.FC<LoginFormProps> = ({ selectedRole, onRoleChange
           >
             {isLoading ? 'Signing in...' : 'Sign In'}
           </button>
+
+          <div style={{ display: 'flex', alignItems: 'center', margin: '1.5rem 0', gap: '0.75rem' }}>
+            <div style={{ flex: 1, height: '1px', background: 'var(--border-color)' }}></div>
+            <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Or connect with</span>
+            <div style={{ flex: 1, height: '1px', background: 'var(--border-color)' }}></div>
+          </div>
+
+          <div style={{ display: 'flex', gap: '1rem' }}>
+            <button
+              type="button"
+              onClick={async () => {
+                try {
+                  sessionStorage.setItem('sso_provider', 'google');
+                  const redirectUrl = await authService.getGoogleLoginUrl();
+                  window.location.href = redirectUrl;
+                } catch (err: any) {
+                  setError(err.message || 'Failed to trigger Google login');
+                }
+              }}
+              style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', background: '#ffffff', color: '#1f2937', fontWeight: 600, padding: '0.625rem', border: '1px solid #d1d5db', borderRadius: '8px', cursor: 'pointer', transition: 'all 0.2s' }}
+            >
+              <svg className="w-5 h-5" viewBox="0 0 24 24" style={{ width: '1.25rem', height: '1.25rem' }}>
+                <path fill="#EA4335" d="M12 5.04c1.86 0 3.3.64 4.02 1.33l3-3C17.22 1.77 14.82 1 12 1 7.24 1 3.22 3.75 1.25 7.76l3.74 2.9C6.01 7.37 8.78 5.04 12 5.04z" />
+                <path fill="#4285F4" d="M23.49 12.27c0-.81-.07-1.59-.2-2.35H12v4.45h6.45c-.28 1.48-1.12 2.74-2.38 3.58l3.69 2.86c2.16-1.99 3.42-4.92 3.42-8.54z" />
+                <path fill="#FBBC05" d="M4.99 10.66c-.24-.71-.38-1.47-.38-2.26s.14-1.55.38-2.26L1.25 3.24C.45 4.84 0 6.62 0 8.4s.45 3.56 1.25 5.16l3.74-2.9z" />
+                <path fill="#34A853" d="M12 23c3.24 0 5.97-1.07 7.96-2.9l-3.69-2.86c-1.03.69-2.35 1.1-4.27 1.1-3.22 0-5.99-2.33-6.96-5.62l-3.74 2.9C3.22 20.25 7.24 23 12 23z" />
+              </svg>
+              Google
+            </button>
+            <button
+              type="button"
+              onClick={async () => {
+                try {
+                  sessionStorage.setItem('sso_provider', 'microsoft');
+                  const redirectUrl = await authService.getMicrosoftLoginUrl();
+                  window.location.href = redirectUrl;
+                } catch (err: any) {
+                  setError(err.message || 'Failed to trigger Microsoft login');
+                }
+              }}
+              style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', background: '#2f2f2f', color: '#ffffff', fontWeight: 600, padding: '0.625rem', border: '1px solid #4b5563', borderRadius: '8px', cursor: 'pointer', transition: 'all 0.2s' }}
+            >
+              <svg className="w-5 h-5" viewBox="0 0 23 23" style={{ width: '1.25rem', height: '1.25rem' }}>
+                <path fill="#f35325" d="M0 0h11v11H0z" />
+                <path fill="#80bb1a" d="M12 0h11v11H12z" />
+                <path fill="#00a1f1" d="M0 12h11v11H0z" />
+                <path fill="#ffb900" d="M12 12h11v11H12z" />
+              </svg>
+              Microsoft
+            </button>
+          </div>
         </form>
       ) : recoveryCodes.length > 0 ? (
         <div className="auth-space-y-6">

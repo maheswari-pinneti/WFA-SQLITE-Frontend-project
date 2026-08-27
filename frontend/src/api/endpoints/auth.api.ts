@@ -70,6 +70,42 @@ export const authApi = {
     } catch (error: any) {
       handleApiError(error, 'Logout failed');
     }
+  },
+
+  getGoogleLoginUrl: async (): Promise<string> => {
+    try {
+      const response = await apiClient.get('/v1/auth/sso/google');
+      if (response.data && response.data.success && response.data.redirectUrl) {
+        return response.data.redirectUrl;
+      }
+      throw new Error('Failed to get Google login URL');
+    } catch (error: any) {
+      return handleApiError(error, 'Google SSO initiation failed');
+    }
+  },
+
+  getMicrosoftLoginUrl: async (): Promise<string> => {
+    try {
+      const response = await apiClient.get('/v1/auth/sso/microsoft');
+      if (response.data && response.data.success && response.data.redirectUrl) {
+        return response.data.redirectUrl;
+      }
+      throw new Error('Failed to get Microsoft login URL');
+    } catch (error: any) {
+      return handleApiError(error, 'Microsoft SSO initiation failed');
+    }
+  },
+
+  ssoCallback: async (code: string, state: string, provider: string): Promise<any> => {
+    try {
+      const response = await apiClient.post('/v1/auth/sso/callback', { code, state, provider });
+      if (response.data && response.data.success) {
+        return response.data;
+      }
+      throw new Error(response.data?.message || 'SSO authentication failed');
+    } catch (error: any) {
+      return handleApiError(error, 'SSO authentication failed');
+    }
   }
 };
 

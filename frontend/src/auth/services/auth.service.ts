@@ -60,6 +60,30 @@ export const authService = {
     throw new Error('Failed to refresh session');
   },
 
+  getGoogleLoginUrl: async () => {
+    return await authApi.getGoogleLoginUrl();
+  },
+
+  getMicrosoftLoginUrl: async () => {
+    return await authApi.getMicrosoftLoginUrl();
+  },
+
+  ssoCallback: async (code: string, state: string, provider: string) => {
+    const data = await authApi.ssoCallback(code, state, provider);
+    
+    // Check if it requires MFA redirection challenge
+    if (data.data && data.data.requiresMfa) {
+      return data.data; // Return the MFA challenge instructions
+    }
+
+    const { token, user } = data.data;
+    const normalizedUser = normalizeUser(user);
+    if (!token || !normalizedUser) throw new Error('SSO returned an invalid user session.');
+    setAccessToken(token);
+    sessionStorage.setItem(STORAGE_KEYS.USER_DATA, JSON.stringify(normalizedUser));
+    return { token, user: normalizedUser };
+  },
+
   logout: async () => {
     try {
       await authApi.logout();

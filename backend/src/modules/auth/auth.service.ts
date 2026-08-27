@@ -2,6 +2,7 @@ import crypto from 'crypto';
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
 import { userRepository } from './auth.repository.js';
+import { execute } from '../../database/connection.js';
 import { env } from '../../config/env.js';
 import {
   generateTotpSecret,
@@ -171,10 +172,13 @@ export const generateAndSendOtp = async (user: any, method: string = 'email') =>
     console.log(`[MFA DELIVERY] [EMAIL] Simulated Email OTP code for ${user.email} is: ${code}`);
   }
 
+  const challengeType = method === 'sms' ? 'SMS_OTP' : 'EMAIL_OTP';
+
   await userRepository.createMfaChallenge({
     id: challengeId,
     userId: user.id,
     otp_hash: otpHash,
+    type: challengeType,
     expires_at: expiresAt,
     attempts_count: 0,
     max_attempts: MAX_ATTEMPTS,
@@ -287,6 +291,7 @@ export const createTotpChallenge = async (user: any) => {
     id: challengeId,
     userId: user.id,
     otp_hash: 'totp-mfa',
+    type: 'TOTP',
     expires_at: expiresAt,
     attempts_count: 0,
     max_attempts: MAX_ATTEMPTS,
@@ -352,6 +357,7 @@ export const confirmTotpEnroll = async (userId: string, code: string) => {
     enabled: 1,
     verified_at: now
   });
+  await execute('UPDATE users SET mfa_enabled = 1 WHERE id = ?', [userId]);
 
   // Generate 10 recovery codes
   const { plaintextCodes, hashedCodes } = generateRecoveryCodes();
@@ -477,6 +483,7 @@ export const verifyTotpChallenge = async (challengeId: string, code: string) => 
 export const disableTotp = async (userId: string) => {
   await userRepository.deleteMfaSettings(userId);
   await userRepository.deleteRecoveryCodes(userId);
+  await execute('UPDATE users SET mfa_enabled = 0 WHERE id = ?', [userId]);
   return { success: true };
 };
 

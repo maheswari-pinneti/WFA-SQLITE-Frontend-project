@@ -13,6 +13,11 @@ export const initDb = async (): Promise<void> => {
         // Connect to either SQLite Cloud or fallback to local SQLite
         await connectDatabase();
 
+        // Run migrations for users and mfachallenges columns if they don't exist
+        try { await execute("ALTER TABLE users ADD COLUMN authProvider TEXT DEFAULT 'local';"); } catch (e) {}
+        try { await execute("ALTER TABLE users ADD COLUMN providerSubject TEXT;"); } catch (e) {}
+        try { await execute("ALTER TABLE mfachallenges ADD COLUMN type TEXT DEFAULT 'totp-mfa';"); } catch (e) {}
+
         // Ensure critical tables exist (like failed_logins)
         await execute(`
           CREATE TABLE IF NOT EXISTS failed_logins (
@@ -20,6 +25,16 @@ export const initDb = async (): Promise<void> => {
             attempts INTEGER DEFAULT 0,
             lockedUntil TEXT,
             updatedAt TEXT
+          )
+        `);
+
+        // Ensure OAuth PKCE state table exists
+        await execute(`
+          CREATE TABLE IF NOT EXISTS oauth_states (
+            state TEXT PRIMARY KEY,
+            code_verifier TEXT NOT NULL,
+            provider TEXT NOT NULL,
+            expires_at TEXT NOT NULL
           )
         `);
 

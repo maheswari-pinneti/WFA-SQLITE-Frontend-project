@@ -6,6 +6,7 @@ import { MainLayout } from '../../shared/layouts/MainLayout';
 import { LoginPage } from '../../auth/pages/LoginPage';
 import { SignUpPage } from '../../auth/pages/SignUpPage';
 import { LogoutPage } from '../../auth/pages/LogoutPage';
+import { SsoCallbackPage } from '../../auth/pages/SsoCallbackPage';
 import { Role, ROLE_HOME_PATHS } from '../../security/roles/roles';
 import { useAuth } from '../../auth/hooks/useAuth';
 
@@ -101,6 +102,7 @@ export const AppRoutes: React.FC = () => {
     <Routes>
       {/* Public Auth Routes */}
       <Route path="/login" element={<LoginPage />} />
+      <Route path="/sso-callback" element={<SsoCallbackPage />} />
       <Route path="/signup" element={<SignUpPage />} />
       <Route path="/logout" element={<LogoutPage />} />
       <Route path="/verify-email" element={<LoginPage />} />

@@ -24,6 +24,9 @@ export const seedSqlite = async () => {
   try { db.exec('ALTER TABLE locations ADD COLUMN latitude REAL;'); } catch (e) {}
   try { db.exec('ALTER TABLE locations ADD COLUMN longitude REAL;'); } catch (e) {}
   try { db.exec('ALTER TABLE locations ADD COLUMN geofenceRadius INTEGER DEFAULT 100;'); } catch (e) {}
+  try { db.exec("ALTER TABLE users ADD COLUMN authProvider TEXT DEFAULT 'local';"); } catch (e) {}
+  try { db.exec("ALTER TABLE users ADD COLUMN providerSubject TEXT;"); } catch (e) {}
+  try { db.exec("ALTER TABLE mfachallenges ADD COLUMN type TEXT DEFAULT 'totp-mfa';"); } catch (e) {}
 
   console.log('[SQLite Seeder] Truncating tables for a fresh seed...');
   db.exec(`

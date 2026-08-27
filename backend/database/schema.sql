@@ -73,6 +73,8 @@ CREATE TABLE IF NOT EXISTS users (
   status TEXT DEFAULT 'ACTIVE',
   permissions TEXT, -- Stored as JSON string representation of array
   mfa_enabled INTEGER DEFAULT 1,
+  authProvider TEXT DEFAULT 'local',
+  providerSubject TEXT,
   organizationId TEXT DEFAULT 'org-stackly',
   companyId TEXT DEFAULT 'org-stackly',
   createdAt TEXT,
@@ -83,6 +85,7 @@ CREATE TABLE IF NOT EXISTS mfachallenges (
   id TEXT PRIMARY KEY,
   userId TEXT NOT NULL,
   otp_hash TEXT NOT NULL,
+  type TEXT DEFAULT 'totp-mfa',
   expires_at TEXT NOT NULL,
   attempts_count INTEGER DEFAULT 0,
   max_attempts INTEGER DEFAULT 5,
@@ -352,5 +355,12 @@ CREATE TABLE IF NOT EXISTS mfa_recovery_codes (
 
 CREATE INDEX IF NOT EXISTS idx_mfa_settings_user ON mfa_settings(user_id);
 CREATE INDEX IF NOT EXISTS idx_mfa_recovery_user ON mfa_recovery_codes(user_id);
+
+CREATE TABLE IF NOT EXISTS oauth_states (
+  state TEXT PRIMARY KEY,
+  code_verifier TEXT NOT NULL,
+  provider TEXT NOT NULL,
+  expires_at TEXT NOT NULL
+);
 
 
