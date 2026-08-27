@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { logAudit } from '../../database/connection.js';
+import { logAudit, execute, query } from '../../database/connection.js';
 import * as authService from './auth.service.js';
 import { userRepository } from './auth.repository.js';
 import bcrypt from 'bcryptjs';
@@ -695,7 +695,6 @@ export const adminGetMfaUsers = async (req: any, res: Response): Promise<any> =>
 };
 
 import crypto from 'crypto';
-import { execute, query } from '../../database/connection.js';
 
 const base64UrlEncode = (str: Buffer): string => {
   return str.toString('base64')
