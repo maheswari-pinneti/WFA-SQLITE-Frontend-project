@@ -309,7 +309,7 @@ export const verifyMfa = async (req: Request, res: Response): Promise<any> => {
   try {
     const challenge = await userRepository.findMfaChallengeById(challengeId);
     if (!challenge) {
-      return res.status(400).json({ success: false, message: 'MFA session expired or invalid' });
+      return res.status(400).json({ success: false, code: 'MFA_INVALID', message: 'MFA session expired or invalid' });
     }
 
     let verifyResult;
@@ -321,7 +321,7 @@ export const verifyMfa = async (req: Request, res: Response): Promise<any> => {
 
     if (!verifyResult.success) {
       logAudit('anonymous', 'FAILED_MFA_VERIFICATION', `Failed MFA verification for challenge ${challengeId}: ${verifyResult.message}`);
-      return res.status(400).json({ success: false, message: verifyResult.message });
+      return res.status(400).json({ success: false, code: 'MFA_INVALID', message: verifyResult.message || 'Invalid or expired verification code' });
     }
 
     const user = await userRepository.findById(verifyResult.userId!);
@@ -346,7 +346,7 @@ export const verifyMfa = async (req: Request, res: Response): Promise<any> => {
     }
   } catch (err: any) {
     console.error("MFA VERIFICATION ERROR:", err);
-    return res.status(403).json({ success: false, message: 'MFA session expired or invalid' });
+    return res.status(403).json({ success: false, code: 'MFA_INVALID', message: 'MFA session expired or invalid' });
   }
 };
 
