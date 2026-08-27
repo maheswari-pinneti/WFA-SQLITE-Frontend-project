@@ -27,6 +27,8 @@ export const seedSqlite = async () => {
   try { db.exec("ALTER TABLE users ADD COLUMN authProvider TEXT DEFAULT 'local';"); } catch (e) {}
   try { db.exec("ALTER TABLE users ADD COLUMN providerSubject TEXT;"); } catch (e) {}
   try { db.exec("ALTER TABLE mfachallenges ADD COLUMN type TEXT DEFAULT 'totp-mfa';"); } catch (e) {}
+  try { db.exec("ALTER TABLE failed_logins ADD COLUMN lockedAt TEXT;"); } catch (e) {}
+  try { db.exec("ALTER TABLE failed_logins ADD COLUMN lockReason TEXT;"); } catch (e) {}
 
   console.log('[SQLite Seeder] Truncating tables for a fresh seed...');
   db.exec(`

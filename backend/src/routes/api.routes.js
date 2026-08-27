@@ -29,6 +29,7 @@ router.post('/auth/mfa-resend', authRateLimiter, authController.resendMfa);
 router.post('/auth/logout', authenticateToken, authController.logout);
 router.get('/auth/me', authenticateToken, authController.getMe);
 router.post('/auth/refresh', authRateLimiter, authController.refresh);
+router.post('/auth/admin/unlock', authenticateToken, authorizeRoles(['ADMIN']), authController.adminUnlockUser);
 
 // TOTP MFA Routes
 router.get('/auth/mfa/totp/status', authenticateToken, authController.getMfaStatus);

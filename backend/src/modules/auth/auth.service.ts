@@ -18,7 +18,7 @@ const JWT_SECRET = env.JWT_SECRET || 'wfa_platform_secret_jwt_key_2026';
 const ACCESS_TOKEN_EXPIRY = '15m';
 const REFRESH_TOKEN_EXPIRY_DAYS = 7;
 const OTP_EXPIRY_MINUTES = 5;
-const MAX_ATTEMPTS = 5;
+const MAX_ATTEMPTS = 7;
 const MAX_RESENDS = 5;
 
 const hashToken = (token: string): string => {

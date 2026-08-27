@@ -176,11 +176,10 @@ export const login = async (req: Request, res: Response): Promise<any> => {
     if (failedRecord && failedRecord.lockedUntil) {
       const now = new Date().toISOString();
       if (now < failedRecord.lockedUntil) {
-        const remainingMinutes = Math.ceil((new Date(failedRecord.lockedUntil).getTime() - Date.now()) / (60 * 1000));
         logAudit('anonymous', 'LOCKOUT_BLOCKED', `Blocked login attempt for locked account ${email}`);
-        return res.status(423).json({
+        return res.status(401).json({
           success: false,
-          message: `This account is temporarily locked due to too many failed attempts. Try again in ${remainingMinutes} minutes.`
+          message: 'Invalid email or password'
         });
       }
     }
@@ -190,18 +189,17 @@ export const login = async (req: Request, res: Response): Promise<any> => {
       if (!isMatch) {
         const attempts = failedRecord ? failedRecord.attempts + 1 : 1;
         let lockedUntil: string | null = null;
-        if (attempts >= 5) {
-          lockedUntil = new Date(Date.now() + 15 * 60 * 1000).toISOString();
-          logAudit(user.id, 'ACCOUNT_LOCKOUT', `Account ${email} locked for 15 minutes due to 5 failures`);
+        if (attempts >= 2) {
+          const lockHours = user.role === 'ADMIN' ? 72 : 48;
+          lockedUntil = new Date(Date.now() + lockHours * 60 * 60 * 1000).toISOString();
+          logAudit(user.id, 'ACCOUNT_LOCKOUT', `Account ${email} locked for ${lockHours} hours due to 2 failures`);
         }
         await userRepository.incrementFailedLogins(lookupEmail, lockedUntil);
 
         logAudit(user.id, 'FAILED_AUTHENTICATION', `Incorrect password for ${email}`);
         return res.status(401).json({
           success: false,
-          message: lockedUntil
-            ? 'Too many failed attempts. Your account has been locked for 15 minutes.'
-            : `Invalid email or password. Attempt ${attempts} of 5.`
+          message: 'Invalid email or password'
         });
       }
     } catch (compareErr) {
@@ -903,6 +901,30 @@ export const ssoCallback = async (req: Request, res: Response): Promise<any> => 
         }
       });
     }
+  } catch (err: any) {
+    return res.status(500).json({ success: false, message: err.message });
+  }
+};
+
+export const adminUnlockUser = async (req: Request, res: Response): Promise<any> => {
+  try {
+    const { email } = req.body;
+    if (!email) {
+      return res.status(400).json({ success: false, message: 'Email is required' });
+    }
+
+    const emailLower = email.trim().toLowerCase();
+    const lookupEmail = emailLower.endsWith('@company.com')
+      ? emailLower.replace('@company.com', '@thestackly.com')
+      : emailLower;
+
+    await userRepository.resetFailedLogins(lookupEmail);
+    logAudit((req as any).user?.id || 'admin', 'ADMIN_UNLOCK', `Admin unlocked account: ${lookupEmail}`);
+
+    return res.json({
+      success: true,
+      message: 'Account unlocked successfully.'
+    });
   } catch (err: any) {
     return res.status(500).json({ success: false, message: err.message });
   }

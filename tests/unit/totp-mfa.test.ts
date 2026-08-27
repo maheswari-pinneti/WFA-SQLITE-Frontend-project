@@ -133,11 +133,11 @@ describe('TOTP MFA Operational Unit Tests', () => {
     expect(verifyRes2.success).toBe(false);
   });
 
-  it('8. Lockdown: Should block challenge session after 5 invalid attempts', async () => {
+  it('8. Lockdown: Should block challenge session after 7 invalid attempts', async () => {
     const challenge = await createTotpChallenge(mockUser);
-    for (let i = 0; i < 5; i++) {
+    for (let i = 0; i < 7; i++) {
       const res = await verifyTotpChallenge(challenge.challengeId, '999999');
-      if (i < 4) {
+      if (i < 6) {
         expect(res.success).toBe(false);
         expect(res.message).toContain('Unable to verify');
       } else {

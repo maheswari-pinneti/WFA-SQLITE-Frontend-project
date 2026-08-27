@@ -17,6 +17,8 @@ export const initDb = async (): Promise<void> => {
         try { await execute("ALTER TABLE users ADD COLUMN authProvider TEXT DEFAULT 'local';"); } catch (e) {}
         try { await execute("ALTER TABLE users ADD COLUMN providerSubject TEXT;"); } catch (e) {}
         try { await execute("ALTER TABLE mfachallenges ADD COLUMN type TEXT DEFAULT 'totp-mfa';"); } catch (e) {}
+        try { await execute("ALTER TABLE failed_logins ADD COLUMN lockedAt TEXT;"); } catch (e) {}
+        try { await execute("ALTER TABLE failed_logins ADD COLUMN lockReason TEXT;"); } catch (e) {}
 
         // Ensure critical tables exist (like failed_logins)
         await execute(`
