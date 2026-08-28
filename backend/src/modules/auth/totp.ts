@@ -107,6 +107,7 @@ export const generateRecoveryCodes = (): { plaintextCodes: string[]; hashedCodes
  * Verify a recovery code against stored hashes
  */
 export const verifyRecoveryCode = (userInput: string, storedHashes: string[]): string | null => {
+  if (!userInput) return null;
   const hash = crypto.createHash('sha256').update(userInput.trim()).digest('hex');
   return storedHashes.includes(hash) ? hash : null;
 };
