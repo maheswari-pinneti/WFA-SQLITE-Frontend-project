@@ -4,6 +4,7 @@ import RoleSelector from './RoleSelector';
 import AuthHeader from './AuthHeader';
 import AuthFooter from './AuthFooter';
 import { RoleType } from '../../theme/roles';
+import { authService } from '../../auth/services/auth.service';
 
 interface SignupFormProps {
   selectedRole: RoleType;
@@ -183,6 +184,34 @@ export const SignupForm: React.FC<SignupFormProps> = ({ selectedRole, onRoleChan
           className="auth-btn-primary"
         >
           {isLoading ? 'Creating Account...' : 'Sign Up'}
+        </button>
+
+        <div style={{ display: 'flex', alignItems: 'center', margin: '1.5rem 0', gap: '0.75rem' }}>
+          <div style={{ flex: 1, height: '1px', background: 'var(--border-color)' }}></div>
+          <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Or connect with</span>
+          <div style={{ flex: 1, height: '1px', background: 'var(--border-color)' }}></div>
+        </div>
+
+        <button
+          type="button"
+          onClick={async () => {
+            try {
+              sessionStorage.setItem('sso_provider', 'microsoft');
+              const redirectUrl = await authService.getMicrosoftLoginUrl();
+              window.location.href = redirectUrl;
+            } catch (err: any) {
+              setError(err.message || 'Failed to trigger Microsoft login');
+            }
+          }}
+          style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', background: '#ffffff', color: '#1f2937', fontWeight: 600, padding: '0.625rem', border: '1px solid #d1d5db', borderRadius: '8px', cursor: 'pointer', transition: 'all 0.2s' }}
+        >
+          <svg className="w-5 h-5" viewBox="0 0 23 23" style={{ width: '1.25rem', height: '1.25rem' }}>
+            <path fill="#F25022" d="M0 0h11v11H0z" />
+            <path fill="#7FBA00" d="M12 0h11v11H12z" />
+            <path fill="#00A4EF" d="M0 12h11v11H0z" />
+            <path fill="#FFB900" d="M12 12h11v11H12z" />
+          </svg>
+          Microsoft
         </button>
       </form>
 
