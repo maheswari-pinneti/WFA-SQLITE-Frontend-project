@@ -27,9 +27,33 @@ const getScopeQuery = (req) => {
 
 export const getLeaveRequests = async (req, res) => {
   try {
+    const orgId = getOrganizationId(req);
     const query = getScopeQuery(req);
-    const leaves = await LeaveRequest.find(query).sort({ createdAt: -1 });
-    return res.json({ success: true, data: leaves });
+    const leaves = await LeaveRequest.find(query).sort({ createdAt: -1 }) as any[];
+
+    // Get all employees in the organization to check their joinDate
+    const employees = await Employee.find({ organizationId: orgId }) as any[];
+    const employeeJoinDateMap = new Map<string, string>();
+    employees.forEach(emp => {
+      if (emp.joinDate) {
+        employeeJoinDateMap.set(emp.id, emp.joinDate);
+      }
+    });
+
+    const isAfterOrOnJoinDate = (recordDateStr: string, joinDateStr?: string) => {
+      if (!joinDateStr) return true;
+      const recDate = recordDateStr.substring(0, 10);
+      const joinDate = joinDateStr.substring(0, 10);
+      return recDate >= joinDate;
+    };
+
+    const validLeaves = leaves.filter(leave => {
+      const joinDate = employeeJoinDateMap.get(leave.employeeId);
+      const leaveDate = leave.createdAt || leave.startDate || new Date().toISOString();
+      return isAfterOrOnJoinDate(leaveDate, joinDate);
+    });
+
+    return res.json({ success: true, data: validLeaves });
   } catch (err) {
     return res.status(500).json({ success: false, message: err.message });
   }
@@ -122,7 +146,8 @@ export const reviewLeaveRequest = async (req, res) => {
 
 export const getTasks = async (req, res) => {
   try {
-    const query: any = { organizationId: getOrganizationId(req) };
+    const orgId = getOrganizationId(req);
+    const query: any = { organizationId: orgId };
     if (req.user.role === 'EMPLOYEE') {
       query.assigneeId = req.user.id;
     } else if (req.user.role === 'TEAM_LEAD') {
@@ -131,8 +156,33 @@ export const getTasks = async (req, res) => {
       query.department = req.user.department;
     }
 
-    const tasks = await Task.find(query).sort({ updatedAt: -1, priority: -1 });
-    return res.json({ success: true, data: tasks });
+    const tasks = await Task.find(query).sort({ updatedAt: -1, priority: -1 }) as any[];
+    
+    // Get all employees in the organization to check their joinDate
+    const employees = await Employee.find({ organizationId: orgId }) as any[];
+    const employeeJoinDateMap = new Map<string, string>();
+    employees.forEach(emp => {
+      if (emp.joinDate) {
+        employeeJoinDateMap.set(emp.id, emp.joinDate);
+      }
+    });
+
+    const isAfterOrOnJoinDate = (recordDateStr: string, joinDateStr?: string) => {
+      if (!joinDateStr) return true;
+      const recDate = recordDateStr.substring(0, 10);
+      const joinDate = joinDateStr.substring(0, 10);
+      return recDate >= joinDate;
+    };
+
+    // Filter tasks so they are only included from Joining Date onward
+    const validTasks = tasks.filter(task => {
+      if (!task.assigneeId) return true;
+      const joinDate = employeeJoinDateMap.get(task.assigneeId);
+      const taskDate = task.createdAt || task.updatedAt || new Date().toISOString();
+      return isAfterOrOnJoinDate(taskDate, joinDate);
+    });
+
+    return res.json({ success: true, data: validTasks });
   } catch (err) {
     return res.status(500).json({ success: false, message: err.message });
   }

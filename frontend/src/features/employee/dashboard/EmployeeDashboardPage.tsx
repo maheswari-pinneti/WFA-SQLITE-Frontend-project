@@ -7,7 +7,8 @@ import { LiveCheckInWidget } from '../../../components/attendance/LiveCheckInWid
 import { workforceApi, Task } from '../../../api/endpoints/workforce.api';
 import { attendanceApi, AttendanceRecord, CorrectionRequest } from '../../../api/attendanceApi';
 import { MinimalKpiCard } from '../../../components/ui/MinimalKpiCard';
-import { AnalyticsOverview } from '../../../components/dashboard/AnalyticsOverview';
+import { useAnalyticsData } from '../../../hooks/useAnalyticsData';
+import { AnalyticsBarChart, AnalyticsDonutChart, AnalyticsLineChart } from '../../../components/charts/AnalyticsCharts';
 import { Clock, Calendar, FileText, Compass, CheckCircle2, AlertCircle, Plus, Layers, ClipboardList, Briefcase, Award, Filter } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
@@ -237,6 +238,7 @@ export const EmployeeSprintWork: React.FC<{
 
 export const EmployeeDashboardPage: React.FC = () => {
   const { user } = useAuth();
+  const analytics = useAnalyticsData();
   const [tasks, setTasks] = useState<Task[]>([]);
   const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([]);
   const [corrections, setCorrections] = useState<CorrectionRequest[]>([]);
@@ -368,7 +370,11 @@ export const EmployeeDashboardPage: React.FC = () => {
           goalProgress={goalProgress}
           timesheetStatus={timesheetStatus}
         />
-        <AnalyticsOverview title="My Personal Analytics & Trends" subtitle="Scope-aware productivity and attendance details" compact={false} />
+        {/* Personal Employee Analytics Grid controlled by the Page */}
+        <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
+          <AnalyticsBarChart title="My Daily Work Hours" subtitle="My hours tracked per weekday" data={analytics.data?.attendanceOverview} xKey="name" series={[{ key: 'present', name: 'Work Hours', color: '#10b981' }]} isLoading={analytics.isLoading} error={analytics.error} onRetry={analytics.reload} />
+          <AnalyticsLineChart title="My Performance History" subtitle="Calculated productivity score index" data={analytics.data?.performance} xKey="name" series={[{ key: 'performance', name: 'Productivity', color: '#0ea5e9' }]} isLoading={analytics.isLoading} error={analytics.error} onRetry={analytics.reload} />
+        </div>
         
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2">

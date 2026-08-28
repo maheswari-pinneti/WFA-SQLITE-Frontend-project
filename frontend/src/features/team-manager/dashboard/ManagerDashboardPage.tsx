@@ -4,7 +4,8 @@ import { Role } from '../../../security/roles/roles';
 import { Permission } from '../../../security/permissions/permissions';
 import { KPICard } from '../../../components/cards/KPICard';
 import { DrillDownModal, DrillDownData } from '../../../shared/components/DrillDownModal';
-import { AnalyticsOverview } from '../../../components/dashboard/AnalyticsOverview';
+import { useAnalyticsData } from '../../../hooks/useAnalyticsData';
+import { AnalyticsBarChart, AnalyticsDonutChart, AnalyticsLineChart } from '../../../components/charts/AnalyticsCharts';
 import { workforceApi, Task } from '../../../api/endpoints/workforce.api';
 import { employeeApi } from '../../../api/endpoints/employee.api';
 import { Employee } from '../../../shared/types/common.types';
@@ -219,6 +220,7 @@ export const ManagerSprintOverview: React.FC<{ tasks: Task[] }> = ({ tasks }) =>
 );
 
 export const ManagerDashboardPage: React.FC = () => {
+  const analytics = useAnalyticsData();
   const [drillDownData, setDrillDownData] = useState<DrillDownData | null>(null);
   const [approvals, setApprovals] = useState<Array<{ id: string; employee: string; type: string; duration: string; reason: string; status: 'PENDING' | 'APPROVED' | 'REJECTED' }>>([]);
   const [employees, setEmployees] = useState<Employee[]>([]);
@@ -334,7 +336,16 @@ export const ManagerDashboardPage: React.FC = () => {
           <KPICard title="Pending Approvals" value={`${pendingApprovalsCount} Requests`} change={0.0} trend="neutral" subtitle="Requires manager action" icon={<FileText size={20} />} accentColor="rose" />
         </div>
 
-        <AnalyticsOverview title="Department Intelligence" subtitle="Real-time analytics limited to your authenticated department scope" compact={false} />
+        {/* Scoped Department Analytics Grid controlled by the Page */}
+        <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
+          <AnalyticsLineChart title="Department Growth & Hiring" subtitle="Staff additions inside department" data={analytics.data?.growthData} xKey="name" series={[{ key: 'headcount', name: 'Headcount', color: '#3b82f6' }]} isLoading={analytics.isLoading} error={analytics.error} onRetry={analytics.reload} />
+          <AnalyticsBarChart title="Team Attendance Overview" subtitle="Attendance metrics by team" data={analytics.data?.attendanceOverview} xKey="name" series={[{ key: 'present', name: 'Present', color: '#10b981' }, { key: 'absent', name: 'Absent', color: '#ef4444' }]} isLoading={analytics.isLoading} error={analytics.error} onRetry={analytics.reload} />
+          <AnalyticsDonutChart title="Employment Status Mix" subtitle="Department active duty rate" data={analytics.data?.employmentStatus} isLoading={analytics.isLoading} error={analytics.error} onRetry={analytics.reload} />
+          <AnalyticsDonutChart title="Department Distribution" subtitle="Staff distribution in department" data={analytics.data?.departmentDistribution} isLoading={analytics.isLoading} error={analytics.error} onRetry={analytics.reload} />
+          <AnalyticsBarChart title="Productivity & Performance" subtitle="Team productivity score index" data={analytics.data?.teamProductivity} xKey="name" series={[{ key: 'productivity', name: 'Productivity', color: '#8b5cf6' }]} layout="vertical" isLoading={analytics.isLoading} error={analytics.error} onRetry={analytics.reload} />
+          <AnalyticsDonutChart title="Retention Risks" subtitle="Retention risk distribution" data={analytics.data?.riskDistribution} isLoading={analytics.isLoading} error={analytics.error} onRetry={analytics.reload} colors={['#ef4444', '#f59e0b', '#10b981']} />
+        </div>
+
         <ManagerEmployeeTable deptEmployees={deptEmployees} />
         <ManagerSprintOverview tasks={tasks} />
 

@@ -389,7 +389,30 @@ export class AttendanceService {
       query.department = department;
     }
 
-    return Attendance.find(query);
+    const records = await Attendance.find(query) as any[];
+
+    // Fetch all employees to check their joinDate
+    const employees = await Employee.find({ organizationId: orgId }) as any[];
+    const employeeJoinDateMap = new Map<string, string>();
+    employees.forEach(emp => {
+      if (emp.joinDate) {
+        employeeJoinDateMap.set(emp.id, emp.joinDate);
+      }
+    });
+
+    const isAfterOrOnJoinDate = (recordDateStr: string, joinDateStr?: string) => {
+      if (!joinDateStr) return true;
+      const recDate = recordDateStr.substring(0, 10);
+      const joinDate = joinDateStr.substring(0, 10);
+      return recDate >= joinDate;
+    };
+
+    return records.filter(record => {
+      const joinDate = employeeJoinDateMap.get(record.employeeId);
+      const recordDate = record.createdAt || record.date;
+      if (!recordDate) return true;
+      return isAfterOrOnJoinDate(recordDate, joinDate);
+    });
   }
 
   async getTodayAttendance(userId: string, orgId: string): Promise<any> {

@@ -6,8 +6,8 @@ import { Permission } from '../../../security/permissions/permissions';
 import { KPICard } from '../../../components/cards/KPICard';
 import { DrillDownModal, DrillDownData } from '../../../shared/components/DrillDownModal';
 import { EmployeeTable } from '../../../components/tables/EmployeeTable';
-import { AnalyticsOverview } from '../../../components/dashboard/AnalyticsOverview';
 import { useAnalyticsData } from '../../../hooks/useAnalyticsData';
+import { AnalyticsBarChart, AnalyticsDonutChart, AnalyticsLineChart } from '../../../components/charts/AnalyticsCharts';
 import { workforceApi, Task } from '../../../api/endpoints/workforce.api';
 import { UserCheck, Users, Briefcase, FileText, Plus, Clock, HeartHandshake, Star, AlertTriangle, DollarSign, Filter, Layers } from 'lucide-react';
 import { Link } from 'react-router-dom';
@@ -155,8 +155,8 @@ export const HrSprintOverview: React.FC<{ hrTasks: Task[] }> = ({ hrTasks }) => 
         <tbody className="divide-y divide-slate-800/80">
           {hrTasks.map((task) => (
             <tr key={task.id} className="hover:bg-slate-800/40">
-              <td className="py-3 px-4 text-white font-medium max-w-[200px] truncate">{task.title}</td>
-              <td className="py-3 px-4 text-slate-400">{task.assigneeName || 'HR Team'}</td>
+              <td className="py-3 px-4 text-white font-medium max-w-[250px] truncate">{task.title}</td>
+              <td className="py-3 px-4 text-slate-400">{task.assigneeName || 'Unassigned'}</td>
               <td className="py-3 px-4">
                 <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
                   task.priority === 'CRITICAL' || task.priority === 'HIGH' ? 'bg-rose-500/10 text-rose-400' : 'bg-slate-800 text-slate-300'
@@ -176,7 +176,7 @@ export const HrSprintOverview: React.FC<{ hrTasks: Task[] }> = ({ hrTasks }) => 
 
 export const HrDashboardPage: React.FC = () => {
   const { user } = useAuth();
-  const { data: analytics, isLoading } = useAnalyticsData();
+  const { data: analytics, isLoading, error, reload } = useAnalyticsData();
   const [drillDownData, setDrillDownData] = useState<DrillDownData | null>(null);
   const [hrTasks, setHrTasks] = useState<Task[]>([]);
   const [loadingTasks, setLoadingTasks] = useState(true);
@@ -218,8 +218,6 @@ export const HrDashboardPage: React.FC = () => {
   const rawCount = analytics?.metrics?.totalWorkforce ?? 254;
   const headCount = typeof rawCount === 'number' ? rawCount : Number(rawCount) || 254;
   const attendanceRate = analytics?.metrics?.attendanceRate ?? '96.5%';
-  const riskCount = analytics?.metrics?.retentionRiskCount ?? 0;
-  const lateCount = analytics?.metrics?.lateArrivals ?? 0;
 
   return (
     <RoleGuard allowedRoles={[Role.ADMIN, Role.HR]} requiredPermission={Permission.EMPLOYEE_READ}>
@@ -240,7 +238,7 @@ export const HrDashboardPage: React.FC = () => {
           setStatusFilter={setStatusFilter}
         />
         
-        {/* KPI metrics */}
+        {/* KPI metrics - Grid controlled by the Page */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <KPICard
             title="Total Headcount"
@@ -265,7 +263,16 @@ export const HrDashboardPage: React.FC = () => {
           <KPICard title="Pending Documents" value="3 Audits" change={-0.8} trend="down" subtitle="Contract reviews" icon={<AlertTriangle size={20} />} accentColor="rose" />
         </div>
 
-        <AnalyticsOverview title="HR Workforce Intelligence" subtitle="Organization-wide workforce lifecycle, attendance, skill coverage and retention analytics" />
+        {/* Scoped HR Workforce Analytics Grid controlled by the Page */}
+        <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
+          <AnalyticsLineChart title="Employee Growth & Hiring" subtitle="Headcount and new hires by join month" data={analytics?.growthData} xKey="name" series={[{ key: 'headcount', name: 'Headcount', color: '#8b5cf6' }, { key: 'hiring', name: 'New hires', color: '#ec4899' }]} isLoading={isLoading} error={error} onRetry={reload} />
+          <AnalyticsBarChart title="Attendance Compliance Trend" subtitle="Daily shift present/absent stats" data={analytics?.attendanceOverview} xKey="name" series={[{ key: 'present', name: 'Present', color: '#10b981' }, { key: 'absent', name: 'Absent', color: '#ef4444' }]} isLoading={isLoading} error={error} onRetry={reload} />
+          <AnalyticsDonutChart title="Employment Status Mix" subtitle="Active vs On Leave overview" data={analytics?.employmentStatus} isLoading={isLoading} error={error} onRetry={reload} />
+          <AnalyticsDonutChart title="Department Breakdown" subtitle="Current staff allocation across departments" data={analytics?.departmentDistribution} isLoading={isLoading} error={error} onRetry={reload} />
+          <AnalyticsBarChart title="Skills Coverage Analysis" subtitle="Highest frequency active skills in scope" data={analytics?.skillsAnalysis?.topSkills} xKey="name" series={[{ key: 'coverage', name: 'Coverage %', color: '#06b6d4' }]} layout="vertical" isLoading={isLoading} error={error} onRetry={reload} />
+          <AnalyticsDonutChart title="Retention Risk Distribution" subtitle="Workforce stabilization assessment" data={analytics?.riskDistribution} isLoading={isLoading} error={error} onRetry={reload} colors={['#ef4444', '#f59e0b', '#10b981']} />
+        </div>
+
         <EmployeeTable />
         <HrSprintOverview hrTasks={hrTasks} />
 

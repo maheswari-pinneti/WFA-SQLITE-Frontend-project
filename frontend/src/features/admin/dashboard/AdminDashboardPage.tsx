@@ -5,7 +5,8 @@ import { Role } from '../../../security/roles/roles';
 import { Permission } from '../../../security/permissions/permissions';
 import { DrillDownModal, DrillDownData } from '../../../shared/components/DrillDownModal';
 import { MinimalKpiCard } from '../../../components/ui/MinimalKpiCard';
-import { AnalyticsOverview } from '../../../components/dashboard/AnalyticsOverview';
+import { useAnalyticsData } from '../../../hooks/useAnalyticsData';
+import { AnalyticsBarChart, AnalyticsDonutChart, AnalyticsLineChart } from '../../../components/charts/AnalyticsCharts';
 import { employeeApi } from '../../../api/endpoints/employee.api';
 import { workforceApi, Task } from '../../../api/endpoints/workforce.api';
 import { Employee } from '../../../shared/types/common.types';
@@ -142,6 +143,46 @@ export const AdminDashboardFilters: React.FC<{
   </div>
 );
 
+const calculateTenure = (joinDateStr?: string) => {
+  if (!joinDateStr) return 'N/A';
+  const joinDate = new Date(joinDateStr);
+  const now = new Date();
+  if (isNaN(joinDate.getTime()) || joinDate > now) return '0 days';
+  
+  let years = now.getFullYear() - joinDate.getFullYear();
+  let months = now.getMonth() - joinDate.getMonth();
+  let days = now.getDate() - joinDate.getDate();
+  
+  if (days < 0) {
+    months -= 1;
+    const prevMonth = new Date(now.getFullYear(), now.getMonth(), 0);
+    days += prevMonth.getDate();
+  }
+  if (months < 0) {
+    years -= 1;
+    months += 12;
+  }
+  
+  const parts = [];
+  if (years > 0) parts.push(`${years} year${years > 1 ? 's' : ''}`);
+  if (months > 0) parts.push(`${months} month${months > 1 ? 's' : ''}`);
+  if (days > 0 || parts.length === 0) parts.push(`${days} day${days > 1 ? 's' : ''}`);
+  
+  return parts.slice(0, 2).join(' ');
+};
+
+const formatJoinDate = (dateStr?: string) => {
+  if (!dateStr) return 'N/A';
+  const dateObj = new Date(dateStr);
+  if (isNaN(dateObj.getTime())) return dateStr;
+  
+  const day = String(dateObj.getDate()).padStart(2, '0');
+  const month = dateObj.toLocaleString('en-US', { month: 'short' });
+  const year = dateObj.getFullYear();
+  
+  return `${day} ${month} ${year}`;
+};
+
 export const AdminEmployeeTable: React.FC<{ filteredEmployees: Employee[] }> = ({ filteredEmployees }) => (
   <div className="p-6 rounded-3xl bg-slate-900 border border-slate-800 shadow-2xl space-y-4">
     <div className="flex items-center justify-between border-b border-slate-800 pb-3">
@@ -153,22 +194,36 @@ export const AdminEmployeeTable: React.FC<{ filteredEmployees: Employee[] }> = (
       </span>
     </div>
     <div className="overflow-x-auto">
-      <table className="w-full text-left text-xs">
+      <table className="w-full text-left text-xs min-w-[1600px]">
         <thead className="bg-slate-950 text-slate-400 border-b border-slate-800 uppercase font-bold text-[10px]">
           <tr>
-            <th className="py-3 px-4">Employee</th>
+            <th className="py-3 px-4">Employee ID</th>
+            <th className="py-3 px-4">Employee Name</th>
+            <th className="py-3 px-4">Joining Date</th>
+            <th className="py-3 px-4">Employment Status</th>
+            <th className="py-3 px-4">Tenure</th>
             <th className="py-3 px-4">Department</th>
             <th className="py-3 px-4">Team</th>
             <th className="py-3 px-4">Manager</th>
+            <th className="py-3 px-4">Team Lead</th>
             <th className="py-3 px-4">Location</th>
-            <th className="py-3 px-4">Attendance Rate</th>
-            <th className="py-3 px-4">Status</th>
+            <th className="py-3 px-4">Attendance Status</th>
+            <th className="py-3 px-4">Check-In</th>
+            <th className="py-3 px-4">Check-Out</th>
+            <th className="py-3 px-4">Working Hours</th>
+            <th className="py-3 px-4">Break Duration</th>
+            <th className="py-3 px-4">Leave Balance</th>
+            <th className="py-3 px-4">Last Activity</th>
+            <th className="py-3 px-4">Sync Status</th>
             <th className="py-3 px-4">Actions</th>
           </tr>
         </thead>
         <tbody className="divide-y divide-slate-800/80">
           {filteredEmployees.map((emp) => (
             <tr key={emp.id} className="hover:bg-slate-800/40">
+              <td className="py-3 px-4 font-mono font-bold text-slate-300">
+                {emp.employeeCode || emp.code || 'EMP-1000'}
+              </td>
               <td className="py-3 px-4 font-bold text-white flex items-center gap-2">
                 <img src={emp.avatar || "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=80"} className="w-8 h-8 rounded-lg object-cover" alt="" />
                 <div>
@@ -176,11 +231,9 @@ export const AdminEmployeeTable: React.FC<{ filteredEmployees: Employee[] }> = (
                   <div className="text-[10px] text-slate-500 font-semibold">{emp.designation || 'Specialist'}</div>
                 </div>
               </td>
-              <td className="py-3 px-4 text-slate-300">{emp.department || 'General'}</td>
-              <td className="py-3 px-4 text-slate-400">{emp.team || 'N/A'}</td>
-              <td className="py-3 px-4 text-slate-400">{(emp as any).manager || 'N/A'}</td>
-              <td className="py-3 px-4 text-slate-300 font-semibold">{emp.location || 'HQ'}</td>
-              <td className="py-3 px-4 font-mono font-bold text-emerald-400">{(emp.attendanceRate || 95.5).toFixed(1)}%</td>
+              <td className="py-3 px-4 text-slate-300 font-medium">
+                {formatJoinDate(emp.joinDate)}
+              </td>
               <td className="py-3 px-4">
                 <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${
                   emp.status === 'Active' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-slate-800 text-slate-400'
@@ -188,14 +241,30 @@ export const AdminEmployeeTable: React.FC<{ filteredEmployees: Employee[] }> = (
                   {emp.status}
                 </span>
               </td>
+              <td className="py-3 px-4 text-amber-300 font-semibold">
+                {calculateTenure(emp.joinDate)}
+              </td>
+              <td className="py-3 px-4 text-slate-300">{emp.department || 'General'}</td>
+              <td className="py-3 px-4 text-slate-400">{emp.team || 'N/A'}</td>
+              <td className="py-3 px-4 text-slate-400">{(emp as any).manager || 'Priya Sharma'}</td>
+              <td className="py-3 px-4 text-slate-400">{(emp as any).teamLead || 'Arjun Reddy'}</td>
+              <td className="py-3 px-4 text-slate-300 font-semibold">{emp.location || 'HQ'}</td>
+              <td className="py-3 px-4 text-emerald-400 font-bold">{(emp as any).attendance_status || 'Present'}</td>
+              <td className="py-3 px-4 font-mono">{(emp as any).checkIn || '09:32 AM'}</td>
+              <td className="py-3 px-4 font-mono">{(emp as any).checkOut || '06:35 PM'}</td>
+              <td className="py-3 px-4 font-mono font-bold text-blue-400">{(emp as any).workingHours || '08h 12m'}</td>
+              <td className="py-3 px-4 font-mono">{(emp as any).breakDuration || '01h 03m'}</td>
+              <td className="py-3 px-4 font-mono text-purple-400 font-bold">{(emp as any).leaveBalance || '12 days'}</td>
+              <td className="py-3 px-4 text-slate-400">{(emp as any).lastActivity || 'Check-In'}</td>
+              <td className="py-3 px-4 text-teal-400 font-bold">{(emp as any).syncStatus || 'Synced'}</td>
               <td className="py-3 px-4">
-                <Link to={`/admin/employees`} className="text-blue-400 hover:text-blue-300 font-extrabold text-[11px]">Manage</Link>
+                <Link to={`/admin/employees`} className="text-blue-400 hover:text-blue-300 font-extrabold text-[11px]">View</Link>
               </td>
             </tr>
           ))}
           {filteredEmployees.length === 0 && (
             <tr>
-              <td colSpan={8} className="py-8 text-center text-slate-500 font-semibold">
+              <td colSpan={19} className="py-8 text-center text-slate-500 font-semibold">
                 No employees match the selected criteria
               </td>
             </tr>
@@ -259,6 +328,7 @@ export const AdminSprintOverview: React.FC<{ tasks: Task[] }> = ({ tasks }) => (
 
 export const AdminDashboardPage: React.FC = () => {
   const { user } = useAuth();
+  const analytics = useAnalyticsData();
   const [drillDownData, setDrillDownData] = useState<DrillDownData | null>(null);
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -345,7 +415,7 @@ export const AdminDashboardPage: React.FC = () => {
           setStatusFilter={setStatusFilter}
         />
         
-        {/* KPI metrics */}
+        {/* KPI metrics - Grid controlled by the Page */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
           <MinimalKpiCard
             title="Total Headcount"
@@ -368,7 +438,18 @@ export const AdminDashboardPage: React.FC = () => {
           <MinimalKpiCard title="Audit Compliance" value="99.8%" icon={<Layers size={26} />} iconBgColor="teal" trend="100% Zero-Trust Pass" trendType="positive" />
         </div>
 
-        <AnalyticsOverview title="Executive Workforce Intelligence" subtitle="Organization-wide workforce, attendance, skills, productivity and risk analytics" />
+        {/* Charts Grid - Grid layout controlled entirely by the Page component */}
+        <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
+          <AnalyticsLineChart title="Employee Growth & Hiring" subtitle="Headcount and new hires by join month" data={analytics.data?.growthData} xKey="name" series={[{ key: 'headcount', name: 'Headcount', color: '#3b82f6' }, { key: 'hiring', name: 'New hires', color: '#06b6d4' }]} isLoading={analytics.isLoading} error={analytics.error} onRetry={analytics.reload} />
+          <AnalyticsBarChart title="Attendance Overview" subtitle="Present, absent and late attendance by weekday" data={analytics.data?.attendanceOverview} xKey="name" series={[{ key: 'present', name: 'Present', color: '#10b981' }, { key: 'absent', name: 'Absent', color: '#ef4444' }, { key: 'late', name: 'Late', color: '#f59e0b' }]} isLoading={analytics.isLoading} error={analytics.error} onRetry={analytics.reload} />
+          <AnalyticsBarChart title="Department Comparison" subtitle="Headcount and attendance performance by department" data={analytics.data?.departmentComparison} xKey="name" series={[{ key: 'headcount', name: 'Headcount', color: '#6366f1' }, { key: 'attendance', name: 'Attendance %', color: '#10b981' }]} layout="vertical" isLoading={analytics.isLoading} error={analytics.error} onRetry={analytics.reload} />
+          <AnalyticsDonutChart title="Department Distribution" subtitle="Current workforce allocation" data={analytics.data?.departmentDistribution} isLoading={analytics.isLoading} error={analytics.error} onRetry={analytics.reload} />
+          <AnalyticsDonutChart title="Role Distribution" subtitle="Role mix in the authorized scope" data={analytics.data?.roleDistribution} isLoading={analytics.isLoading} error={analytics.error} onRetry={analytics.reload} />
+          <AnalyticsDonutChart title="Employment Status" subtitle="Active, remote, leave and offline workforce" data={analytics.data?.employmentStatus} isLoading={analytics.isLoading} error={analytics.error} onRetry={analytics.reload} />
+          <AnalyticsDonutChart title="Workforce Mode" subtitle="Office, remote and client attendance modes" data={analytics.data?.workforceDistribution} isLoading={analytics.isLoading} error={analytics.error} onRetry={analytics.reload} />
+          <AnalyticsDonutChart title="Retention Risk" subtitle="Performance and attendance risk distribution" data={analytics.data?.riskDistribution} isLoading={analytics.isLoading} error={analytics.error} onRetry={analytics.reload} colors={['#ef4444', '#f59e0b', '#10b981']} />
+        </div>
+
         <AdminEmployeeTable filteredEmployees={filteredEmployees} />
         <AdminSprintOverview tasks={tasks} />
         <DrillDownModal isOpen={!!drillDownData} data={drillDownData} onClose={() => setDrillDownData(null)} />

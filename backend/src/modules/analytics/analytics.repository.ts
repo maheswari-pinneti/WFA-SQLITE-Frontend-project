@@ -45,7 +45,7 @@ export class AnalyticsRepository {
   async getEmployeesSummary(queryData: any) {
     const { clause, params } = buildWhereClause(queryData);
     const rows = await query(`
-      SELECT id, department, team, role, status, performanceScore, attendanceRate 
+      SELECT id, department, team, role, status, performanceScore, attendanceRate, joinDate 
       FROM employees 
       ${clause}
     `, params);
@@ -114,31 +114,47 @@ export class AnalyticsRepository {
   }
 
   async getPerformanceByQuarter(queryData: any) {
-    const { clause, params } = buildWhereClause(queryData);
+    const clauses: string[] = ['(p.companyId = ? OR p.organizationId = ?)'];
+    const orgId = queryData.organizationId || queryData.companyId || 'org-stackly';
+    const params: any[] = [orgId, orgId];
+    if (queryData.employeeId) {
+      clauses.push('p.employeeId = ?');
+      params.push(queryData.employeeId);
+    }
+    const where = clauses.length > 0 ? `WHERE ${clauses.join(' AND ')}` : '';
     const rows = await query(`
       SELECT 
-        quarter as name,
-        ROUND(AVG(kpiScore), 1) as performance,
-        ROUND(AVG(targetScore), 1) as target,
-        ROUND(AVG(productivityScore), 1) as productivity
-      FROM performancerecords
-      ${clause}
-      GROUP BY quarter
+        p.quarter as name,
+        ROUND(AVG(p.kpiScore), 1) as performance,
+        ROUND(AVG(p.targetScore), 1) as target,
+        ROUND(AVG(p.productivityScore), 1) as productivity
+      FROM performancerecords p
+      JOIN employees e ON p.employeeId = e.id
+      ${where} AND (p.createdAt >= e.joinDate OR e.joinDate IS NULL)
+      GROUP BY p.quarter
       ORDER BY name ASC
     `, params);
     return rows;
   }
 
   async getTeamProductivity(queryData: any) {
-    const { clause, params } = buildWhereClause(queryData);
+    const clauses: string[] = ['(p.companyId = ? OR p.organizationId = ?)'];
+    const orgId = queryData.organizationId || queryData.companyId || 'org-stackly';
+    const params: any[] = [orgId, orgId];
+    if (queryData.employeeId) {
+      clauses.push('p.employeeId = ?');
+      params.push(queryData.employeeId);
+    }
+    const where = clauses.length > 0 ? `WHERE ${clauses.join(' AND ')}` : '';
     const rows = await query(`
       SELECT 
-        COALESCE(team, 'Unassigned') as name,
-        ROUND(AVG(productivityScore), 1) as productivity,
-        COUNT(DISTINCT employeeId) as members
-      FROM performancerecords
-      ${clause}
-      GROUP BY team
+        COALESCE(p.team, 'Unassigned') as name,
+        ROUND(AVG(p.productivityScore), 1) as productivity,
+        COUNT(DISTINCT p.employeeId) as members
+      FROM performancerecords p
+      JOIN employees e ON p.employeeId = e.id
+      ${where} AND (p.createdAt >= e.joinDate OR e.joinDate IS NULL)
+      GROUP BY p.team
       ORDER BY productivity DESC
     `, params);
     return rows;

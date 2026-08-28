@@ -70,9 +70,31 @@ export class AnalyticsService {
 
     const growthData = await buildGrowth(reqUser);
     const totalEmployees = employees.length;
-    const activePresent = attendance.filter((record: any) => record.status !== 'Checked Out').length;
+
+    const employeeJoinDateMap = new Map<string, string>();
+    employees.forEach((emp: any) => {
+      if (emp.joinDate) {
+        employeeJoinDateMap.set(emp.id, emp.joinDate);
+      }
+    });
+
+    const isAfterOrOnJoinDate = (recordDateStr: string, joinDateStr?: string) => {
+      if (!joinDateStr) return true;
+      const recDate = recordDateStr.substring(0, 10);
+      const joinDate = joinDateStr.substring(0, 10);
+      return recDate >= joinDate;
+    };
+
+    const validAttendance = attendance.filter((record: any) => {
+      const joinDate = employeeJoinDateMap.get(record.employeeId);
+      const recordDate = record.createdAt || record.date;
+      if (!recordDate) return true;
+      return isAfterOrOnJoinDate(recordDate, joinDate);
+    });
+
+    const activePresent = validAttendance.filter((record: any) => record.status !== 'Checked Out').length;
     
-    const lateCount = attendance.filter((record: any) => {
+    const lateCount = validAttendance.filter((record: any) => {
       if (!record.checkInTime) return false;
       const parts = record.checkInTime.split(':');
       if (parts.length < 2) return false;
@@ -90,7 +112,7 @@ export class AnalyticsService {
       : 0;
 
     const attendanceOverview = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'].map((name, index) => {
-      const dayRecords = attendance.filter((record: any) => {
+      const dayRecords = validAttendance.filter((record: any) => {
         const dateObj = record.createdAt ? new Date(record.createdAt) : new Date();
         return dateObj.getDay() === (index + 1);
       });

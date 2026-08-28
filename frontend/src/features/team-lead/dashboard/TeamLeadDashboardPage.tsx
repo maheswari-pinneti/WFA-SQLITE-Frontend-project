@@ -4,7 +4,8 @@ import { Role } from '../../../security/roles/roles';
 import { Permission } from '../../../security/permissions/permissions';
 import { KPICard } from '../../../components/cards/KPICard';
 import { DrillDownModal, DrillDownData } from '../../../shared/components/DrillDownModal';
-import { AnalyticsOverview } from '../../../components/dashboard/AnalyticsOverview';
+import { useAnalyticsData } from '../../../hooks/useAnalyticsData';
+import { AnalyticsBarChart, AnalyticsDonutChart, AnalyticsLineChart } from '../../../components/charts/AnalyticsCharts';
 import { employeeApi } from '../../../api/endpoints/employee.api';
 import { workforceApi, Task } from '../../../api/endpoints/workforce.api';
 import { Employee } from '../../../shared/types/common.types';
@@ -198,6 +199,7 @@ export const TeamLeadSprintBoard: React.FC<{ sprintTasks: Task[] }> = ({ sprintT
 );
 
 export const TeamLeadDashboardPage: React.FC = () => {
+  const analytics = useAnalyticsData();
   const [drillDownData, setDrillDownData] = useState<DrillDownData | null>(null);
   const [directReports, setDirectReports] = useState<Employee[]>([]);
   const [sprintTasks, setSprintTasks] = useState<Task[]>([]);
@@ -279,7 +281,14 @@ export const TeamLeadDashboardPage: React.FC = () => {
           <KPICard title="Tasks Completed" value={`${sprintTasks.filter(t => t.status === 'COMPLETED').length} Closed`} change={100} trend="up" subtitle="Closed sprint targets" icon={<CheckCircle2 size={20} />} accentColor="emerald" />
         </div>
 
-        <AnalyticsOverview title="Team Lead Intelligence" subtitle="Live team productivity, performance, attendance and skills" compact={false} />
+        {/* Scoped Team Lead Analytics Grid controlled by the Page */}
+        <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
+          <AnalyticsBarChart title="Squad Daily Attendance" subtitle="Weekdays breakdown inside squad" data={analytics.data?.attendanceOverview} xKey="name" series={[{ key: 'present', name: 'Present', color: '#0ea5e9' }, { key: 'absent', name: 'Absent', color: '#f43f5e' }]} isLoading={analytics.isLoading} error={analytics.error} onRetry={analytics.reload} />
+          <AnalyticsBarChart title="Squad Task Velocity" subtitle="Productivity by sprint task status" data={analytics.data?.teamProductivity} xKey="name" series={[{ key: 'productivity', name: 'Productivity Rate', color: '#10b981' }]} isLoading={analytics.isLoading} error={analytics.error} onRetry={analytics.reload} />
+          <AnalyticsDonutChart title="Employment Status Mix" subtitle="Squad duty allocation" data={analytics.data?.employmentStatus} isLoading={analytics.isLoading} error={analytics.error} onRetry={analytics.reload} />
+          <AnalyticsLineChart title="Squad Performance History" subtitle="Individual metrics trend" data={analytics.data?.performance} xKey="name" series={[{ key: 'performance', name: 'Performance', color: '#6366f1' }]} isLoading={analytics.isLoading} error={analytics.error} onRetry={analytics.reload} />
+        </div>
+
         <TeamLeadEmployeeTable filteredReports={filteredReports} />
         <TeamLeadSprintBoard sprintTasks={sprintTasks} />
 
