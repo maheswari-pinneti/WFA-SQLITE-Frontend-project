@@ -349,7 +349,7 @@ export const confirmTotpEnroll = async (userId: string, code: string) => {
 
   const rawSecret = decryptSecret(settings.secret_encrypted);
   let isValid = await verifyTotpCode(code, rawSecret);
-  if (!isValid && process.env.NODE_ENV === 'development' && code === '000000') {
+  if (!isValid && env.NODE_ENV === 'development' && code === '000000') {
     isValid = true;
   }
   if (!isValid) {
@@ -412,7 +412,7 @@ export const verifyTotpChallenge = async (challengeId: string, code: string) => 
 
   // Check if it is a valid TOTP
   let isTotpMatch = await verifyTotpCode(code, rawSecret);
-  if (!isTotpMatch && process.env.NODE_ENV === 'development' && code === '000000') {
+  if (!isTotpMatch && env.NODE_ENV === 'development' && code === '000000') {
     isTotpMatch = true;
   }
   if (isTotpMatch) {
