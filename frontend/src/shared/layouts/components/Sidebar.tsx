@@ -395,57 +395,35 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
     [Role.EMPLOYEE]: [
       {
-        category: 'Dashboard',
+        category: 'Workspace',
         items: [
-          { label: 'Dashboard', path: '/employee/dashboard', icon: <LayoutDashboard size={18} strokeWidth={2} className="text-blue-400" /> },
+          { label: 'My Workspace', path: '/employee/dashboard', icon: <LayoutDashboard size={18} strokeWidth={2} className="text-blue-400" /> },
         ],
       },
       {
-        category: 'My Attendance',
+        category: 'Attendance Management',
         items: [
-          { label: 'Today\'s Attendance', path: '/employee/attendance-today', icon: <Calendar size={18} strokeWidth={2} className="text-blue-400" /> },
           { label: 'Check-In / Check-Out', path: '/employee/check-in-out', icon: <Clock size={18} strokeWidth={2} className="text-cyan-400" /> },
-          { label: 'Break', path: '/employee/break', icon: <Zap size={18} strokeWidth={2} className="text-amber-400" /> },
-          { label: 'Attendance History', path: '/employee/attendance', icon: <History size={18} strokeWidth={2} className="text-rose-400" /> },
-          { label: 'Working Hours', path: '/employee/working-hours', icon: <Timer size={18} strokeWidth={2} className="text-emerald-400" /> },
+          { label: 'Break Details', path: '/employee/break', icon: <Zap size={18} strokeWidth={2} className="text-amber-400" /> },
+          { label: 'My Attendance', path: '/employee/attendance', icon: <History size={18} strokeWidth={2} className="text-rose-400" /> },
         ],
       },
       {
-        category: 'My Shifts',
-        items: [
-          { label: 'Shift Schedule', path: '/employee/shifts', icon: <ClipboardList size={18} strokeWidth={2} className="text-teal-400" /> },
-        ],
-      },
-      {
-        category: 'My Skills',
-        items: [
-          { label: 'Skills', path: '/employee/skills', icon: <Compass size={18} strokeWidth={2} className="text-cyan-400" /> },
-          { label: 'Skill Coverage', path: '/employee/skills-coverage', icon: <Map size={18} strokeWidth={2} className="text-indigo-400" /> },
-          { label: 'Skill Gaps', path: '/employee/skills-gaps', icon: <Target size={18} strokeWidth={2} className="text-rose-400" /> },
-        ],
-      },
-      {
-        category: 'My Performance',
-        items: [
-          { label: 'Performance', path: '/employee/performance', icon: <Star size={18} strokeWidth={2} className="text-amber-400" /> },
-        ],
-      },
-      {
-        category: 'Attendance Requests',
+        category: 'Requests',
         items: [
           { label: 'Correction Requests', path: '/employee/corrections', icon: <FileText size={18} strokeWidth={2} className="text-blue-400" /> },
+        ],
+      },
+      {
+        category: 'Schedules',
+        items: [
+          { label: 'Shift Timings', path: '/employee/shifts', icon: <ClipboardList size={18} strokeWidth={2} className="text-teal-400" /> },
         ],
       },
       {
         category: 'My Profile',
         items: [
           { label: 'My Profile', path: '/employee/profile', icon: <User size={18} strokeWidth={2} className="text-emerald-400" /> },
-        ],
-      },
-      {
-        category: 'Settings',
-        items: [
-          { label: 'Settings', path: '/employee/settings', icon: <Sliders size={18} strokeWidth={2} className="text-slate-400" /> },
         ],
       },
       {
