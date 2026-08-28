@@ -21,11 +21,11 @@ flowchart TD
     TOKEN --> PROFILE["Load User Profile"]
     PROFILE --> ROLE{"Determine Role"}
     
-    ROLE --> ADMIN["Admin Dashboard"]
-    ROLE --> HR["HR Dashboard"]
-    ROLE --> MANAGER["Manager Dashboard"]
-    ROLE --> LEAD["Team Lead Dashboard"]
-    ROLE --> EMP["Employee Dashboard"]
+    ROLE --> ADMIN["Admin Dashboard (AdminDashboardPage)"]
+    ROLE --> HR["HR Dashboard (HrDashboardPage)"]
+    ROLE --> MANAGER["Manager Dashboard (ManagerDashboardPage)"]
+    ROLE --> LEAD["Team Lead Dashboard (TeamLeadDashboardPage)"]
+    ROLE --> EMP["Employee Dashboard (EmployeeDashboardPage)"]
     
     ADMIN --> API["API Request"]
     HR --> API
