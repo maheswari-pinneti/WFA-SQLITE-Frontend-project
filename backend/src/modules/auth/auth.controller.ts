@@ -212,6 +212,8 @@ export const login = async (req: Request, res: Response): Promise<any> => {
     if (mfaSettings && mfaSettings.enabled) {
       try {
         const mfaRes = await authService.createTotpChallenge(user);
+        const rawSecret = authService.decryptSecret(mfaSettings.secret_encrypted);
+        const currentTotp = await authService.getTotpCode(rawSecret);
         logAudit(user.id, 'MFA_CHALLENGE', `TOTP MFA challenge generated for ${email}`);
 
         return res.json({
@@ -220,7 +222,8 @@ export const login = async (req: Request, res: Response): Promise<any> => {
             requiresMfa: true,
             requiresTotp: true,
             challengeId: mfaRes.challengeId,
-            expiresAt: mfaRes.expiresAt
+            expiresAt: mfaRes.expiresAt,
+            otpDevHint: currentTotp
           }
         });
       } catch (mfaErr: any) {
@@ -233,6 +236,7 @@ export const login = async (req: Request, res: Response): Promise<any> => {
       try {
         const enrollData = await authService.enrollTotp(user);
         const mfaRes = await authService.createTotpChallenge(user);
+        const currentTotp = await authService.getTotpCode(enrollData.secret);
         logAudit(user.id, 'MFA_ENROLL_CHALLENGE', `Forced TOTP enrollment challenge generated for ${email}`);
 
         return res.json({
@@ -245,7 +249,8 @@ export const login = async (req: Request, res: Response): Promise<any> => {
             expiresAt: mfaRes.expiresAt,
             secret: enrollData.secret,
             qrCodeDataUrl: enrollData.qrCodeDataUrl,
-            otpauthUrl: enrollData.otpauthUrl
+            otpauthUrl: enrollData.otpauthUrl,
+            otpDevHint: currentTotp
           }
         });
       } catch (enrollErr: any) {

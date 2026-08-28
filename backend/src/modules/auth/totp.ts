@@ -75,7 +75,7 @@ export const verifyTotpCode = async (code: string, secret: string): Promise<bool
     return false;
   }
   try {
-    const result = await totpInstance.verify(code, { secret, window: 1 });
+    const result = await totpInstance.verify(code, { secret, window: 4 });
     return result.valid;
   } catch (err) {
     return false;
@@ -109,4 +109,8 @@ export const generateRecoveryCodes = (): { plaintextCodes: string[]; hashedCodes
 export const verifyRecoveryCode = (userInput: string, storedHashes: string[]): string | null => {
   const hash = crypto.createHash('sha256').update(userInput.trim()).digest('hex');
   return storedHashes.includes(hash) ? hash : null;
+};
+
+export const getTotpCode = async (secret: string): Promise<string> => {
+  return await totpInstance.generate({ secret });
 };

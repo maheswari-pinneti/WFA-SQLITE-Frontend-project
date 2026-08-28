@@ -86,8 +86,16 @@ export const LoginForm: React.FC<LoginFormProps> = ({ selectedRole, onRoleChange
           const qrCodeDataUrl = sessionStorage.getItem('mfa_setup_qr') || '';
           const otpauthUrl = sessionStorage.getItem('mfa_setup_otpauth') || '';
           setSetupData({ secret, qrCodeDataUrl, otpauthUrl });
+          const devHint = sessionStorage.getItem('mfa_otp_dev_hint');
+          if (devHint) {
+            setTotpCode(devHint);
+          }
         } else if (savedRequiresTotp === 'true') {
           setRequiresTotp(true);
+          const devHint = sessionStorage.getItem('mfa_otp_dev_hint');
+          if (devHint) {
+            setTotpCode(devHint);
+          }
         } else {
           setRequiresTotp(false);
           const devHint = sessionStorage.getItem('mfa_otp_dev_hint');
@@ -149,11 +157,21 @@ export const LoginForm: React.FC<LoginFormProps> = ({ selectedRole, onRoleChange
           sessionStorage.setItem('mfa_setup_secret', res.secret);
           sessionStorage.setItem('mfa_setup_qr', res.qrCodeDataUrl);
           sessionStorage.setItem('mfa_setup_otpauth', res.otpauthUrl);
-          setTotpCode('');
+          if (res.otpDevHint) {
+            setTotpCode(res.otpDevHint.toString());
+            sessionStorage.setItem('mfa_otp_dev_hint', res.otpDevHint.toString());
+          } else {
+            setTotpCode('');
+          }
         } else if (res.requiresTotp) {
           setRequiresTotp(true);
           sessionStorage.setItem('mfa_requires_totp', 'true');
-          setTotpCode('');
+          if (res.otpDevHint) {
+            setTotpCode(res.otpDevHint.toString());
+            sessionStorage.setItem('mfa_otp_dev_hint', res.otpDevHint.toString());
+          } else {
+            setTotpCode('');
+          }
         } else {
           setRequiresTotp(false);
           sessionStorage.setItem('mfa_requires_totp', 'false');

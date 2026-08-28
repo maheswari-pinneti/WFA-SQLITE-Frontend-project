@@ -11,7 +11,8 @@ import {
   generateQrCode,
   verifyTotpCode,
   generateRecoveryCodes,
-  verifyRecoveryCode
+  verifyRecoveryCode,
+  getTotpCode
 } from './totp.js';
 
 const JWT_SECRET = env.JWT_SECRET || 'wfa_platform_secret_jwt_key_2026';
@@ -508,4 +509,6 @@ export const regenerateRecoveryCodesForUser = async (userId: string) => {
 
   return plaintextCodes;
 };
+
+export { decryptSecret, getTotpCode };
 
