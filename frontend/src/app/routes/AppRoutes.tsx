@@ -11,7 +11,7 @@ import { Role, ROLE_HOME_PATHS } from '../../security/roles/roles';
 import { useAuth } from '../../auth/hooks/useAuth';
 
 // Admin Dashboards & Pages
-import { AdminDashboard } from '../../features/admin/pages/AdminDashboard';
+import { AdminDashboardPage as AdminDashboard } from '../../features/admin/dashboard/AdminDashboardPage';
 import { UserManagement } from '../../features/admin/pages/UserManagement';
 import { RoleManagement } from '../../features/admin/pages/RoleManagement';
 import { PermissionsManagement } from '../../features/admin/pages/PermissionsManagement';
@@ -23,7 +23,7 @@ import { SystemConfiguration } from '../../features/admin/pages/SystemConfigurat
 import { SecurityAdminDashboard } from '../../features/admin/pages/SecurityAdminDashboard';
 
 // HR Dashboards & Pages
-import { HRDashboard } from '../../features/hr/pages/HRDashboard';
+import { HrDashboardPage as HRDashboard } from '../../features/hr/dashboard/HrDashboardPage';
 import { EmployeeManagement } from '../../features/hr/pages/EmployeeManagement';
 import { AttendanceManagement } from '../../features/hr/pages/AttendanceManagement';
 import { RecruitmentManagement } from '../../features/hr/pages/RecruitmentManagement';
@@ -32,21 +32,21 @@ import { PayrollReports } from '../../features/hr/pages/PayrollReports';
 import { HRReports } from '../../features/hr/pages/HRReports';
 
 // Manager Dashboards & Pages
-import { ManagerDashboard } from '../../features/team-manager/pages/ManagerDashboard';
+import { ManagerDashboardPage as ManagerDashboard } from '../../features/team-manager/dashboard/ManagerDashboardPage';
 import { TeamAnalytics } from '../../features/team-manager/pages/TeamAnalytics';
 import { TeamReports } from '../../features/team-manager/pages/TeamReports';
 import { ApprovalsPage } from '../../features/team-manager/pages/ApprovalsPage';
 import { DeptHeadDashboard } from '../../features/team-manager/pages/DeptHeadDashboard';
 
 // Team Lead Dashboards & Pages
-import { TeamLeadDashboard } from '../../features/team-lead/pages/TeamLeadDashboard';
+import { TeamLeadDashboardPage as TeamLeadDashboard } from '../../features/team-lead/dashboard/TeamLeadDashboardPage';
 import { TeamMembersPage } from '../../features/team-lead/pages/TeamMembersPage';
 import { TaskTrackingPage } from '../../features/team-lead/pages/TaskTrackingPage';
 import { Productivity } from '../../features/team-lead/pages/Productivity';
 import { FeedbackManagement } from '../../features/team-lead/pages/FeedbackManagement';
 
 // Employee Dashboards & Pages
-import { EmployeeDashboard } from '../../features/employee/pages/EmployeeDashboard';
+import { EmployeeDashboardPage as EmployeeDashboard } from '../../features/employee/dashboard/EmployeeDashboardPage';
 import { Profile } from '../../features/employee/pages/Profile';
 import { MyAttendance } from '../../features/employee/pages/MyAttendance';
 import { MyPerformance } from '../../features/employee/pages/MyPerformance';
