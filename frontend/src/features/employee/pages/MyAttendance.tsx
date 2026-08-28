@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { AppDispatch, RootState } from '../../../app/store';
 import { fetchAttendanceDataThunk } from '../../../store/attendanceSlice';
@@ -7,6 +7,10 @@ import { LiveCheckInWidget } from '../../../components/attendance/LiveCheckInWid
 import { AttendanceCalendarView } from '../../../components/attendance/AttendanceCalendarView';
 import { AnalyticsOverview } from '../../../components/dashboard/AnalyticsOverview';
 
+export const MyAttendance: React.FC = () => {
+  const dispatch = useDispatch<AppDispatch>();
+  const { user } = useAuth();
+  const { records } = useSelector((state: RootState) => state.attendance);
   const [statusFilter, setStatusFilter] = useState('All');
 
   useEffect(() => {
@@ -51,7 +55,7 @@ import { AnalyticsOverview } from '../../../components/dashboard/AnalyticsOvervi
       break: breakStr,
       late: lateStr,
       overtime: overtimeStr,
-      status: record.status || (record.checkOutTime ? 'Checked Out' : 'Working')
+      status: (record.status || (record.checkOutTime ? 'Checked Out' : 'Working')) as string
     };
   });
 
