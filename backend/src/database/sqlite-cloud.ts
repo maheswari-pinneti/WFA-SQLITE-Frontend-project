@@ -51,6 +51,34 @@ export const connectDatabase = async (): Promise<any> => {
   return localDb;
 };
 
+const isConnectionError = (err: any): boolean => {
+  if (!err) return false;
+  const msg = (err.message || '').toLowerCase();
+  return (
+    msg.includes('connection unavailable') ||
+    msg.includes('disconnected') ||
+    msg.includes('paused') ||
+    msg.includes('inactive') ||
+    msg.includes('closed by the remote host') ||
+    err.errorCode === 'ERR_CONNECTION_NOT_ESTABLISHED' ||
+    err.code === 'ERR_CONNECTION_NOT_ESTABLISHED' ||
+    err.errorCode === '10010'
+  );
+};
+
+const ensureLocalDbInitialized = async () => {
+  if (localDb) return;
+  console.log(`[Database] Initializing local SQLite fallback database at ${DB_PATH}`);
+  if (!fs.existsSync(DB_DIR)) {
+    fs.mkdirSync(DB_DIR, { recursive: true });
+  }
+  localDb = new BetterSqlite3(DB_PATH, { timeout: 10000 });
+  localDb.pragma('foreign_keys = ON');
+  localDb.pragma('journal_mode = WAL');
+  localDb.pragma('synchronous = NORMAL');
+  localDb.pragma('wal_checkpoint(PASSIVE)');
+};
+
 export const getDatabase = (): any => {
   if (cloudDb) return cloudDb;
   if (localDb) return localDb;
@@ -58,45 +86,81 @@ export const getDatabase = (): any => {
 };
 
 export const query = async <T = any>(sql: string, params: any[] = []): Promise<T[]> => {
-  const db = getDatabase();
   if (cloudDb) {
-    return await cloudDb.sql(sql, ...params) as T[];
-  } else {
-    return localDb!.prepare(sql).all(...params) as T[];
+    try {
+      return await cloudDb.sql(sql, ...params) as T[];
+    } catch (err: any) {
+      if (isConnectionError(err)) {
+        console.error('[Database] SQLite Cloud connection lost or node paused. Swapping to local SQLite fallback database.');
+        cloudDb = null;
+        await ensureLocalDbInitialized();
+        return localDb!.prepare(sql).all(...params) as T[];
+      }
+      throw err;
+    }
   }
+  await ensureLocalDbInitialized();
+  return localDb!.prepare(sql).all(...params) as T[];
 };
 
 export const execute = async (sql: string, params: any[] = []): Promise<any> => {
-  const db = getDatabase();
   if (cloudDb) {
-    return await cloudDb.sql(sql, ...params);
-  } else {
-    return localDb!.prepare(sql).run(...params);
+    try {
+      return await cloudDb.sql(sql, ...params);
+    } catch (err: any) {
+      if (isConnectionError(err)) {
+        console.error('[Database] SQLite Cloud connection lost or node paused. Swapping to local SQLite fallback database.');
+        cloudDb = null;
+        await ensureLocalDbInitialized();
+        return localDb!.prepare(sql).run(...params);
+      }
+      throw err;
+    }
   }
+  await ensureLocalDbInitialized();
+  return localDb!.prepare(sql).run(...params);
 };
 
 export const transaction = async <T>(fn: () => Promise<T>): Promise<T> => {
-  const db = getDatabase();
   if (cloudDb) {
-    await cloudDb.sql('BEGIN TRANSACTION');
     try {
-      const res = await fn();
-      await cloudDb.sql('COMMIT');
-      return res;
-    } catch (err) {
-      await cloudDb.sql('ROLLBACK');
+      await cloudDb.sql('BEGIN TRANSACTION');
+      try {
+        const res = await fn();
+        await cloudDb.sql('COMMIT');
+        return res;
+      } catch (err) {
+        await cloudDb.sql('ROLLBACK');
+        throw err;
+      }
+    } catch (err: any) {
+      if (isConnectionError(err)) {
+        console.error('[Database] SQLite Cloud connection lost during transaction setup. Swapping to local SQLite fallback database.');
+        cloudDb = null;
+        await ensureLocalDbInitialized();
+        // Retry logic on localDb
+        localDb!.prepare('BEGIN TRANSACTION').run();
+        try {
+          const res = await fn();
+          localDb!.prepare('COMMIT').run();
+          return res;
+        } catch (localErr) {
+          localDb!.prepare('ROLLBACK').run();
+          throw localErr;
+        }
+      }
       throw err;
     }
-  } else {
-    localDb!.prepare('BEGIN TRANSACTION').run();
-    try {
-      const res = await fn();
-      localDb!.prepare('COMMIT').run();
-      return res;
-    } catch (err) {
-      localDb!.prepare('ROLLBACK').run();
-      throw err;
-    }
+  }
+  await ensureLocalDbInitialized();
+  localDb!.prepare('BEGIN TRANSACTION').run();
+  try {
+    const res = await fn();
+    localDb!.prepare('COMMIT').run();
+    return res;
+  } catch (err) {
+    localDb!.prepare('ROLLBACK').run();
+    throw err;
   }
 };
 
