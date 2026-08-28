@@ -88,22 +88,20 @@ export interface HeaderState {
 
 ```mermaid
 sequenceDiagram
-    title Header API & Authentication Integration Data Flow
-    actor User
-    participant Client as "React Frontend (Header)"
-    participant Redux as "Redux Toolkit Store"
-    participant AuthAPI as "Authentication Service"
-    participant NotifAPI as "Notification API (GET /notifications)"
-
-    User ->> Client: Login Request
-    Client ->> AuthAPI: POST /auth/login
-    AuthAPI -->> Client: Return User Token & Role Metadata
-    Client ->> Redux: Dispatch setUser(Name, Role, Department, Permissions)
-    Redux -->> Client: Update Header Profile Avatar & Role Badge
-
-    Client ->> NotifAPI: GET /notifications
-    NotifAPI -->> Client: Return Real-time Alerts & Unread Badges
-    Client ->> Redux: Update Header Notifications Array
+title Header API & Authentication Integration Data Flow
+actor User
+participant Client as "React Frontend (Header)"
+participant Redux as "Redux Toolkit Store"
+participant AuthAPI as "Authentication Service"
+participant NotifAPI as "Notification API (GET /notifications)"
+User ->> Client: Login Request
+Client ->> AuthAPI: POST /auth/login
+AuthAPI -->> Client: Return User Token & Role Metadata
+Client ->> Redux: Dispatch setUser(Name, Role, Department, Permissions)
+Redux -->> Client: Update Header Profile Avatar & Role Badge
+Client ->> NotifAPI: GET /notifications
+NotifAPI -->> Client: Return Real-time Alerts & Unread Badges
+Client ->> Redux: Update Header Notifications Array
 ```
 
 ---
