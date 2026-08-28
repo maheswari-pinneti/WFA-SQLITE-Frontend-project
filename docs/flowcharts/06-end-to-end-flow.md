@@ -1,6 +1,6 @@
 # 🔄 Complete End-to-End System Flowchart
 
-This flowchart visualizes the complete end-to-end user-to-database-to-UI flow. It serves as a overview mapping out the request chain from the React UI down to MongoDB, and Socket.io updating the dashboard UI.
+This flowchart visualizes the complete end-to-end user-to-database-to-UI flow. It serves as a overview mapping out the request chain from the React UI down to SQLite Database, and Socket.io updating the dashboard UI.
 
 ```mermaid
 flowchart LR
@@ -11,11 +11,9 @@ flowchart LR
     RBAC --> ABAC["ABAC Scope Validation"]
     ABAC --> SERVICE["Business Services"]
     SERVICE --> DB["SQLite Database"]
-    
     DB --> AUDIT["Audit Logs"]
     SERVICE --> SOCKET["Socket.IO Server"]
     SOCKET --> UI["Updated React Dashboard UI"]
-    
     DB --> SERVICE
     SERVICE --> API
     API --> FE
