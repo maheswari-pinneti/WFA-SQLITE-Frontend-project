@@ -103,19 +103,16 @@ src/
 │   │   ├── hooks/
 │   │   ├── services/
 │   │   └── authSlice.ts
-│   ├── dashboard/              # Executive & Role-Based Dashboards
-│   │   ├── components/
-│   │   ├── hooks/
-│   │   └── views/
-│   ├── employees/              # Employee Directory, Profiles, Lifecycle
-│   │   ├── components/
-│   │   ├── hooks/
-│   │   ├── services/
-│   │   └── employeeSlice.ts
-│   ├── teams/                  # Team Rosters, Org Hierarchy, Activity
-│   ├── analytics/              # Deep Workforce & Salary Analytics
-│   ├── reports/                # Report Generator & Export Builder
-│   └── admin/                  # System Admin, Role Matrix, Audit Logs
+│   ├── admin/                  # System Admin, Role Matrix, Audit Logs
+│   │   └── dashboard/          # Modular Admin Dashboard Components
+│   ├── hr/                     # HR Operations & Employee Management
+│   │   └── dashboard/          # Modular HR Dashboard Components
+│   ├── team-manager/           # Manager Approvals, Roster & Analytics
+│   │   └── dashboard/          # Modular Manager Dashboard Components
+│   ├── team-lead/              # Squad Coordination & Activity Logs
+│   │   └── dashboard/          # Modular Team Lead Dashboard Components
+│   ├── employee/               # Self-service & Personal Workspaces
+│   │   └── dashboard/          # Modular Employee Dashboard Components
 ├── hooks/                      # Global Utility React Hooks
 │   ├── useAuth.ts              # Authentication & User State Helper Hook
 │   ├── usePermission.ts        # RBAC Permission Evaluation Hook

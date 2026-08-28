@@ -22,7 +22,12 @@ WFA-Rolebased-Architecture-main/
 │   ├── assets/                    # Static image and style assets
 │   ├── auth/                      # Authentication flows, MFA, login forms, and auth hooks
 │   ├── components/                # Reusable UI component modules (cards, charts, calendar widgets)
-│   ├── features/                  # Permission-aware feature domains (admin, hr, manager, employee dashboards)
+│   ├── features/                  # Permission-aware feature domains
+│   │   ├── admin/dashboard/       # System Admin Modular dashboard
+│   │   ├── hr/dashboard/          # HR Operations Modular dashboard
+│   │   ├── team-manager/dashboard/# Department Manager Modular dashboard
+│   │   ├── team-lead/dashboard/   # Team Lead Modular dashboard
+│   │   └── employee/dashboard/    # Employee Personal Modular dashboard
 │   ├── security/                  # Frontend route guards and Role checks
 │   ├── store/                     # Global layout states (sidebar, theme, alerts)
 │   └── main.tsx                   # React root startup script
