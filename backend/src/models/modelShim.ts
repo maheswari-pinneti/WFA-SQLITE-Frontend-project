@@ -1,1 +1,1 @@
-export { ModelShim } from '../database/sqlite';
+export { ModelShim } from '../database/sqlite.js';

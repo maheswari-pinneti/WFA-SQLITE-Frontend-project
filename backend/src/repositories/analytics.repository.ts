@@ -1,2 +1,2 @@
-import { analyticsRepository } from '../modules/analytics/analytics.repository';
-export { analyticsRepository, default } from '../modules/analytics/analytics.repository';
+import { analyticsRepository } from '../modules/analytics/analytics.repository.js';
+export { analyticsRepository, default } from '../modules/analytics/analytics.repository.js';

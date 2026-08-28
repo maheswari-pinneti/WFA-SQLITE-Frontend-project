@@ -1,6 +1,6 @@
 import 'dotenv/config';
 import http from 'http';
-import { Server } from 'socket.io';
+import { Server as SocketServer } from 'socket.io';
 import { app } from './backend/src/app.js';
 import { initSockets } from './backend/src/sockets/index.js';
 import { getDb } from './backend/src/config/db.js';
@@ -8,12 +8,12 @@ import logger from './backend/src/config/logger.js';
 
 const PORT = process.env.PORT || 5001;
 
-let server;
-let io;
+let server: http.Server;
+let io: SocketServer;
 
 if (process.env.NODE_ENV !== 'test') {
   server = http.createServer(app);
-  io = new Server(server, {
+  io = new SocketServer(server, {
     cors: {
       origin: '*',
       methods: ['GET', 'POST']
@@ -30,13 +30,13 @@ if (process.env.NODE_ENV !== 'test') {
 }
 
 // Graceful Shutdown Handler
-const handleGracefulShutdown = (signal) => {
+const handleGracefulShutdown = (signal: string) => {
   logger.info('server.shutdown.initiated', `Received ${signal}. Starting graceful shutdown...`);
   
   const shutdownAll = async () => {
     try {
       if (io) {
-        await new Promise((resolve) => io.close(resolve));
+        await new Promise<void>((resolve) => io.close(() => resolve()));
         logger.info('server.shutdown.sockets_closed', 'Socket.IO connections closed.');
       }
       const db = getDb();
@@ -45,7 +45,7 @@ const handleGracefulShutdown = (signal) => {
         logger.info('server.shutdown.db_closed', 'SQLite database connection closed.');
       }
       process.exit(0);
-    } catch (err) {
+    } catch (err: any) {
       logger.error('server.shutdown.error', 'Error during graceful shutdown', { error: err.message });
       process.exit(1);
     }

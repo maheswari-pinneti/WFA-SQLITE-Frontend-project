@@ -5,6 +5,7 @@ import { userRepository } from './auth.repository.js';
 import bcrypt from 'bcryptjs';
 import mongoose from '../../database/transaction.js';
 import { healthCheck as dbHealthCheck } from '../../database/sqlite-cloud.js';
+import { decryptSecret, verifyTotpCode, verifyRecoveryCode } from './totp.js';
 
 const ORGANIZATION_ID = 'org-stackly';
 
@@ -79,7 +80,7 @@ export const register = async (req: Request, res: Response): Promise<any> => {
   try {
     const { fullName, email, department, password } = req.body;
     const name = fullName;
-    const role = 'EMPLOYEE';
+    const role: string = 'EMPLOYEE';
     if (!name || !email || !password) {
       return res.status(400).json({ success: false, message: 'Name, email, and password are required' });
     }

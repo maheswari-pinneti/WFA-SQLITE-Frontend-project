@@ -71,12 +71,15 @@ export function buildWhereClause(tableName: string, query: any): { clause: strin
       const operators = Object.keys(value);
       operators.forEach(op => {
         if (op === '$ne') {
-          if (value[op] === null) {
-            clauses.push(`${key} IS NOT NULL`);
-          } else {
-            clauses.push(`${key} != ?`);
-            params.push(serializeValue(value[op]));
-          }
+          const vals = Array.isArray(value[op]) ? value[op] : [value[op]];
+          vals.forEach((v: any) => {
+            if (v === null) {
+              clauses.push(`${key} IS NOT NULL`);
+            } else {
+              clauses.push(`${key} != ?`);
+              params.push(serializeValue(v));
+            }
+          });
         } else if (op === '$in') {
           const list = value[op];
           if (Array.isArray(list) && list.length > 0) {

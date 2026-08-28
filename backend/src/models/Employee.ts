@@ -1,3 +1,3 @@
-import { Employee } from './index';
+import { Employee } from './index.js';
 export { Employee };
 export default Employee;

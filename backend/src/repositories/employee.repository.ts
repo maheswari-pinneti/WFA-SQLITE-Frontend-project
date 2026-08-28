@@ -1,2 +1,2 @@
-import { employeeRepository } from '../modules/employees/employee.repository';
-export { employeeRepository, default } from '../modules/employees/employee.repository';
+import { employeeRepository } from '../modules/employees/employee.repository.js';
+export { employeeRepository, default } from '../modules/employees/employee.repository.js';

@@ -14,7 +14,7 @@ const findIdentity = async (employeeId, orgId) => {
 };
 
 const getScopeQuery = (req) => {
-  const query = { organizationId: getOrganizationId(req) };
+  const query: any = { organizationId: getOrganizationId(req) };
   if (req.user.role === 'EMPLOYEE') {
     query.employeeId = req.user.id;
   } else if (req.user.role === 'TEAM_LEAD') {
@@ -122,7 +122,7 @@ export const reviewLeaveRequest = async (req, res) => {
 
 export const getTasks = async (req, res) => {
   try {
-    const query = { organizationId: getOrganizationId(req) };
+    const query: any = { organizationId: getOrganizationId(req) };
     if (req.user.role === 'EMPLOYEE') {
       query.assigneeId = req.user.id;
     } else if (req.user.role === 'TEAM_LEAD') {

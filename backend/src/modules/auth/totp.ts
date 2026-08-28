@@ -75,7 +75,7 @@ export const verifyTotpCode = async (code: string, secret: string): Promise<bool
     return false;
   }
   try {
-    const result = await totpInstance.verify(code, { secret, window: 4 });
+    const result = await totpInstance.verify(code, { secret, window: 4 } as any);
     return result.valid;
   } catch (err) {
     return false;

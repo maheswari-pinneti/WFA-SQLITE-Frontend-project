@@ -9,10 +9,10 @@ const getOrganizationId = (req) => req.user.organizationId || 'org-stackly';
 export const getDepartments = async (req, res) => {
   try {
     const orgId = getOrganizationId(req);
-    const depts = await Employee.distinct('department', { organizationId: orgId, department: { $ne: null, $ne: '' } });
+    const depts = await Employee.distinct('department', { organizationId: orgId, department: { $ne: [null, ''] } });
     const formatted = depts.sort().map(d => ({ name: d }));
     return res.json({ success: true, data: formatted });
-  } catch (err) {
+  } catch (err: any) {
     return res.status(500).json({ success: false, message: err.message });
   }
 };
@@ -23,10 +23,10 @@ export const getDepartments = async (req, res) => {
 export const getLocations = async (req, res) => {
   try {
     const orgId = getOrganizationId(req);
-    const locs = await Employee.distinct('location', { organizationId: orgId, location: { $ne: null, $ne: '' } });
+    const locs = await Employee.distinct('location', { organizationId: orgId, location: { $ne: [null, ''] } });
     const formatted = locs.sort().map(l => ({ name: l }));
     return res.json({ success: true, data: formatted });
-  } catch (err) {
+  } catch (err: any) {
     return res.status(500).json({ success: false, message: err.message });
   }
 };

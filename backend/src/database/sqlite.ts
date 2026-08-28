@@ -25,41 +25,41 @@ export class ModelShim {
           if (typeof sortObj === 'string') {
             const field = sortObj.replace('-', '');
             const order = sortObj.startsWith('-') ? 'DESC' : 'ASC';
-            this._sort = `ORDER BY ${field} ${order}`;
+            builder._sort = `ORDER BY ${field} ${order}`;
           } else {
             const field = Object.keys(sortObj)[0];
             if (field) {
               const order = sortObj[field] === -1 ? 'DESC' : 'ASC';
-              this._sort = `ORDER BY ${field} ${order}`;
+              builder._sort = `ORDER BY ${field} ${order}`;
             }
           }
         }
-        return this;
+        return builder;
       },
       
       limit(n: any) {
-        if (n !== undefined && n !== null) this._limit = n;
-        return this;
+        if (n !== undefined && n !== null) builder._limit = n;
+        return builder;
       },
       
       skip(n: any) {
-        if (n !== undefined && n !== null) this._skip = n;
-        return this;
+        if (n !== undefined && n !== null) builder._skip = n;
+        return builder;
       },
       
       select() {
-        return this;
+        return builder;
       },
       
-      session() {
-        return this;
+      session(_sess?: any) {
+        return builder;
       },
       
       then: (resolve: (val: any) => void, reject: (err: any) => void) => {
         let sql = `SELECT * FROM ${this.tableName} ${clause}`;
-        if (this._sort) sql += ` ${this._sort}`;
-        if (this._limit !== null && this._limit !== undefined) sql += ` LIMIT ${this._limit}`;
-        if (this._skip !== null && this._skip !== undefined) sql += ` OFFSET ${this._skip}`;
+        if (builder._sort) sql += ` ${builder._sort}`;
+        if (builder._limit !== null && builder._limit !== undefined) sql += ` LIMIT ${builder._limit}`;
+        if (builder._skip !== null && builder._skip !== undefined) sql += ` OFFSET ${builder._skip}`;
 
         query(sql, params)
           .then(rows => {
@@ -86,25 +86,25 @@ export class ModelShim {
           if (typeof sortObj === 'string') {
             const field = sortObj.replace('-', '');
             const order = sortObj.startsWith('-') ? 'DESC' : 'ASC';
-            this._sort = `ORDER BY ${field} ${order}`;
+            builder._sort = `ORDER BY ${field} ${order}`;
           } else {
             const field = Object.keys(sortObj)[0];
             if (field) {
               const order = sortObj[field] === -1 ? 'DESC' : 'ASC';
-              this._sort = `ORDER BY ${field} ${order}`;
+              builder._sort = `ORDER BY ${field} ${order}`;
             }
           }
         }
-        return this;
+        return builder;
       },
       
-      session() {
-        return this;
+      session(_sess?: any) {
+        return builder;
       },
       
       then: (resolve: (val: any) => void, reject: (err: any) => void) => {
         let sql = `SELECT * FROM ${this.tableName} ${clause}`;
-        if (this._sort) sql += ` ${this._sort}`;
+        if (builder._sort) sql += ` ${builder._sort}`;
         sql += ` LIMIT 1`;
         
         query(sql, params)
@@ -216,7 +216,7 @@ export class ModelShim {
 
   updateOne(queryParam: any, update: any) {
     const builder = {
-      session: () => builder,
+      session: (_sess?: any) => builder,
       then: (resolve: (val: any) => void, reject: (err: any) => void) => {
         this._updateOneInternal(queryParam, update).then(resolve, reject);
       }
@@ -299,7 +299,7 @@ export class ModelShim {
 
   deleteOne(queryParam: any) {
     const builder = {
-      session: () => builder,
+      session: (_sess?: any) => builder,
       then: (resolve: (val: any) => void, reject: (err: any) => void) => {
         this._deleteOneInternal(queryParam).then(resolve, reject);
       }
@@ -309,7 +309,7 @@ export class ModelShim {
 
   deleteMany(queryParam: any) {
     const builder = {
-      session: () => builder,
+      session: (_sess?: any) => builder,
       then: (resolve: (val: any) => void, reject: (err: any) => void) => {
         this._deleteOneInternal(queryParam).then(resolve, reject);
       }

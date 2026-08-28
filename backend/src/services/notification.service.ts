@@ -1,3 +1,3 @@
-import * as notificationService from '../modules/notifications/notification.service';
-export * from '../modules/notifications/notification.service';
+import * as notificationService from '../modules/notifications/notification.service.js';
+export * from '../modules/notifications/notification.service.js';
 export default notificationService;
