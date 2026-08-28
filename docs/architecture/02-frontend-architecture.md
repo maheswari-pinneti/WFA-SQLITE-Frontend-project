@@ -7,7 +7,7 @@ This document describes the design of the React SPA including navigation routing
 ```mermaid
 flowchart TB
     USER["Authenticated User"]
-    
+
     subgraph APP["React Application"]
         ENTRY["main.tsx Application Entry"]
         APPROOT["App.tsx Application Root"]
@@ -17,12 +17,12 @@ flowchart TB
         HEADER["Header"]
         SIDEBAR["Role-Based Sidebar"]
         CONTENT["Dashboard Content"]
-        
+
         subgraph STATE_LAYER["State Management"]
             REDUX["Redux Toolkit (Auth / User / UI State)"]
             QUERY["TanStack React Query (API State / Cache)"]
         end
-        
+
         subgraph UI_LAYER["Reusable UI Components"]
             KPI["KPI Cards"]
             TABLE["Employee Tables"]
@@ -31,7 +31,7 @@ flowchart TB
             FORMS["Forms / Modals"]
             NOTIFICATIONS["Notification UI"]
         end
-        
+
         subgraph ROLE_LAYER["Role Dashboards"]
             ADMIN["Admin Dashboard"]
             HR["HR Dashboard"]
@@ -39,7 +39,7 @@ flowchart TB
             LEAD["Team Lead Dashboard"]
             EMPLOYEE["Employee Dashboard"]
         end
-        
+
         subgraph ATTENDANCE["Attendance Module"]
             CHECKIN["Check-In"]
             BREAK["Break"]
@@ -49,12 +49,12 @@ flowchart TB
             CORRECTION["Correction Request"]
             OFFLINE["Offline Queue"]
         end
-        
+
         THEME["Theme System (Light / Dark)"]
         API_CLIENT["REST API Client (Axios)"]
         SOCKET["Socket.IO Client"]
     end
-    
+
     USER --> ENTRY
     ENTRY --> APPROOT
     APPROOT --> ROUTER
@@ -63,13 +63,13 @@ flowchart TB
     LAYOUT --> HEADER
     LAYOUT --> SIDEBAR
     LAYOUT --> CONTENT
-    
+
     GUARDS --> ADMIN
     GUARDS --> HR
     GUARDS --> MANAGER
     GUARDS --> LEAD
     GUARDS --> EMPLOYEE
-    
+
     CONTENT --> STATE_LAYER
     REDUX --> API_CLIENT
     QUERY --> API_CLIENT
@@ -92,13 +92,13 @@ flowchart TB
 flowchart LR
     LOGIN["Login / MFA"] --> AUTH["Authenticated Session"]
     AUTH --> ROLE{"User Role"}
-    
+
     ROLE -->|ADMIN| ADMIN["/admin/dashboard"]
     ROLE -->|HR| HR["/hr/dashboard"]
     ROLE -->|MANAGER| MANAGER["/manager/dashboard"]
     ROLE -->|TEAM_LEAD| LEAD["/team-lead/dashboard"]
     ROLE -->|EMPLOYEE| EMP["/employee/dashboard"]
-    
+
     ADMIN --> ADMIN_NAV["Admin Navigation"]
     HR --> HR_NAV["HR Navigation"]
     MANAGER --> MGR_NAV["Manager Navigation"]

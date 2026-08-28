@@ -5,11 +5,11 @@ This document outlines the architectural organization of the Express API, routin
 ```mermaid
 flowchart TB
     CLIENT["React Frontend"]
-    
+
     subgraph SERVER["Node.js + Express Backend"]
         ENTRY["Server Entry (server.js / app)"]
         ROUTES["API Routes"]
-        
+
         subgraph MIDDLEWARE["Middleware Layer"]
             AUTH_MW["Authentication Middleware (JWT Verification)"]
             ROLE_MW["Role Guard"]
@@ -17,14 +17,14 @@ flowchart TB
             ABAC["ABAC / Scope Validation"]
             VALIDATION["Request Validation"]
         end
-        
+
         subgraph CONTROLLERS["Controllers"]
             AUTH_C["Auth Controller"]
             EMP_C["Workforce / Employee Controller"]
             ATT_C["Attendance Controller"]
             ANALYTICS_C["Analytics Controller"]
         end
-        
+
         subgraph SERVICE_LAYER["Service Layer"]
             AUTH_S["Authentication Service"]
             MFA_S["MFA Service"]
@@ -34,13 +34,13 @@ flowchart TB
             NOTIFY_S["Notification Service"]
             AUDIT_S["Audit Service"]
         end
-        
+
         SOCKET["Socket.IO Server"]
         RESPONSE["Response / Error Handler"]
     end
-    
+
     DB["SQLite / SQLite Cloud Database"]
-    
+
     CLIENT --> ENTRY
     ENTRY --> ROUTES
     ROUTES --> MIDDLEWARE
@@ -50,29 +50,29 @@ flowchart TB
     PERMISSION --> ABAC
     ABAC --> VALIDATION
     VALIDATION --> CONTROLLERS
-    
+
     CONTROLLERS --> AUTH_C
     CONTROLLERS --> EMP_C
     CONTROLLERS --> ATT_C
     CONTROLLERS --> ANALYTICS_C
-    
+
     AUTH_C --> AUTH_S
     AUTH_C --> MFA_S
     EMP_C --> EMP_S
     ATT_C --> ATT_S
     ANALYTICS_C --> ANALYTICS_S
-    
+
     EMP_S --> DB
     ATT_S --> DB
     ANALYTICS_S --> DB
     AUTH_S --> DB
     MFA_S --> DB
-    
+
     ATT_S --> NOTIFY_S
     ATT_S --> AUDIT_S
     EMP_S --> AUDIT_S
     AUTH_S --> AUDIT_S
-    
+
     NOTIFY_S --> SOCKET
     AUDIT_S --> DB
     SOCKET --> CLIENT

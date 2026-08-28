@@ -5,7 +5,7 @@ This diagram illustrates the overall system architecture of the Workforce Analyt
 ```mermaid
 flowchart TB
     USER["Users (ADMIN, HR, MANAGER, TEAM LEAD, EMPLOYEE)"]
-    
+
     subgraph FRONTEND["FRONTEND — React + TypeScript"]
         UI["Role-Based UI"]
         ROUTER["React Router Protected Routes"]
@@ -16,7 +16,7 @@ flowchart TB
         ATTENDANCE_UI["Attendance (Check-In / Break / Resume / Check-Out)"]
         SOCKET_CLIENT["Socket.IO Client Real-Time Updates"]
     end
-    
+
     subgraph BACKEND["BACKEND — Node.js + Express"]
         API["REST API"]
         AUTH["Authentication (JWT + Refresh Token + MFA)"]
@@ -28,7 +28,7 @@ flowchart TB
         NOTIFICATION["Notification Service"]
         AUDIT["Audit Service"]
     end
-    
+
     subgraph DATABASE["DATABASE — SQLite / SQLite Cloud"]
         USERS["Users / Roles / Permissions"]
         EMP["Employees"]
@@ -40,7 +40,7 @@ flowchart TB
         NOTIFY["Notifications"]
         AUDITDB["Audit Logs"]
     end
-    
+
     USER --> UI
     UI --> ROUTER
     ROUTER --> STATE
@@ -52,7 +52,7 @@ flowchart TB
     AUTH --> AUTHZ
     AUTHZ --> CONTROLLERS
     CONTROLLERS --> SERVICES
-    
+
     SERVICES --> USERS
     SERVICES --> EMP
     SERVICES --> ORG
@@ -62,13 +62,13 @@ flowchart TB
     SERVICES --> SESSION
     SERVICES --> NOTIFY
     SERVICES --> AUDITDB
-    
+
     SERVICES --> SOCKET
     SOCKET --> SOCKET_CLIENT
     SOCKET_CLIENT --> UI
     SERVICES --> NOTIFICATION
     SERVICES --> AUDIT
-    
+
     ANALYTICS_UI --> QUERY
     ATTENDANCE_UI --> QUERY
 ```
