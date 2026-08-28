@@ -13,12 +13,31 @@ export const initDb = async (): Promise<void> => {
         // Connect to either SQLite Cloud or fallback to local SQLite
         await connectDatabase();
 
+        const columnExists = async (tableName: string, columnName: string): Promise<boolean> => {
+          try {
+            const columns = await query(`PRAGMA table_info(${tableName})`);
+            return Array.isArray(columns) && columns.some((col: any) => col.name === columnName);
+          } catch (err) {
+            return false;
+          }
+        };
+
         // Run migrations for users and mfachallenges columns if they don't exist
-        try { await execute("ALTER TABLE users ADD COLUMN authProvider TEXT DEFAULT 'local';"); } catch (e) {}
-        try { await execute("ALTER TABLE users ADD COLUMN providerSubject TEXT;"); } catch (e) {}
-        try { await execute("ALTER TABLE mfachallenges ADD COLUMN type TEXT DEFAULT 'totp-mfa';"); } catch (e) {}
-        try { await execute("ALTER TABLE failed_logins ADD COLUMN lockedAt TEXT;"); } catch (e) {}
-        try { await execute("ALTER TABLE failed_logins ADD COLUMN lockReason TEXT;"); } catch (e) {}
+        if (!(await columnExists('users', 'authProvider'))) {
+          try { await execute("ALTER TABLE users ADD COLUMN authProvider TEXT DEFAULT 'local';"); } catch (e) {}
+        }
+        if (!(await columnExists('users', 'providerSubject'))) {
+          try { await execute("ALTER TABLE users ADD COLUMN providerSubject TEXT;"); } catch (e) {}
+        }
+        if (!(await columnExists('mfachallenges', 'type'))) {
+          try { await execute("ALTER TABLE mfachallenges ADD COLUMN type TEXT DEFAULT 'totp-mfa';"); } catch (e) {}
+        }
+        if (!(await columnExists('failed_logins', 'lockedAt'))) {
+          try { await execute("ALTER TABLE failed_logins ADD COLUMN lockedAt TEXT;"); } catch (e) {}
+        }
+        if (!(await columnExists('failed_logins', 'lockReason'))) {
+          try { await execute("ALTER TABLE failed_logins ADD COLUMN lockReason TEXT;"); } catch (e) {}
+        }
 
         // Ensure critical tables exist (like failed_logins)
         await execute(`
