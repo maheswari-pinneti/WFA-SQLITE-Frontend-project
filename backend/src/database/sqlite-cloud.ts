@@ -16,30 +16,39 @@ let localDb: BetterSqlite3.Database | null = null;
 export const connectDatabase = async (): Promise<any> => {
   const cloudUrl = process.env.SQLITE_CLOUD_URL || process.env.SQLITE_CLOUD_CONNECTION_STRING;
   if (cloudUrl && process.env.NODE_ENV !== 'test') {
-    console.log('[Database] Connecting to SQLite Cloud database...');
-    cloudDb = new SQLiteCloudDatabase(cloudUrl);
-    return cloudDb;
-  } else {
-    console.log(`[Database] Connecting to local SQLite at ${DB_PATH}`);
-    if (!fs.existsSync(DB_DIR)) {
-      fs.mkdirSync(DB_DIR, { recursive: true });
+    try {
+      console.log('[Database] Connecting to SQLite Cloud database...');
+      const testDb = new SQLiteCloudDatabase(cloudUrl);
+      // Run test query immediately to check if server is paused/down
+      await testDb.sql('SELECT 1 as active');
+      console.log('[Database] Successfully connected to SQLite Cloud.');
+      cloudDb = testDb;
+      return cloudDb;
+    } catch (err: any) {
+      console.error('[Database] SQLite Cloud unavailable (node may be paused or offline). Falling back to local SQLite. Error:', err.message);
+      cloudDb = null;
     }
-    localDb = new BetterSqlite3(DB_PATH, { timeout: 10000 });
-    localDb.pragma('foreign_keys = ON');
-    localDb.pragma('journal_mode = WAL');
-    localDb.pragma('synchronous = NORMAL');
-    
-    // Validate database integrity on connection setup
-    const integrityResult = localDb.pragma('integrity_check');
-    if (integrityResult && integrityResult[0] && integrityResult[0].integrity_check !== 'ok') {
-      console.warn(`[Database] Warning: SQLite database integrity check returned: ${integrityResult[0].integrity_check}`);
-    }
-    
-    // Checkpoint WAL frames to base database file
-    localDb.pragma('wal_checkpoint(PASSIVE)');
-    
-    return localDb;
   }
+
+  console.log(`[Database] Connecting to local SQLite at ${DB_PATH}`);
+  if (!fs.existsSync(DB_DIR)) {
+    fs.mkdirSync(DB_DIR, { recursive: true });
+  }
+  localDb = new BetterSqlite3(DB_PATH, { timeout: 10000 });
+  localDb.pragma('foreign_keys = ON');
+  localDb.pragma('journal_mode = WAL');
+  localDb.pragma('synchronous = NORMAL');
+  
+  // Validate database integrity on connection setup
+  const integrityResult = localDb.pragma('integrity_check');
+  if (integrityResult && integrityResult[0] && integrityResult[0].integrity_check !== 'ok') {
+    console.warn(`[Database] Warning: SQLite database integrity check returned: ${integrityResult[0].integrity_check}`);
+  }
+  
+  // Checkpoint WAL frames to base database file
+  localDb.pragma('wal_checkpoint(PASSIVE)');
+  
+  return localDb;
 };
 
 export const getDatabase = (): any => {
