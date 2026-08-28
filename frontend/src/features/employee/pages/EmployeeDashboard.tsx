@@ -4,40 +4,41 @@ import { Role } from '../../../security/roles/roles';
 import { Permission } from '../../../security/permissions/permissions';
 import { useAuth } from '../../../auth/hooks/useAuth';
 import { LiveCheckInWidget } from '../../../components/attendance/LiveCheckInWidget';
-import { AttendanceCalendarView } from '../../../components/attendance/AttendanceCalendarView';
 import { workforceApi, Task } from '../../../api/endpoints/workforce.api';
-import { attendanceApi, CorrectionRequest } from '../../../api/attendanceApi';
+import { attendanceApi, AttendanceRecord, CorrectionRequest } from '../../../api/attendanceApi';
+import { MinimalKpiCard } from '../../../components/ui/MinimalKpiCard';
+import { AnalyticsOverview } from '../../../components/dashboard/AnalyticsOverview';
 import { 
-  Clock, Calendar, FileText, Compass, CheckCircle2, AlertCircle, Sparkles, Plus, Play, Check, HelpCircle, Layers, ClipboardList
+  Clock, Calendar, FileText, Compass, CheckCircle2, AlertCircle, Sparkles, Plus, Play, Check, HelpCircle, Layers, ClipboardList, Briefcase, Award, TrendingUp, Filter
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 export const EmployeeDashboard: React.FC = () => {
   const { user } = useAuth();
   const [tasks, setTasks] = useState<Task[]>([]);
+  const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([]);
   const [corrections, setCorrections] = useState<CorrectionRequest[]>([]);
-  const [loadingTasks, setLoadingTasks] = useState(true);
-  const [loadingCorrections, setLoadingCorrections] = useState(true);
+  const [loading, setLoading] = useState(true);
+  const [statusFilter, setStatusFilter] = useState('All');
+  const [dateFilter, setDateFilter] = useState('');
 
-  // Fetch tasks and corrections
+  // Fetch tasks, attendance records, and corrections
   useEffect(() => {
     const loadDashboardData = async () => {
+      setLoading(true);
       try {
-        const fetchedTasks = await workforceApi.getTasks();
+        const [fetchedTasks, fetchedAttendance, fetchedCorrections] = await Promise.all([
+          workforceApi.getTasks().catch(() => []),
+          attendanceApi.getRecords().catch(() => []),
+          attendanceApi.getCorrections().catch(() => [])
+        ]);
         setTasks(fetchedTasks);
-      } catch (err) {
-        console.error('Failed to load tasks:', err);
-      } finally {
-        setLoadingTasks(false);
-      }
-
-      try {
-        const fetchedCorrections = await attendanceApi.getCorrections();
+        setAttendanceRecords(fetchedAttendance);
         setCorrections(fetchedCorrections);
       } catch (err) {
-        console.error('Failed to load corrections:', err);
+        console.error('Failed to load dashboard data:', err);
       } finally {
-        setLoadingCorrections(false);
+        setLoading(false);
       }
     };
     loadDashboardData();
@@ -51,6 +52,96 @@ export const EmployeeDashboard: React.FC = () => {
       console.error('Failed to update task status:', err);
     }
   };
+
+  // 1. Attendance Calculations
+  const history = attendanceRecords.map((record) => {
+    const totalBreakMs = record.breaks ? record.breaks.reduce((acc: number, b: any) => {
+      const end = b.endTime ? new Date(b.endTime).getTime() : Date.now();
+      const start = new Date(b.startTime).getTime();
+      return acc + (end - start);
+    }, 0) : 0;
+    
+    const breakHours = (totalBreakMs / 3600000).toFixed(2);
+    const breakStr = `${breakHours} hrs`;
+
+    const totalWorkMs = record.checkOutTime 
+      ? (new Date(record.checkOutTime).getTime() - new Date(record.checkInTime || '').getTime()) 
+      : (Date.now() - new Date(record.checkInTime || '').getTime());
+    
+    const netWorkMs = Math.max(0, totalWorkMs - totalBreakMs);
+    const workingHours = (netWorkMs / 3600000).toFixed(2);
+    const workingTimeStr = `${workingHours} hrs`;
+
+    // Late calculation (Shift start: 9:00 AM)
+    const checkInDate = record.checkInTime ? new Date(record.checkInTime) : new Date();
+    const checkInHour = checkInDate.getHours();
+    const checkInMin = checkInDate.getMinutes();
+    const lateMinutes = (checkInHour * 60 + checkInMin) - (9 * 60);
+    const lateStr = lateMinutes > 0 ? `${lateMinutes} mins` : 'On Time';
+
+    // Overtime calculation (Standard work day: 8 hours)
+    const netHours = netWorkMs / 3600000;
+    const overtimeHrs = netHours > 8 ? (netHours - 8).toFixed(2) : '0.00';
+    const overtimeStr = `${overtimeHrs} hrs`;
+
+    return {
+      date: new Date(record.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }),
+      rawDate: record.date, // for filtering
+      in: record.checkInTime ? new Date(record.checkInTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '—',
+      out: record.checkOutTime ? new Date(record.checkOutTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Active',
+      workingTime: workingTimeStr,
+      workingHoursNum: netHours,
+      break: breakStr,
+      late: lateStr,
+      overtime: overtimeStr,
+      status: record.status || (record.checkOutTime ? 'Checked Out' : 'Working')
+    };
+  });
+
+  // Filter Attendance Logs
+  const filteredHistory = history.filter(h => {
+    const matchesStatus = statusFilter === 'All' || h.status.toLowerCase() === statusFilter.toLowerCase();
+    const matchesDate = !dateFilter || h.rawDate.includes(dateFilter);
+    return matchesStatus && matchesDate;
+  });
+
+  // Calculate 8 KPIs
+  const todayRecord = history.find(h => {
+    const todayStr = new Date().toISOString().split('T')[0];
+    return h.rawDate === todayStr;
+  });
+  const hoursToday = todayRecord ? `${todayRecord.workingTime}` : '0.00 hrs';
+
+  // Hours this week
+  const startOfWeek = new Date();
+  startOfWeek.setDate(startOfWeek.getDate() - startOfWeek.getDay());
+  const hoursThisWeekNum = history.reduce((acc, h) => {
+    const recordDate = new Date(h.rawDate);
+    if (recordDate >= startOfWeek) {
+      return acc + h.workingHoursNum;
+    }
+    return acc;
+  }, 0);
+  const hoursThisWeek = `${hoursThisWeekNum.toFixed(2)} hrs`;
+
+  // Attendance rate
+  const attendanceRate = history.length > 0 
+    ? `${((history.filter(h => h.status !== 'Absent').length / history.length) * 100).toFixed(1)}%` 
+    : '100%';
+
+  // Leave balances
+  const leaveBalance = '14 Days';
+  const leavesUsed = '4 Days';
+
+  // Tasks KPIs
+  const pendingTasksCount = tasks.filter(t => t.status !== 'COMPLETED').length;
+  const completedTasksCount = tasks.filter(t => t.status === 'COMPLETED').length;
+  const totalTasksCount = tasks.length;
+  const goalProgress = totalTasksCount > 0 
+    ? `${Math.round((completedTasksCount / totalTasksCount) * 100)}%` 
+    : '0%';
+  
+  const timesheetStatus = todayRecord?.out && todayRecord.out !== 'Active' ? 'Submitted' : 'Pending';
 
   return (
     <RoleGuard allowedRoles={[Role.EMPLOYEE, Role.TEAM_LEAD, Role.MANAGER, Role.HR, Role.ADMIN]} requiredPermission={Permission.PROFILE_VIEW}>
@@ -81,13 +172,40 @@ export const EmployeeDashboard: React.FC = () => {
           </div>
         </div>
 
-        {/* Attendance Action Widget */}
+        {/* Global Filter Bar */}
+        <div className="p-4 rounded-2xl bg-slate-900 border border-slate-800 flex flex-wrap items-center gap-4">
+          <div className="flex items-center gap-2 text-slate-300 text-xs font-bold uppercase">
+            <Filter size={16} className="text-emerald-400" /> Filter Dashboard:
+          </div>
+          <input
+            type="date"
+            value={dateFilter}
+            onChange={(e) => setDateFilter(e.target.value)}
+            className="bg-slate-950 border border-slate-800 text-slate-300 text-xs rounded-xl px-3 py-2 focus:outline-none focus:ring-1 focus:ring-emerald-500 cursor-pointer font-semibold"
+          />
+        </div>
+
+        {/* 8 KPI Cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+          <MinimalKpiCard title="Hours Today" value={hoursToday} icon={<Clock size={26} />} iconBgColor="blue" trend="Today's Active Shift" />
+          <MinimalKpiCard title="Hours This Week" value={hoursThisWeek} icon={<Briefcase size={26} />} iconBgColor="emerald" trend="Current Week" />
+          <MinimalKpiCard title="Attendance Rate" value={attendanceRate} icon={<Calendar size={26} />} iconBgColor="teal" trend="Lifetime Adherence" />
+          <MinimalKpiCard title="Leave Balance" value={leaveBalance} icon={<Layers size={26} />} iconBgColor="purple" trend="Available Days" />
+          <MinimalKpiCard title="Leaves Used" value={leavesUsed} icon={<FileText size={26} />} iconBgColor="rose" trend="This Calendar Year" />
+          <MinimalKpiCard title="Pending Tasks" value={pendingTasksCount} icon={<AlertCircle size={26} />} iconBgColor="amber" trend="In Sprint Backlog" />
+          <MinimalKpiCard title="Goal Progress" value={goalProgress} icon={<Award size={26} />} iconBgColor="cyan" trend="Target Achievement" />
+          <MinimalKpiCard title="Timesheet Status" value={timesheetStatus} icon={<CheckCircle2 size={26} />} iconBgColor="indigo" trend="Daily Verification" />
+        </div>
+
+        {/* 8 Charts (Scope Aware Analytics) */}
+        <AnalyticsOverview title="My Personal Analytics & Trends" subtitle="Scope-aware productivity and attendance details" compact={false} />
+
+        {/* Attendance Action Widget & Timing Details */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2">
             <LiveCheckInWidget />
           </div>
           
-          {/* Shift Timings Card */}
           <div className="p-6 rounded-3xl bg-slate-900 border border-slate-800 shadow-xl flex flex-col justify-between">
             <div>
               <div className="flex items-center justify-between mb-4">
@@ -120,6 +238,86 @@ export const EmployeeDashboard: React.FC = () => {
           </div>
         </div>
 
+        {/* Table Module (My Attendance Logs) */}
+        <div className="p-6 rounded-3xl bg-slate-900 border border-slate-800 shadow-2xl space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <h3 className="text-base font-extrabold text-white">My Attendance logs</h3>
+            
+            <div className="flex items-center gap-4">
+              <span className="text-xs text-slate-400 font-semibold">Filter Status:</span>
+              <select
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value)}
+                className="bg-slate-950 border border-slate-800 text-slate-300 text-xs rounded-xl px-2.5 py-1.5 focus:outline-none focus:ring-1 focus:ring-emerald-500 cursor-pointer font-semibold"
+              >
+                <option value="All">All</option>
+                <option value="Present">Present</option>
+                <option value="Absent">Absent</option>
+                <option value="Late">Late</option>
+                <option value="Half Day">Half Day</option>
+                <option value="On Leave">On Leave</option>
+                <option value="Holiday">Holiday</option>
+                <option value="Week Off">Week Off</option>
+                <option value="Missing Checkout">Missing Checkout</option>
+              </select>
+            </div>
+          </div>
+
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-xs">
+              <thead className="bg-slate-950 text-slate-400 border-b border-slate-880 uppercase font-bold text-[10px]">
+                <tr>
+                  <th className="py-3 px-4">Date</th>
+                  <th className="py-3 px-4">Check In</th>
+                  <th className="py-3 px-4">Check Out</th>
+                  <th className="py-3 px-4">Working Time</th>
+                  <th className="py-3 px-4">Break</th>
+                  <th className="py-3 px-4">Late</th>
+                  <th className="py-3 px-4">Overtime</th>
+                  <th className="py-3 px-4">Status</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-800/80">
+                {filteredHistory.map((h, i) => (
+                  <tr key={i} className="hover:bg-slate-800/40">
+                    <td className="py-3 px-4 font-bold text-white">{h.date}</td>
+                    <td className="py-3 px-4 font-mono text-emerald-400 font-bold">{h.in}</td>
+                    <td className="py-3 px-4 font-mono text-rose-400 font-bold">{h.out}</td>
+                    <td className="py-3 px-4 font-mono text-blue-400 font-bold">{h.workingTime}</td>
+                    <td className="py-3 px-4 font-mono text-slate-300">{h.break}</td>
+                    <td className="py-3 px-4">
+                      <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
+                        h.late === 'On Time' ? 'bg-emerald-500/10 text-emerald-400' : 'bg-rose-500/10 text-rose-400'
+                      }`}>
+                        {h.late}
+                      </span>
+                    </td>
+                    <td className="py-3 px-4 font-mono text-purple-400">{h.overtime}</td>
+                    <td className="py-3 px-4">
+                      <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${
+                        h.status === 'Checked In' || h.status === 'Working' || h.status === 'Present'
+                          ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
+                          : h.status === 'Absent'
+                          ? 'bg-rose-500/20 text-rose-400 border border-rose-500/30'
+                          : 'bg-slate-800 text-slate-400'
+                      }`}>
+                        {h.status}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+                {filteredHistory.length === 0 && (
+                  <tr>
+                    <td colSpan={8} className="py-8 text-center text-slate-500 font-semibold">
+                      No matching daily logs found
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
         {/* Sprint Work & Tasks */}
         <div className="p-6 rounded-3xl bg-slate-900 border border-slate-800 shadow-xl">
           <div className="flex items-center justify-between mb-6">
@@ -131,7 +329,7 @@ export const EmployeeDashboard: React.FC = () => {
             </span>
           </div>
 
-          {loadingTasks ? (
+          {loading ? (
             <div className="flex justify-center items-center py-10">
               <div className="loading loading-spinner text-blue-500"></div>
             </div>
@@ -201,7 +399,7 @@ export const EmployeeDashboard: React.FC = () => {
             </Link>
           </div>
 
-          {loadingCorrections ? (
+          {loading ? (
             <div className="flex justify-center items-center py-10">
               <div className="loading loading-spinner text-rose-500"></div>
             </div>
@@ -249,17 +447,6 @@ export const EmployeeDashboard: React.FC = () => {
             </div>
           )}
         </div>
-
-        {/* My Attendance Calendar */}
-        <div className="p-6 rounded-3xl bg-slate-900 border border-slate-800 shadow-xl">
-          <div className="mb-4">
-            <h3 className="text-lg font-bold text-white flex items-center gap-2">
-              <Calendar className="text-teal-400" size={22} /> My Attendance History
-            </h3>
-          </div>
-          <AttendanceCalendarView />
-        </div>
-
       </div>
     </RoleGuard>
   );

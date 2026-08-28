@@ -1,16 +1,14 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../../auth/hooks/useAuth';
 import { RoleGuard } from '../../../security/guards/RoleGuard';
 import { Role } from '../../../security/roles/roles';
 import { Permission } from '../../../security/permissions/permissions';
-import { AdvancedFilterBar } from '../../../shared/components/AdvancedFilterBar';
 import { DrillDownModal, DrillDownData } from '../../../shared/components/DrillDownModal';
-
 import { MinimalKpiCard } from '../../../components/ui/MinimalKpiCard';
-
-// 6 Distinct Recharts Modules (Each uses a completely different chart type)
 import { AnalyticsOverview } from '../../../components/dashboard/AnalyticsOverview';
-
+import { employeeApi } from '../../../api/endpoints/employee.api';
+import { workforceApi, Task } from '../../../api/endpoints/workforce.api';
+import { Employee } from '../../../shared/types/common.types';
 import {
   Users,
   UserPlus,
@@ -26,14 +24,44 @@ import {
   TrendingDown,
   Briefcase,
   ShieldCheck,
-  DollarSign,
   Layers,
+  Filter,
+  DollarSign
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 export const AdminDashboard: React.FC = () => {
   const { user } = useAuth();
   const [drillDownData, setDrillDownData] = useState<DrillDownData | null>(null);
+  const [employees, setEmployees] = useState<Employee[]>([]);
+  const [tasks, setTasks] = useState<Task[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  // Filters
+  const [dateFilter, setDateFilter] = useState('');
+  const [locationFilter, setLocationFilter] = useState('All');
+  const [deptFilter, setDeptFilter] = useState('All');
+  const [teamFilter, setTeamFilter] = useState('All');
+  const [statusFilter, setStatusFilter] = useState('All');
+
+  useEffect(() => {
+    const fetchData = async () => {
+      setLoading(true);
+      try {
+        const [empData, taskData] = await Promise.all([
+          employeeApi.getEmployees().catch(() => []),
+          workforceApi.getTasks().catch(() => [])
+        ]);
+        setEmployees(Array.isArray(empData) ? empData : empData.employees || []);
+        setTasks(taskData);
+      } catch (err) {
+        console.error('Error fetching admin dashboard data:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, []);
 
   const openDrillDown = (title: string, value: string | number, subtitle: string, details: { label: string; value: string | number }[]) => {
     setDrillDownData({
@@ -44,6 +72,14 @@ export const AdminDashboard: React.FC = () => {
       details,
     });
   };
+
+  // Filter Employees
+  const filteredEmployees = employees.filter(emp => {
+    const matchesDept = deptFilter === 'All' || emp.department === deptFilter;
+    const matchesLocation = locationFilter === 'All' || emp.location === locationFilter;
+    const matchesStatus = statusFilter === 'All' || emp.status === statusFilter;
+    return matchesDept && matchesLocation && matchesStatus;
+  });
 
   const currentDateFormatted = new Date().toLocaleDateString('en-US', {
     weekday: 'long',
@@ -59,7 +95,7 @@ export const AdminDashboard: React.FC = () => {
     return 'Good Evening';
   };
 
-  const firstName = user?.name ? user.name.split(' ')[0] : 'Maheswari';
+  const firstName = user?.name ? user.name.split(' ')[0] : 'Admin';
 
   return (
     <RoleGuard allowedRoles={[Role.ADMIN]} requiredPermission={Permission.SYSTEM_CONFIG}>
@@ -93,195 +129,265 @@ export const AdminDashboard: React.FC = () => {
           </div>
         </div>
 
-        {/* Global Filter Bar */}
-        <AdvancedFilterBar />
-
-        {/* EXECUTIVE WORKFORCE KPI METRICS (EXACTLY 8 CARDS - 4 COLS X 2 ROWS) */}
-        <div>
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-xs font-extrabold uppercase tracking-wider text-slate-400">
-              EXECUTIVE WORKFORCE KPI METRICS (8 KEY INDICATORS)
-            </h3>
-            <span className="text-[10px] font-mono font-bold text-blue-400 bg-blue-500/10 px-2.5 py-1 rounded-lg border border-blue-500/20">
-              LIVE METRICS
-            </span>
+        {/* Global Admin Filter Bar */}
+        <div className="p-5 rounded-2xl bg-slate-900 border border-slate-800 space-y-4">
+          <div className="flex items-center gap-2 text-slate-300 text-xs font-extrabold uppercase">
+            <Filter size={16} className="text-blue-400" /> Executive Analytics Scopes
           </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-            {/* KPI 1 */}
-            <MinimalKpiCard
-              title="Total Headcount"
-              value="500"
-              icon={<Users size={26} />}
-              iconBgColor="emerald"
-              trend="+12.4% than last month"
-              trendType="positive"
-              onClick={() => openDrillDown('Total Employee Headcount', '500 Active Records', 'Global workforce roster', [
-                { label: 'Full-time Permanent', value: 440 },
-                { label: 'Contractors & Consultants', value: 60 },
-              ])}
-            />
-
-            {/* KPI 2 */}
-            <MinimalKpiCard
-              title="Active Duty Rate"
-              value="242"
-              icon={<ShieldCheck size={26} />}
-              iconBgColor="blue"
-              trend="+96.8% active shift"
-              trendType="positive"
-              onClick={() => openDrillDown('Active Duty Status', '242 Clocked In', 'Real-time shift roster', [
-                { label: 'In-Office Campuses', value: 180 },
-                { label: 'Remote WFH', value: 62 },
-              ])}
-            />
-
-            {/* KPI 3 */}
-            <MinimalKpiCard
-              title="Attendance Rate"
-              value="96.5%"
-              icon={<Clock size={26} />}
-              iconBgColor="amber"
-              trend="+1.5% compliance"
-              trendType="positive"
-              onClick={() => openDrillDown('Attendance Compliance Rate', '96.5%', 'Weekly shift adherence', [
-                { label: 'On-Time Clock Ins', value: '94.2%' },
-                { label: 'Approved Remote WFH', value: '2.3%' },
-              ])}
-            />
-
-            {/* KPI 4 */}
-            <MinimalKpiCard
-              title="Annual Attrition"
-              value="4.2%"
-              icon={<TrendingDown size={26} />}
-              iconBgColor="rose"
-              trend="-0.8% than last year"
-              trendType="positive"
-              onClick={() => openDrillDown('Employee Turnover Attrition', '4.2% Rate', 'Annual attrition index', [
-                { label: 'Voluntary Resignations', value: '3.1%' },
-                { label: 'Involuntary Departures', value: '1.1%' },
-              ])}
-            />
-
-            {/* KPI 5 */}
-            <MinimalKpiCard
-              title="Monthly Payroll"
-              value="$4.8M"
-              icon={<DollarSign size={26} />}
-              iconBgColor="purple"
-              trend="+4.35% budget allocation"
-              trendType="positive"
-              onClick={() => openDrillDown('Monthly Enterprise Payroll', '$4.8M Total Budget', 'Monthly compensation', [
-                { label: 'Base Salaries', value: '$4.1M' },
-                { label: 'Bonuses & Perks', value: '$700K' },
-              ])}
-            />
-
-            {/* KPI 6 */}
-            <MinimalKpiCard
-              title="Productivity Score"
-              value="94.8%"
-              icon={<Award size={26} />}
-              iconBgColor="cyan"
-              trend="+3.2% performance"
-              trendType="positive"
-              onClick={() => openDrillDown('Performance Score Index', '87% Average', 'Quarterly KPI score', [
-                { label: 'Exceeding Expectations', value: '58%' },
-                { label: 'Meeting Targets', value: '38%' },
-              ])}
-            />
-
-            {/* KPI 7 */}
-            <MinimalKpiCard
-              title="Open Vacancies"
-              value="124"
-              icon={<Briefcase size={26} />}
-              iconBgColor="indigo"
-              trend="+8.4% open requisitions"
-              trendType="positive"
-              onClick={() => openDrillDown('Active Job Requisitions', '124 Roles', 'Hiring pipeline', [
-                { label: 'Engineering Roles', value: 64 },
-                { label: 'Sales & Growth', value: 32 },
-              ])}
-            />
-
-            {/* KPI 8 */}
-            <MinimalKpiCard
-              title="Audit Compliance"
-              value="99.8%"
-              icon={<Layers size={26} />}
-              iconBgColor="teal"
-              trend="100% Zero-Trust Pass"
-              trendType="positive"
-              onClick={() => openDrillDown('Security & Audit Score', '99.8% Pass Rate', 'Automated security compliance', [
-                { label: 'Zero Trust ABAC Policy', value: '100% Compliant' },
-                { label: 'DBAC Scope Isolation', value: '100% Passed' },
-              ])}
-            />
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+            <div>
+              <label className="text-[10px] text-slate-400 font-bold block mb-1">Date</label>
+              <input
+                type="date"
+                value={dateFilter}
+                onChange={(e) => setDateFilter(e.target.value)}
+                className="w-full bg-slate-950 border border-slate-800 text-slate-300 text-xs rounded-xl px-3 py-2.5 focus:outline-none focus:ring-1 focus:ring-blue-500 font-semibold"
+              />
+            </div>
+            <div>
+              <label className="text-[10px] text-slate-400 font-bold block mb-1">Location</label>
+              <select
+                value={locationFilter}
+                onChange={(e) => setLocationFilter(e.target.value)}
+                className="w-full bg-slate-950 border border-slate-800 text-slate-300 text-xs rounded-xl px-3 py-2.5 focus:outline-none focus:ring-1 focus:ring-blue-500 font-semibold cursor-pointer"
+              >
+                <option value="All">All Locations</option>
+                <option value="Bangalore">Bangalore</option>
+                <option value="Delhi">Delhi</option>
+                <option value="Hyderabad">Hyderabad</option>
+                <option value="Remote">Remote</option>
+              </select>
+            </div>
+            <div>
+              <label className="text-[10px] text-slate-400 font-bold block mb-1">Department</label>
+              <select
+                value={deptFilter}
+                onChange={(e) => setDeptFilter(e.target.value)}
+                className="w-full bg-slate-950 border border-slate-800 text-slate-300 text-xs rounded-xl px-3 py-2.5 focus:outline-none focus:ring-1 focus:ring-blue-500 font-semibold cursor-pointer"
+              >
+                <option value="All">All Departments</option>
+                <option value="Engineering">Engineering</option>
+                <option value="HR">Human Resources</option>
+                <option value="Finance">Finance</option>
+                <option value="Sales">Sales & Marketing</option>
+              </select>
+            </div>
+            <div>
+              <label className="text-[10px] text-slate-400 font-bold block mb-1">Team</label>
+              <select
+                value={teamFilter}
+                onChange={(e) => setTeamFilter(e.target.value)}
+                className="w-full bg-slate-950 border border-slate-800 text-slate-300 text-xs rounded-xl px-3 py-2.5 focus:outline-none focus:ring-1 focus:ring-blue-500 font-semibold cursor-pointer"
+              >
+                <option value="All">All Teams</option>
+                <option value="Frontend">Frontend Devs</option>
+                <option value="Backend">Backend Services</option>
+                <option value="QA">Quality Assurance</option>
+              </select>
+            </div>
+            <div>
+              <label className="text-[10px] text-slate-400 font-bold block mb-1">Status</label>
+              <select
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value)}
+                className="w-full bg-slate-950 border border-slate-800 text-slate-300 text-xs rounded-xl px-3 py-2.5 focus:outline-none focus:ring-1 focus:ring-blue-500 font-semibold cursor-pointer"
+              >
+                <option value="All">All Statuses</option>
+                <option value="Active">Active</option>
+                <option value="On Leave">On Leave</option>
+                <option value="Terminated">Terminated</option>
+              </select>
+            </div>
           </div>
         </div>
 
+        {/* 8 KPI Cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+          <MinimalKpiCard
+            title="Total Headcount"
+            value={employees.length || "500"}
+            icon={<Users size={26} />}
+            iconBgColor="emerald"
+            trend="+12.4% than last month"
+            trendType="positive"
+            onClick={() => openDrillDown('Total Employee Headcount', employees.length, 'Global workforce roster', [
+              { label: 'Full-time Permanent', value: Math.round(employees.length * 0.85) },
+              { label: 'Contractors', value: Math.round(employees.length * 0.15) },
+            ])}
+          />
+          <MinimalKpiCard
+            title="Active Duty Rate"
+            value="242"
+            icon={<ShieldCheck size={26} />}
+            iconBgColor="blue"
+            trend="+96.8% active shift"
+            trendType="positive"
+          />
+          <MinimalKpiCard
+            title="Attendance Rate"
+            value="96.5%"
+            icon={<Clock size={26} />}
+            iconBgColor="amber"
+            trend="+1.5% compliance"
+            trendType="positive"
+          />
+          <MinimalKpiCard
+            title="Annual Attrition"
+            value="4.2%"
+            icon={<TrendingDown size={26} />}
+            iconBgColor="rose"
+            trend="-0.8% than last year"
+            trendType="positive"
+          />
+          <MinimalKpiCard
+            title="Monthly Payroll"
+            value="$4.8M"
+            icon={<DollarSign size={26} />}
+            iconBgColor="purple"
+            trend="+4.35% budget allocation"
+            trendType="positive"
+          />
+          <MinimalKpiCard
+            title="Productivity Score"
+            value="94.8%"
+            icon={<Award size={26} />}
+            iconBgColor="cyan"
+            trend="+3.2% performance"
+            trendType="positive"
+          />
+          <MinimalKpiCard
+            title="Open Vacancies"
+            value="124"
+            icon={<Briefcase size={26} />}
+            iconBgColor="indigo"
+            trend="+8.4% open requisitions"
+            trendType="positive"
+          />
+          <MinimalKpiCard
+            title="Audit Compliance"
+            value="99.8%"
+            icon={<Layers size={26} />}
+            iconBgColor="teal"
+            trend="100% Zero-Trust Pass"
+            trendType="positive"
+          />
+        </div>
+
+        {/* 8 charts */}
         <AnalyticsOverview title="Executive Workforce Intelligence" subtitle="Organization-wide workforce, attendance, skills, productivity and risk analytics" />
 
-        {/* Recent Enterprise Activity Stream & Celebrations */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-2 p-6 rounded-3xl bg-slate-900 border border-slate-800 shadow-2xl space-y-4">
-            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-              <h3 className="text-base font-extrabold text-white flex items-center gap-2">
-                <Activity size={18} className="text-blue-500" /> Recent Enterprise Activity
-              </h3>
-              <Link to="/audit-logs" className="text-xs font-bold text-blue-400 hover:underline flex items-center gap-1">
-                Audit Stream <ArrowRight size={14} />
-              </Link>
-            </div>
-
-            <div className="space-y-3 text-xs">
-              {[
-                { title: 'New employee joined Engineering team', time: '10m ago', user: 'Alex Mercer', badge: 'Onboarding', color: 'text-emerald-400 bg-emerald-500/10' },
-                { title: 'Attendance marked for 242 employees', time: '1h ago', user: 'System Automated', badge: 'Attendance', color: 'text-blue-400 bg-blue-500/10' },
-                { title: 'Leave request approved for Sarah Connor', time: '2h ago', user: 'Elena Rostova (HR)', badge: 'Approval', color: 'text-purple-400 bg-purple-500/10' },
-                { title: 'Quarterly Performance KPI scores updated', time: '3h ago', user: 'David Sterling', badge: 'Performance', color: 'text-amber-400 bg-amber-500/10' },
-              ].map((act, idx) => (
-                <div key={idx} className="p-3 rounded-xl bg-slate-950/80 border border-slate-800/80 flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <CheckCircle2 size={16} className="text-blue-400 shrink-0" />
-                    <div>
-                      <p className="font-bold text-white">{act.title}</p>
-                      <p className="text-[10px] text-slate-400">By {act.user}</p>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${act.color}`}>{act.badge}</span>
-                    <p className="text-[10px] text-slate-400 font-mono mt-0.5">{act.time}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
+        {/* All Employee Table */}
+        <div className="p-6 rounded-3xl bg-slate-900 border border-slate-800 shadow-2xl space-y-4">
+          <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+            <h3 className="text-base font-extrabold text-white flex items-center gap-2">
+              <Users size={18} className="text-emerald-500" /> Employee Attendance & Performance Table
+            </h3>
+            <span className="text-xs text-slate-400 font-semibold bg-slate-950/60 px-3 py-1 rounded-full border border-slate-850">
+              Showing {filteredEmployees.length} employees
+            </span>
           </div>
 
-          <div className="p-6 rounded-3xl bg-slate-900 border border-slate-800 shadow-2xl space-y-4">
-            <h3 className="text-base font-extrabold text-white border-b border-slate-800 pb-3 flex items-center gap-2">
-              <Calendar size={18} className="text-purple-400" /> Upcoming Celebrations
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-xs">
+              <thead className="bg-slate-950 text-slate-400 border-b border-slate-800 uppercase font-bold text-[10px]">
+                <tr>
+                  <th className="py-3 px-4">Employee</th>
+                  <th className="py-3 px-4">Department</th>
+                  <th className="py-3 px-4">Team</th>
+                  <th className="py-3 px-4">Manager</th>
+                  <th className="py-3 px-4">Location</th>
+                  <th className="py-3 px-4">Attendance Rate</th>
+                  <th className="py-3 px-4">Status</th>
+                  <th className="py-3 px-4">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-800/80">
+                {filteredEmployees.map((emp) => (
+                  <tr key={emp.id} className="hover:bg-slate-800/40">
+                    <td className="py-3 px-4 font-bold text-white flex items-center gap-2">
+                      <img src={emp.avatar || "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=80"} className="w-8 h-8 rounded-lg object-cover" alt="" />
+                      <div>
+                        <div>{emp.name}</div>
+                        <div className="text-[10px] text-slate-500 font-semibold">{emp.designation || 'Specialist'}</div>
+                      </div>
+                    </td>
+                    <td className="py-3 px-4 text-slate-300">{emp.department || 'General'}</td>
+                    <td className="py-3 px-4 text-slate-400">{emp.team || 'N/A'}</td>
+                    <td className="py-3 px-4 text-slate-400">{(emp as any).manager || 'N/A'}</td>
+                    <td className="py-3 px-4 text-slate-300 font-semibold">{emp.location || 'HQ'}</td>
+                    <td className="py-3 px-4 font-mono font-bold text-emerald-400">{(emp.attendanceRate || 95.5).toFixed(1)}%</td>
+                    <td className="py-3 px-4">
+                      <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${
+                        emp.status === 'Active' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-slate-800 text-slate-400'
+                      }`}>
+                        {emp.status}
+                      </span>
+                    </td>
+                    <td className="py-3 px-4">
+                      <Link to={`/admin/employees`} className="text-blue-400 hover:text-blue-300 font-extrabold text-[11px]">Manage</Link>
+                    </td>
+                  </tr>
+                ))}
+                {filteredEmployees.length === 0 && (
+                  <tr>
+                    <td colSpan={8} className="py-8 text-center text-slate-500 font-semibold">
+                      No employees match the selected criteria
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        {/* Sprint Work */}
+        <div className="p-6 rounded-3xl bg-slate-900 border border-slate-800 shadow-2xl space-y-4">
+          <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+            <h3 className="text-base font-extrabold text-white flex items-center gap-2">
+              <Layers size={18} className="text-blue-500" /> Active Sprint Work
             </h3>
+            <span className="badge badge-success text-[10px] font-bold">ORGANIZATION SPRINT</span>
+          </div>
 
-            <div className="space-y-3 text-xs">
-              <div className="p-3 rounded-xl bg-purple-500/10 border border-purple-500/20 flex items-center gap-3">
-                <Gift size={20} className="text-purple-400 shrink-0" />
-                <div>
-                  <p className="font-bold text-white">Sarah Connor's Birthday</p>
-                  <p className="text-[10px] text-slate-400">Tomorrow • Product Team</p>
-                </div>
-              </div>
-
-              <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center gap-3">
-                <PartyPopper size={20} className="text-amber-400 shrink-0" />
-                <div>
-                  <p className="font-bold text-white">David Sterling's 5th Work Anniversary</p>
-                  <p className="text-[10px] text-slate-400">Friday • Engineering Dept</p>
-                </div>
-              </div>
-            </div>
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-xs">
+              <thead className="bg-slate-950 text-slate-400 border-b border-slate-800 uppercase font-bold text-[10px]">
+                <tr>
+                  <th className="py-3 px-4">Sprint</th>
+                  <th className="py-3 px-4">Task</th>
+                  <th className="py-3 px-4">Assignee</th>
+                  <th className="py-3 px-4">Priority</th>
+                  <th className="py-3 px-4">Status</th>
+                  <th className="py-3 px-4">Progress</th>
+                  <th className="py-3 px-4">Due Date</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-800/80">
+                {tasks.slice(0, 8).map((task) => (
+                  <tr key={task.id} className="hover:bg-slate-800/40">
+                    <td className="py-3 px-4 font-bold text-slate-300">Sprint 24B</td>
+                    <td className="py-3 px-4 text-white font-medium max-w-[200px] truncate">{task.title}</td>
+                    <td className="py-3 px-4 text-slate-400">{task.assigneeName || 'Unassigned'}</td>
+                    <td className="py-3 px-4">
+                      <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
+                        task.priority === 'CRITICAL' || task.priority === 'HIGH' ? 'bg-rose-500/10 text-rose-400' : 'bg-slate-800 text-slate-300'
+                      }`}>
+                        {task.priority}
+                      </span>
+                    </td>
+                    <td className="py-3 px-4">
+                      <span className="text-slate-300 font-bold uppercase">{task.status}</span>
+                    </td>
+                    <td className="py-3 px-4">
+                      <div className="w-full bg-slate-800 rounded-full h-1.5 max-w-[100px]">
+                        <div className="bg-blue-500 h-1.5 rounded-full" style={{ width: task.status === 'COMPLETED' ? '100%' : task.status === 'IN_PROGRESS' ? '50%' : '0%' }}></div>
+                      </div>
+                    </td>
+                    <td className="py-3 px-4 font-mono text-slate-400">2026-09-10</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         </div>
 

@@ -5,14 +5,24 @@ import { Permission } from '../../../security/permissions/permissions';
 import { KPICard } from '../../../components/cards/KPICard';
 import { DrillDownModal, DrillDownData } from '../../../shared/components/DrillDownModal';
 import { AnalyticsOverview } from '../../../components/dashboard/AnalyticsOverview';
-import { workforceApi } from '../../../api/endpoints/workforce.api';
-
-import { Briefcase, Users, CheckCircle2, XCircle, Clock, Zap, Star, FileText, AlertTriangle, ArrowRight } from 'lucide-react';
+import { workforceApi, Task } from '../../../api/endpoints/workforce.api';
+import { employeeApi } from '../../../api/endpoints/employee.api';
+import { Employee } from '../../../shared/types/common.types';
+import { Briefcase, Users, CheckCircle2, XCircle, Clock, Zap, Star, FileText, AlertTriangle, ArrowRight, Filter, Layers } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 export const ManagerDashboard: React.FC = () => {
   const [drillDownData, setDrillDownData] = useState<DrillDownData | null>(null);
   const [approvals, setApprovals] = useState<Array<{ id: string; employee: string; type: string; duration: string; reason: string; status: 'PENDING' | 'APPROVED' | 'REJECTED' }>>([]);
+  const [employees, setEmployees] = useState<Employee[]>([]);
+  const [tasks, setTasks] = useState<Task[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  // Filters
+  const [dateFilter, setDateFilter] = useState('');
+  const [teamFilter, setTeamFilter] = useState('All');
+  const [employeeFilter, setEmployeeFilter] = useState('All');
+  const [statusFilter, setStatusFilter] = useState('All');
 
   const loadApprovals = async () => {
     const requests = await workforceApi.getLeaveRequests();
@@ -26,14 +36,32 @@ export const ManagerDashboard: React.FC = () => {
     })));
   };
 
-  useEffect(() => { void loadApprovals().catch(() => setApprovals([])); }, []);
+  useEffect(() => {
+    const fetchData = async () => {
+      setLoading(true);
+      try {
+        const [empData, taskData] = await Promise.all([
+          employeeApi.getEmployees().catch(() => []),
+          workforceApi.getTasks().catch(() => [])
+        ]);
+        setEmployees(Array.isArray(empData) ? empData : empData.employees || []);
+        setTasks(taskData);
+        await loadApprovals().catch(() => setApprovals([]));
+      } catch (err) {
+        console.error('Error fetching manager dashboard data:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, []);
 
   const handleAction = async (id: string, status: 'APPROVED' | 'REJECTED') => {
     try {
       await workforceApi.reviewLeaveRequest(id, status);
       await loadApprovals();
     } catch {
-      // The API remains the source of truth; the next load keeps the desk consistent.
+      // Fallback
     }
   };
 
@@ -47,9 +75,23 @@ export const ManagerDashboard: React.FC = () => {
     });
   };
 
+  const departmentName = 'Engineering';
+
+  // Filtered department employees
+  const deptEmployees = employees.filter(emp => {
+    const isDept = emp.department === departmentName;
+    const matchesTeam = teamFilter === 'All' || emp.team === teamFilter;
+    const matchesEmp = employeeFilter === 'All' || emp.id === employeeFilter;
+    const matchesStatus = statusFilter === 'All' || emp.status === statusFilter;
+    return isDept && matchesTeam && matchesEmp && matchesStatus;
+  });
+
+  const pendingApprovalsCount = approvals.filter(a => a.status === 'PENDING').length;
+
   return (
     <RoleGuard allowedRoles={[Role.ADMIN, Role.HR, Role.MANAGER]} requiredPermission={Permission.TEAM_ANALYTICS_VIEW}>
-      <div className="space-y-6 animate-fadeIn">
+      <div className="space-y-6 animate-fadeIn font-sans pb-10">
+        
         {/* Manager Header Banner */}
         <div className="p-6 rounded-2xl bg-gradient-to-r from-blue-950/50 via-slate-900 to-indigo-950/40 border border-blue-500/30 flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-xl">
           <div className="flex items-center gap-4">
@@ -76,118 +118,257 @@ export const ManagerDashboard: React.FC = () => {
           </div>
         </div>
 
-        <AnalyticsOverview title="Department Intelligence" subtitle="Real-time analytics limited to your authenticated department scope" compact />
+        {/* Global Manager Filter Bar */}
+        <div className="p-5 rounded-2xl bg-slate-900 border border-slate-800 space-y-4">
+          <div className="flex items-center gap-2 text-slate-300 text-xs font-extrabold uppercase">
+            <Filter size={16} className="text-blue-400" /> Scoped Department Filters
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <div>
+              <label className="text-[10px] text-slate-400 font-bold block mb-1">Date</label>
+              <input
+                type="date"
+                value={dateFilter}
+                onChange={(e) => setDateFilter(e.target.value)}
+                className="w-full bg-slate-950 border border-slate-800 text-slate-300 text-xs rounded-xl px-3 py-2 focus:outline-none focus:ring-1 focus:ring-blue-500 font-semibold"
+              />
+            </div>
+            <div>
+              <label className="text-[10px] text-slate-400 font-bold block mb-1">Team</label>
+              <select
+                value={teamFilter}
+                onChange={(e) => setTeamFilter(e.target.value)}
+                className="w-full bg-slate-950 border border-slate-800 text-slate-300 text-xs rounded-xl px-3 py-2 focus:outline-none focus:ring-1 focus:ring-blue-500 font-semibold cursor-pointer"
+              >
+                <option value="All">All Teams</option>
+                <option value="Frontend">Frontend</option>
+                <option value="Backend">Backend</option>
+                <option value="QA">QA</option>
+              </select>
+            </div>
+            <div>
+              <label className="text-[10px] text-slate-400 font-bold block mb-1">Employee</label>
+              <select
+                value={employeeFilter}
+                onChange={(e) => setEmployeeFilter(e.target.value)}
+                className="w-full bg-slate-950 border border-slate-800 text-slate-300 text-xs rounded-xl px-3 py-2 focus:outline-none focus:ring-1 focus:ring-blue-500 font-semibold cursor-pointer"
+              >
+                <option value="All">All Department Employees</option>
+                {employees.filter(e => e.department === departmentName).map(emp => (
+                  <option key={emp.id} value={emp.id}>{emp.name}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="text-[10px] text-slate-400 font-bold block mb-1">Status</label>
+              <select
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value)}
+                className="w-full bg-slate-950 border border-slate-800 text-slate-300 text-xs rounded-xl px-3 py-2 focus:outline-none focus:ring-1 focus:ring-blue-500 font-semibold cursor-pointer"
+              >
+                <option value="All">All Statuses</option>
+                <option value="Active">Active</option>
+                <option value="On Leave">On Leave</option>
+              </select>
+            </div>
+          </div>
+        </div>
 
-        {/* 8 Reusable Manager KPI Cards */}
+        {/* 8 KPIs */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <KPICard
             title="Department Staff"
-            value="24 Engineers"
+            value={`${employees.filter(e => e.department === departmentName).length} Engineers`}
             change={8.3}
             trend="up"
-            subtitle="3 Active squads"
+            subtitle="Authorized department rosters"
             icon={<Users size={20} />}
             accentColor="blue"
-            onClick={() => openDrillDown('Department Roster Breakdown', '24 Engineers', 'Frontend, Backend, and QA sub-teams', [
-              { label: 'Frontend Core Squad', value: 8 },
-              { label: 'Backend API Squad', value: 10 },
-              { label: 'QA Automation Squad', value: 6 },
+            onClick={() => openDrillDown('Department Roster Breakdown', 'Engineers', 'Active engineering staff', [
+              { label: 'Engineering Total', value: employees.filter(e => e.department === departmentName).length }
             ])}
           />
           <KPICard
-            title="Department Velocity"
-            value="94.2 / 100"
-            change={4.1}
+            title="Active Employees"
+            value="18 Online"
+            change={0.0}
+            trend="neutral"
+            subtitle="Clocked in today"
+            icon={<Users size={20} />}
+            accentColor="cyan"
+          />
+          <KPICard
+            title="Present Today"
+            value="16 Staff"
+            change={2.0}
             trend="up"
-            subtitle="+4.1% over Q2 target"
-            icon={<Zap size={20} />}
-            accentColor="purple"
-            onClick={() => openDrillDown('Department Sprint Velocity', '94.2 Score', 'Sprint story points delivered vs planned', [
-              { label: 'Frontend Throughput', value: '96.5%' },
-              { label: 'Backend Throughput', value: '92.8%' },
-            ])}
+            subtitle="Office presence"
+            icon={<CheckCircle2 size={20} />}
+            accentColor="emerald"
           />
           <KPICard
-            title="Pending Approvals"
-            value={`${approvals.filter(a => a.status === 'PENDING').length} Requests`}
-            change={-1.0}
-            trend="down"
-            subtitle="Action required"
+            title="Absent Today"
+            value="2 Staff"
+            change={0}
+            trend="neutral"
+            subtitle="Unexcused absence"
+            icon={<XCircle size={20} />}
+            accentColor="rose"
+          />
+          <KPICard
+            title="Late Today"
+            value="3 Staff"
+            change={1.0}
+            trend="up"
+            subtitle="Clocked in after 9:15"
             icon={<Clock size={20} />}
             accentColor="amber"
-            onClick={() => openDrillDown('Pending Department Approvals', `${approvals.filter(a => a.status === 'PENDING').length} Pending`, 'Team leave and expense queue', [
-              { label: 'Alex Mercer Leave', value: '3 Days' },
-              { label: 'Samantha Expense', value: '$450' },
-            ])}
           />
           <KPICard
-            title="Team Morale"
-            value="4.8 / 5.0"
-            change={0.4}
-            trend="up"
-            subtitle="Q2 review score"
-            icon={<Star size={20} />}
-            accentColor="emerald"
-            onClick={() => openDrillDown('Department Team Morale', '4.8 / 5.0 Rating', 'Monthly squad pulse survey rating', [
-              { label: 'Work-Life Balance', value: '4.9 / 5.0' },
-              { label: 'Peer Collaboration', value: '4.8 / 5.0' },
-            ])}
+            title="On Leave"
+            value="1 Staff"
+            change={-1.0}
+            trend="down"
+            subtitle="Approved PTO today"
+            icon={<AlertTriangle size={20} />}
+            accentColor="blue"
           />
           <KPICard
-            title="Attendance Compliance"
+            title="Attendance %"
             value="98.2%"
             change={1.2}
             trend="up"
-            subtitle="Shift presence"
-            icon={<CheckCircle2 size={20} />}
+            subtitle="Active shift rate"
+            icon={<Star size={20} />}
             accentColor="cyan"
-            onClick={() => openDrillDown('Shift Attendance Compliance', '98.2%', 'Department daily attendance rate', [
-              { label: 'On-Duty Office', value: 18 },
-              { label: 'Remote Duty', value: 5 },
-            ])}
           />
           <KPICard
-            title="Completed Deliverables"
-            value="42 Tasks"
-            change={12.0}
-            trend="up"
-            subtitle="Sprint 24B target"
-            icon={<FileText size={20} />}
-            accentColor="emerald"
-            onClick={() => openDrillDown('Completed Sprint Deliverables', '42 Tasks', 'Shipped feature modules and bug fixes', [
-              { label: 'Feature Epics', value: 14 },
-              { label: 'Bug Fixes', value: 22 },
-            ])}
-          />
-          <KPICard
-            title="Team Budget Health"
-            value="82.4%"
-            change={-2.1}
-            trend="neutral"
-            subtitle="Q2 Budget health"
-            icon={<Briefcase size={20} />}
-            accentColor="purple"
-            onClick={() => openDrillDown('Department Budget Utilization', '82.4%', 'Quarterly software & infrastructure spend', [
-              { label: 'Cloud Servers', value: '$12,400' },
-              { label: 'SaaS Licensing', value: '$4,200' },
-            ])}
-          />
-          <KPICard
-            title="Retention Index"
-            value="100% Stability"
+            title="Pending Approvals"
+            value={`${pendingApprovalsCount} Requests`}
             change={0.0}
             trend="neutral"
-            subtitle="Zero department churn"
-            icon={<AlertTriangle size={20} />}
+            subtitle="Requires manager action"
+            icon={<FileText size={20} />}
             accentColor="rose"
-            onClick={() => openDrillDown('Department Retention Index', '100% Retention', 'Predictive retention rating for department', [
-              { label: 'Retention Rate', value: '100%' },
-              { label: 'Turnover Risk', value: 'Low' },
-            ])}
           />
         </div>
 
-        {/* Section 1: Interactive Approval Action Desk */}
+        {/* 8 Charts */}
+        <AnalyticsOverview title="Department Intelligence" subtitle="Real-time analytics limited to your authenticated department scope" compact={false} />
+
+        {/* Department Employee Table */}
+        <div className="p-6 rounded-3xl bg-slate-900 border border-slate-800 shadow-2xl space-y-4">
+          <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+            <h3 className="text-base font-extrabold text-white flex items-center gap-2">
+              <Users size={18} className="text-emerald-500" /> Department Employee Table
+            </h3>
+            <span className="text-xs text-slate-400 font-semibold bg-slate-950/60 px-3 py-1 rounded-full border border-slate-850">
+              Showing {deptEmployees.length} department staff
+            </span>
+          </div>
+
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-xs">
+              <thead className="bg-slate-950 text-slate-400 border-b border-slate-800 uppercase font-bold text-[10px]">
+                <tr>
+                  <th className="py-3 px-4">Employee</th>
+                  <th className="py-3 px-4">Team</th>
+                  <th className="py-3 px-4">Designation</th>
+                  <th className="py-3 px-4">Location</th>
+                  <th className="py-3 px-4">Check In</th>
+                  <th className="py-3 px-4">Check Out</th>
+                  <th className="py-3 px-4">Working Hours</th>
+                  <th className="py-3 px-4">Attendance</th>
+                  <th className="py-3 px-4">Performance</th>
+                  <th className="py-3 px-4">Status</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-800/80">
+                {deptEmployees.map((emp) => (
+                  <tr key={emp.id} className="hover:bg-slate-800/40">
+                    <td className="py-3 px-4 font-bold text-white flex items-center gap-2">
+                      <img src={emp.avatar || "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=80"} className="w-8 h-8 rounded-lg object-cover" alt="" />
+                      <div>{emp.name}</div>
+                    </td>
+                    <td className="py-3 px-4 text-slate-300">{emp.team || 'N/A'}</td>
+                    <td className="py-3 px-4 text-slate-400">{emp.designation || 'Engineer'}</td>
+                    <td className="py-3 px-4 text-slate-450">{emp.location || 'HQ'}</td>
+                    <td className="py-3 px-4 font-mono text-emerald-400">09:05 AM</td>
+                    <td className="py-3 px-4 font-mono text-rose-400">05:15 PM</td>
+                    <td className="py-3 px-4 font-mono text-blue-400">8.17 hrs</td>
+                    <td className="py-3 px-4 font-bold text-emerald-400">{(emp.attendanceRate || 96.0).toFixed(1)}%</td>
+                    <td className="py-3 px-4 font-bold text-indigo-400">{(emp.performanceScore || 85.0).toFixed(0)}%</td>
+                    <td className="py-3 px-4">
+                      <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${
+                        emp.status === 'Active' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-slate-800 text-slate-400'
+                      }`}>
+                        {emp.status}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+                {deptEmployees.length === 0 && (
+                  <tr>
+                    <td colSpan={10} className="py-8 text-center text-slate-500 font-semibold">
+                      No department staff match the selected criteria
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        {/* Department Sprint Work */}
+        <div className="p-6 rounded-3xl bg-slate-900 border border-slate-800 shadow-2xl space-y-4">
+          <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+            <h3 className="text-base font-extrabold text-white flex items-center gap-2">
+              <Layers size={18} className="text-blue-500" /> Department Sprint
+            </h3>
+            <span className="badge badge-success text-[10px] font-bold">ENGINEERING SPRINT</span>
+          </div>
+
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-xs">
+              <thead className="bg-slate-950 text-slate-400 border-b border-slate-800 uppercase font-bold text-[10px]">
+                <tr>
+                  <th className="py-3 px-4">Sprint</th>
+                  <th className="py-3 px-4">Task</th>
+                  <th className="py-3 px-4">Assignee</th>
+                  <th className="py-3 px-4">Priority</th>
+                  <th className="py-3 px-4">Status</th>
+                  <th className="py-3 px-4">Progress</th>
+                  <th className="py-3 px-4">Due Date</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-800/80">
+                {tasks.slice(0, 5).map((task) => (
+                  <tr key={task.id} className="hover:bg-slate-800/40">
+                    <td className="py-3 px-4 font-bold text-slate-300">Sprint 24B</td>
+                    <td className="py-3 px-4 text-white font-medium max-w-[200px] truncate">{task.title}</td>
+                    <td className="py-3 px-4 text-slate-400">{task.assigneeName || 'Unassigned'}</td>
+                    <td className="py-3 px-4">
+                      <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
+                        task.priority === 'CRITICAL' || task.priority === 'HIGH' ? 'bg-rose-500/10 text-rose-400' : 'bg-slate-800 text-slate-300'
+                      }`}>
+                        {task.priority}
+                      </span>
+                    </td>
+                    <td className="py-3 px-4 text-slate-300 font-bold uppercase">{task.status}</td>
+                    <td className="py-3 px-4">
+                      <div className="w-full bg-slate-800 rounded-full h-1.5 max-w-[100px]">
+                        <div className="bg-blue-500 h-1.5 rounded-full" style={{ width: task.status === 'COMPLETED' ? '100%' : task.status === 'IN_PROGRESS' ? '50%' : '0%' }}></div>
+                      </div>
+                    </td>
+                    <td className="py-3 px-4 font-mono text-slate-400">2026-09-10</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        {/* Interactive Approval Action Desk */}
         <div className="glass-panel p-6 rounded-2xl border-[var(--border-color)] space-y-4">
           <div className="flex items-center justify-between">
             <h3 className="text-base font-bold text-[var(--text-primary)] flex items-center gap-2">

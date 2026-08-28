@@ -8,28 +8,35 @@ import { AnalyticsOverview } from '../../../components/dashboard/AnalyticsOvervi
 import { employeeApi } from '../../../api/endpoints/employee.api';
 import { workforceApi, Task } from '../../../api/endpoints/workforce.api';
 import { Employee } from '../../../shared/types/common.types';
-
-import { Flame, GitPullRequest, Users, CheckCircle2, Zap, Clock, Star, FileText, AlertTriangle, ArrowRight } from 'lucide-react';
+import { Flame, GitPullRequest, Users, CheckCircle2, Zap, Clock, Star, FileText, AlertTriangle, ArrowRight, Filter, Layers, Calendar } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 export const TeamLeadDashboard: React.FC = () => {
   const [drillDownData, setDrillDownData] = useState<DrillDownData | null>(null);
-  const [directReports, setDirectReports] = useState<Array<{ name: string; role: string; task: string; velocity: string; avatar?: string }>>([]);
+  const [directReports, setDirectReports] = useState<Employee[]>([]);
   const [sprintTasks, setSprintTasks] = useState<Task[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  // Filters
+  const [dateFilter, setDateFilter] = useState('');
+  const [employeeFilter, setEmployeeFilter] = useState('All');
+  const [statusFilter, setStatusFilter] = useState('All');
+
+  const teamName = 'Frontend';
 
   useEffect(() => {
-    Promise.all([employeeApi.getEmployees(), workforceApi.getTasks()]).then(([employees, tasks]) => {
-      setDirectReports((employees as Employee[]).slice(0, 8).map((employee) => ({
-        name: employee.name,
-        role: employee.designation || employee.role,
-        task: tasks.find((task) => task.assigneeId === employee.id)?.title || 'No active task',
-        velocity: `${Math.round(employee.performanceScore || 0)}%`,
-        avatar: employee.avatar
-      })));
-      setSprintTasks(tasks.slice(0, 8));
-    }).catch(() => {
-      setDirectReports([]);
-      setSprintTasks([]);
+    setLoading(true);
+    Promise.all([
+      employeeApi.getEmployees().catch(() => []),
+      workforceApi.getTasks().catch(() => [])
+    ]).then(([employees, tasks]) => {
+      const allEmp = Array.isArray(employees) ? employees : employees.employees || [];
+      setDirectReports(allEmp.filter((e: Employee) => e.team === teamName));
+      setSprintTasks(tasks);
+    }).catch((err) => {
+      console.error('Error loading team lead data:', err);
+    }).finally(() => {
+      setLoading(false);
     });
   }, []);
 
@@ -43,9 +50,17 @@ export const TeamLeadDashboard: React.FC = () => {
     });
   };
 
+  // Filter direct reports
+  const filteredReports = directReports.filter(emp => {
+    const matchesEmp = employeeFilter === 'All' || emp.id === employeeFilter;
+    const matchesStatus = statusFilter === 'All' || emp.status === statusFilter;
+    return matchesEmp && matchesStatus;
+  });
+
   return (
     <RoleGuard allowedRoles={[Role.ADMIN, Role.HR, Role.MANAGER, Role.TEAM_LEAD]} requiredPermission={Permission.PRODUCTIVITY_VIEW}>
-      <div className="space-y-6 animate-fadeIn">
+      <div className="space-y-6 animate-fadeIn font-sans pb-10">
+        
         {/* Team Lead Header Banner */}
         <div className="p-6 rounded-2xl bg-gradient-to-r from-teal-950/50 via-slate-900 to-cyan-950/40 border border-teal-500/30 flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-xl">
           <div className="flex items-center gap-4">
@@ -72,166 +87,235 @@ export const TeamLeadDashboard: React.FC = () => {
           </div>
         </div>
 
-        <AnalyticsOverview title="Team Lead Intelligence" subtitle="Live team productivity, performance, attendance and skills" compact />
+        {/* Local Filter Bar */}
+        <div className="p-5 rounded-2xl bg-slate-900 border border-slate-800 space-y-4">
+          <div className="flex items-center gap-2 text-slate-300 text-xs font-extrabold uppercase">
+            <Filter size={16} className="text-teal-400" /> Scoped Team Filters
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+            <div>
+              <label className="text-[10px] text-slate-400 font-bold block mb-1">Date</label>
+              <input
+                type="date"
+                value={dateFilter}
+                onChange={(e) => setDateFilter(e.target.value)}
+                className="w-full bg-slate-950 border border-slate-800 text-slate-300 text-xs rounded-xl px-3 py-2 focus:outline-none focus:ring-1 focus:ring-teal-500 font-semibold"
+              />
+            </div>
+            <div>
+              <label className="text-[10px] text-slate-400 font-bold block mb-1">Employee</label>
+              <select
+                value={employeeFilter}
+                onChange={(e) => setEmployeeFilter(e.target.value)}
+                className="w-full bg-slate-950 border border-slate-800 text-slate-300 text-xs rounded-xl px-3 py-2 focus:outline-none focus:ring-1 focus:ring-teal-500 font-semibold cursor-pointer"
+              >
+                <option value="All">All Team Members</option>
+                {directReports.map(emp => (
+                  <option key={emp.id} value={emp.id}>{emp.name}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="text-[10px] text-slate-400 font-bold block mb-1">Status</label>
+              <select
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value)}
+                className="w-full bg-slate-950 border border-slate-800 text-slate-300 text-xs rounded-xl px-3 py-2 focus:outline-none focus:ring-1 focus:ring-teal-500 font-semibold cursor-pointer"
+              >
+                <option value="All">All Statuses</option>
+                <option value="Active">Active</option>
+                <option value="On Leave">On Leave</option>
+              </select>
+            </div>
+          </div>
+        </div>
 
-        {/* 8 Reusable Team Lead KPI Cards */}
+        {/* 8 KPIs */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <KPICard
-            title="Direct Reports"
-            value="6 Developers"
+            title="Team Members"
+            value={`${directReports.length} Developers`}
             change={0.0}
             trend="neutral"
             subtitle="Frontend Core Squad"
             icon={<Users size={20} />}
             accentColor="cyan"
-            onClick={() => openDrillDown('Direct Reports Roster', '6 Developers', 'Active squad developers and assigned roles', [
-              { label: 'Alex Mercer', value: 'Full Stack Developer' },
-              { label: 'Rachel Kim', value: 'Data Analyst' },
+            onClick={() => openDrillDown('Team Roster', `${directReports.length} Developers`, 'Active squad members', [
+              { label: 'Frontend Developers', value: directReports.length }
             ])}
           />
           <KPICard
-            title="Sprint Completion"
-            value="87% Complete"
+            title="Present"
+            value={`${directReports.filter(e => e.status === 'Active').length} Present`}
             change={5.2}
             trend="up"
-            subtitle="Sprint 24B target"
-            icon={<Zap size={20} />}
-            accentColor="amber"
-            onClick={() => openDrillDown('Sprint 24B Story Points', '87% Complete', 'Current sprint burn-down status', [
-              { label: 'Completed Points', value: 48 },
-              { label: 'In Progress Points', value: 8 },
-            ])}
-          />
-          <KPICard
-            title="Daily Attendance"
-            value="6 / 6 Present"
-            change={0.0}
-            trend="up"
-            subtitle="100% On-duty today"
-            icon={<Clock size={20} />}
+            subtitle="On duty today"
+            icon={<CheckCircle2 size={20} />}
             accentColor="emerald"
-            onClick={() => openDrillDown('Daily Squad Attendance', '6 / 6 Present', 'Shift presence for Frontend Squad', [
-              { label: 'Office Duty', value: 4 },
-              { label: 'Remote Shift', value: 2 },
-            ])}
           />
           <KPICard
-            title="Code Review Backlog"
-            value="3 PRs Pending"
+            title="Absent"
+            value="0 Absent"
+            change={0.0}
+            trend="neutral"
+            subtitle="No unexcused absences"
+            icon={<AlertTriangle size={20} />}
+            accentColor="rose"
+          />
+          <KPICard
+            title="Late"
+            value="1 Late"
             change={-1.5}
             trend="down"
-            subtitle="Avg turnaround 2h"
-            icon={<CheckCircle2 size={20} />}
-            accentColor="purple"
-            onClick={() => openDrillDown('Code Review PR Queue', '3 PRs Pending', 'Pull requests waiting for TL review', [
-              { label: 'PR #108', value: 'Alex Mercer' },
-              { label: 'PR #109', value: 'Sarah Connor' },
-            ])}
+            subtitle="Clocked in after shift target"
+            icon={<Clock size={20} />}
+            accentColor="amber"
           />
           <KPICard
-            title="Velocity Points"
-            value="56 Story Pts"
+            title="On Leave"
+            value="0 On Leave"
+            change={0.0}
+            trend="neutral"
+            subtitle="Approved team PTO"
+            icon={<Calendar size={20} />}
+            accentColor="blue"
+          />
+          <KPICard
+            title="Working Hours"
+            value="45 hrs today"
             change={8.0}
             trend="up"
-            subtitle="Sprint target 60"
-            icon={<Flame size={20} />}
+            subtitle="Total squad contribution"
+            icon={<Clock size={20} />}
             accentColor="rose"
-            onClick={() => openDrillDown('Sprint Velocity Metrics', '56 Story Pts', 'Bi-weekly story point delivery history', [
-              { label: 'Sprint 24A Velocity', value: 52 },
-              { label: 'Sprint 24B Velocity', value: 56 },
-            ])}
           />
           <KPICard
-            title="Squad Rating"
-            value="4.9 / 5.0"
-            change={0.2}
-            trend="up"
-            subtitle="Highest team output"
-            icon={<Star size={20} />}
-            accentColor="emerald"
-            onClick={() => openDrillDown('Squad Code Quality Rating', '4.9 / 5.0', 'Code quality and test coverage benchmark', [
-              { label: 'Unit Test Coverage', value: '94.2%' },
-            ])}
-          />
-          <KPICard
-            title="Active Tasks"
-            value="12 In Progress"
+            title="Tasks Pending"
+            value={`${sprintTasks.filter(t => t.status !== 'COMPLETED').length} Pending`}
             change={2.0}
             trend="up"
-            subtitle="Assignees active"
+            subtitle="Sprint tasks in backlog"
             icon={<FileText size={20} />}
             accentColor="blue"
-            onClick={() => openDrillDown('Active Task Allocations', '12 Active Tasks', 'Sprint Kanban active columns', [
-              { label: 'In Progress', value: 7 },
-              { label: 'Under Review', value: 3 },
-            ])}
           />
           <KPICard
-            title="Sprint Blockers"
-            value="0 Blockers"
-            change={-100}
-            trend="down"
-            subtitle="Clear execution path"
-            icon={<AlertTriangle size={20} />}
-            accentColor="cyan"
-            onClick={() => openDrillDown('Sprint Blocker Log', '0 Active Blockers', 'Dependency & blocker resolution log', [
-              { label: 'Infra Dependencies', value: 'Resolved' },
-            ])}
+            title="Tasks Completed"
+            value={`${sprintTasks.filter(t => t.status === 'COMPLETED').length} Closed`}
+            change={100}
+            trend="up"
+            subtitle="Closed sprint targets"
+            icon={<CheckCircle2 size={20} />}
+            accentColor="emerald"
           />
         </div>
 
-        {/* Section 1: Active Sprint Tasks & Direct Reporting Roster */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <div className="glass-panel p-6 rounded-2xl border-[var(--border-color)] space-y-4">
-            <div className="flex items-center justify-between">
-              <h3 className="text-base font-bold text-[var(--text-primary)] flex items-center gap-2">
-                <Flame size={18} className="text-rose-400" /> Active Sprint Task Board
-              </h3>
-              <Link to="/team-lead/tasks" className="text-xs font-bold text-blue-400 hover:underline flex items-center gap-1">
-                View Board <ArrowRight size={12} />
-              </Link>
-            </div>
+        {/* 8 Charts */}
+        <AnalyticsOverview title="Team Lead Intelligence" subtitle="Live team productivity, performance, attendance and skills" compact={false} />
 
-            <div className="space-y-2.5">
-              {sprintTasks.length === 0 ? <p className="text-sm text-[var(--text-muted)]">No tasks are assigned in your team scope.</p> : sprintTasks.map((t) => (
-                <div key={t.id} className="p-3.5 rounded-xl bg-[var(--bg-tertiary)] border border-[var(--border-color)] flex items-center justify-between text-xs">
-                  <div>
-                    <span className="font-mono text-[10px] text-slate-400">{t.id}</span>
-                    <h4 className="font-bold text-sm text-[var(--text-primary)]">{t.title}</h4>
-                    <p className="text-xs text-slate-400">Assignee: <span className="text-blue-400 font-semibold">{t.assigneeName}</span></p>
-                  </div>
-                  <span className={`badge ${t.status === 'COMPLETED' ? 'badge-success' : 'badge-info'} text-[10px] uppercase font-bold`}>
-                    {t.status}
-                  </span>
-                </div>
-              ))}
-            </div>
+        {/* Team Employee Table */}
+        <div className="p-6 rounded-3xl bg-slate-900 border border-slate-800 shadow-2xl space-y-4">
+          <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+            <h3 className="text-base font-extrabold text-white flex items-center gap-2">
+              <Users size={18} className="text-teal-400" /> Team Employee Table
+            </h3>
+            <span className="text-xs text-slate-400 font-semibold bg-slate-950/60 px-3 py-1 rounded-full border border-slate-850">
+              Showing {filteredReports.length} team members
+            </span>
           </div>
 
-          <div className="glass-panel p-6 rounded-2xl border-[var(--border-color)] space-y-4">
-            <div className="flex items-center justify-between">
-              <h3 className="text-base font-bold text-[var(--text-primary)] flex items-center gap-2">
-                <Users size={18} className="text-cyan-400" /> Direct Reports Roster & Velocity
-              </h3>
-              <Link to="/team-lead/members" className="text-xs font-bold text-blue-400 hover:underline flex items-center gap-1">
-                View Roster <ArrowRight size={12} />
-              </Link>
-            </div>
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-xs">
+              <thead className="bg-slate-950 text-slate-400 border-b border-slate-800 uppercase font-bold text-[10px]">
+                <tr>
+                  <th className="py-3 px-4">Employee</th>
+                  <th className="py-3 px-4">Check In</th>
+                  <th className="py-3 px-4">Break</th>
+                  <th className="py-3 px-4">Resume</th>
+                  <th className="py-3 px-4">Check Out</th>
+                  <th className="py-3 px-4">Working Hours</th>
+                  <th className="py-3 px-4">Tasks Progress</th>
+                  <th className="py-3 px-4">Status</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-800/80">
+                {filteredReports.map((emp) => (
+                  <tr key={emp.id} className="hover:bg-slate-800/40">
+                    <td className="py-3 px-4 font-bold text-white flex items-center gap-2">
+                      <img src={emp.avatar || "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=80"} className="w-8 h-8 rounded-lg object-cover" alt="" />
+                      <div>
+                        <div>{emp.name}</div>
+                        <div className="text-[10px] text-slate-500 font-semibold">{emp.designation || 'Developer'}</div>
+                      </div>
+                    </td>
+                    <td className="py-3 px-4 font-mono text-emerald-400">09:00 AM</td>
+                    <td className="py-3 px-4 font-mono text-slate-400">12:30 PM</td>
+                    <td className="py-3 px-4 font-mono text-slate-400">01:30 PM</td>
+                    <td className="py-3 px-4 font-mono text-rose-400">05:00 PM</td>
+                    <td className="py-3 px-4 font-mono font-bold text-blue-400">8.0 hrs</td>
+                    <td className="py-3 px-4">
+                      <div className="w-full bg-slate-800 rounded-full h-1.5 max-w-[100px]">
+                        <div className="bg-emerald-500 h-1.5 rounded-full" style={{ width: '80%' }}></div>
+                      </div>
+                    </td>
+                    <td className="py-3 px-4">
+                      <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${
+                        emp.status === 'Active' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-slate-800 text-slate-400'
+                      }`}>
+                        {emp.status}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+                {filteredReports.length === 0 && (
+                  <tr>
+                    <td colSpan={8} className="py-8 text-center text-slate-500 font-semibold">
+                      No team members match the selected criteria
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
 
-            <div className="space-y-3">
-              {directReports.length === 0 ? <p className="text-sm text-[var(--text-muted)]">No team members are available in your scope.</p> : directReports.map((m, idx) => (
-                <div key={idx} className="p-3 rounded-xl bg-[var(--bg-tertiary)] border border-[var(--border-color)] flex items-center justify-between text-xs">
-                  <div className="flex items-center gap-3">
-                    <img src={m.avatar} alt={m.name} className="w-10 h-10 rounded-full object-cover border border-cyan-500 shrink-0" />
-                    <div>
-                      <h4 className="font-bold text-sm text-[var(--text-primary)]">{m.name}</h4>
-                      <p className="text-[11px] text-slate-400">{m.task}</p>
-                    </div>
-                  </div>
-                  <span className="badge badge-success text-[10px] font-bold">{m.velocity}</span>
-                </div>
-              ))}
-            </div>
+        {/* Team Sprint */}
+        <div className="p-6 rounded-3xl bg-slate-900 border border-slate-800 shadow-2xl space-y-4">
+          <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+            <h3 className="text-base font-extrabold text-white flex items-center gap-2">
+              <Layers size={18} className="text-rose-400" /> Team Sprint
+            </h3>
+            <span className="badge badge-success text-[10px] font-bold">FRONTEND SPRINT</span>
+          </div>
+
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-xs">
+              <thead className="bg-slate-950 text-slate-400 border-b border-slate-800 uppercase font-bold text-[10px]">
+                <tr>
+                  <th className="py-3 px-4">Task</th>
+                  <th className="py-3 px-4">Assignee</th>
+                  <th className="py-3 px-4">Priority</th>
+                  <th className="py-3 px-4">Status</th>
+                  <th className="py-3 px-4">Due Date</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-800/80">
+                {sprintTasks.slice(0, 6).map((task) => (
+                  <tr key={task.id} className="hover:bg-slate-800/40">
+                    <td className="py-3 px-4 text-white font-medium max-w-[250px] truncate">{task.title}</td>
+                    <td className="py-3 px-4 text-slate-400">{task.assigneeName || 'Unassigned'}</td>
+                    <td className="py-3 px-4">
+                      <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
+                        task.priority === 'CRITICAL' || task.priority === 'HIGH' ? 'bg-rose-500/10 text-rose-400' : 'bg-slate-800 text-slate-300'
+                      }`}>
+                        {task.priority}
+                      </span>
+                    </td>
+                    <td className="py-3 px-4 text-slate-300 font-bold uppercase">{task.status}</td>
+                    <td className="py-3 px-4 font-mono text-slate-400">2026-09-10</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         </div>
 
