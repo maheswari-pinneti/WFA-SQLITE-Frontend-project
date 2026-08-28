@@ -10,7 +10,7 @@ flowchart LR
     AUTH --> RBAC["RBAC Evaluation"]
     RBAC --> ABAC["ABAC Scope Validation"]
     ABAC --> SERVICE["Business Services"]
-    SERVICE --> DB["MongoDB"]
+    SERVICE --> DB["SQLite Database"]
     
     DB --> AUDIT["Audit Logs"]
     SERVICE --> SOCKET["Socket.IO Server"]
@@ -25,4 +25,4 @@ flowchart LR
 ---
 
 ### End-to-End Request Chain in One Sentence:
-> **User** $\rightarrow$ **React UI** $\rightarrow$ **Protected Route** $\rightarrow$ **REST API** $\rightarrow$ **JWT/MFA** $\rightarrow$ **RBAC** $\rightarrow$ **ABAC/Scope** $\rightarrow$ **Controller** $\rightarrow$ **Service** $\rightarrow$ **MongoDB** $\rightarrow$ **Audit/Notification** $\rightarrow$ **Socket.IO** $\rightarrow$ **React UI**.
+> **User** $\rightarrow$ **React UI** $\rightarrow$ **Protected Route** $\rightarrow$ **REST API** $\rightarrow$ **JWT/MFA** $\rightarrow$ **RBAC** $\rightarrow$ **ABAC/Scope** $\rightarrow$ **Controller** $\rightarrow$ **Service** $\rightarrow$ **SQLite Database** $\rightarrow$ **Audit/Notification** $\rightarrow$ **Socket.IO** $\rightarrow$ **React UI**.

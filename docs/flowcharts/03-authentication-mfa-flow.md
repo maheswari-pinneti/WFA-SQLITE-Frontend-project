@@ -11,7 +11,7 @@ sequenceDiagram
     participant Pres as Auth Presenter / Service
     participant MFA as MFA Gateway
     participant JWT as JWT Issuer
-    participant DB as MongoDB Database
+    participant DB as SQLite Database
 
     User->>View: Enter Email (e.g. admin@thestackly.com) & Password
     View->>Pres: Submit Credentials

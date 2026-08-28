@@ -32,7 +32,7 @@ flowchart TD
     
     VALIDATE --> CONTROLLER["Controller"]
     CONTROLLER --> SERVICE["Business Service"]
-    SERVICE --> DB["MongoDB"]
+    SERVICE --> DB["SQLite Database"]
     
     DB --> RESULT["Database Result"]
     
