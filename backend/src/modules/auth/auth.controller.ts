@@ -6,6 +6,7 @@ import bcrypt from 'bcryptjs';
 import mongoose from '../../database/transaction.js';
 import { healthCheck as dbHealthCheck } from '../../database/sqlite-cloud.js';
 import { decryptSecret, verifyTotpCode, verifyRecoveryCode } from './totp.js';
+import { env } from '../../config/env.js';
 
 const ORGANIZATION_ID = 'org-stackly';
 
@@ -724,6 +725,12 @@ export const googleLogin = async (req: Request, res: Response): Promise<any> => 
     const redirectUri = process.env.SSO_CALLBACK_URL || 'http://localhost:3000/sso-callback';
     const clientId = process.env.GOOGLE_CLIENT_ID || 'mock-google-client-id';
     
+    const isMock = clientId.includes('mock') || env.NODE_ENV === 'development';
+    if (isMock) {
+      const mockUrl = `${redirectUri}?code=mock-code-google-email-employee-at-thestackly.com&state=${state}`;
+      return res.json({ success: true, redirectUrl: mockUrl });
+    }
+
     const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?response_type=code&client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=openid%20profile%20email&state=${state}&code_challenge=${challenge}&code_challenge_method=S256`;
 
     return res.json({ success: true, redirectUrl: authUrl });
@@ -746,6 +753,12 @@ export const microsoftLogin = async (req: Request, res: Response): Promise<any> 
     const redirectUri = process.env.SSO_CALLBACK_URL || 'http://localhost:3000/sso-callback';
     const clientId = process.env.MICROSOFT_CLIENT_ID || 'mock-microsoft-client-id';
     
+    const isMock = clientId.includes('mock') || env.NODE_ENV === 'development';
+    if (isMock) {
+      const mockUrl = `${redirectUri}?code=mock-code-microsoft-email-employee-at-thestackly.com&state=${state}`;
+      return res.json({ success: true, redirectUrl: mockUrl });
+    }
+
     const authUrl = `https://login.microsoftonline.com/common/oauth2/v2.0/authorize?response_type=code&client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=openid%20profile%20email%20User.Read&state=${state}&code_challenge=${challenge}&code_challenge_method=S256`;
 
     return res.json({ success: true, redirectUrl: authUrl });
