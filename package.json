@@ -4,8 +4,8 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "dev": "concurrently \"tsx server.js\" \"vite\"",
-    "server": "tsx server.js",
+    "dev": "concurrently \"tsx server.ts\" \"vite\"",
+    "server": "tsx server.ts",
     "frontend": "vite",
     "build": "node -e \"import('fs').then(fs => { try { fs.rmSync('dist', { recursive: true, force: true }); } catch(e) {} })\" && tsc && vite build",
     "preview": "vite preview",
