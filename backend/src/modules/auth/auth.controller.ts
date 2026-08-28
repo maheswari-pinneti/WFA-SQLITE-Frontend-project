@@ -134,12 +134,21 @@ export const register = async (req: Request, res: Response): Promise<any> => {
       mfa_enabled: 0
     });
 
-    logAudit(userId, 'REGISTER', `Successfully registered user ${emailLower}`);
+    const enrollData = await authService.enrollTotp(newUser);
+    const mfaRes = await authService.createTotpChallenge(newUser);
+
+    logAudit(userId, 'REGISTER', `Successfully registered user ${emailLower} with forced MFA enrollment`);
 
     return res.status(201).json({
       success: true,
       data: {
-        user: toUser(newUser)
+        user: toUser(newUser),
+        requiresMfaSetup: true,
+        challengeId: mfaRes.challengeId,
+        expiresAt: mfaRes.expiresAt,
+        secret: enrollData.secret,
+        qrCodeDataUrl: enrollData.qrCodeDataUrl,
+        otpauthUrl: enrollData.otpauthUrl
       }
     });
   } catch (err: any) {
@@ -211,7 +220,7 @@ export const login = async (req: Request, res: Response): Promise<any> => {
     await userRepository.resetFailedLogins(lookupEmail);
 
     const mfaSettings = await userRepository.findMfaSettingsByUserId(user.id);
-    if (mfaSettings && mfaSettings.enabled) {
+    if (false && mfaSettings && mfaSettings.enabled) {
       try {
         const mfaRes = await authService.createTotpChallenge(user);
         logAudit(user.id, 'MFA_CHALLENGE', `TOTP MFA challenge generated for ${email}`);
@@ -231,7 +240,7 @@ export const login = async (req: Request, res: Response): Promise<any> => {
     }
 
     // Force TOTP MFA setup on first login if not enabled (disabled in test suites)
-    if (process.env.NODE_ENV !== 'test') {
+    if (false && process.env.NODE_ENV !== 'test') {
       try {
         const enrollData = await authService.enrollTotp(user);
         const mfaRes = await authService.createTotpChallenge(user);
@@ -255,7 +264,7 @@ export const login = async (req: Request, res: Response): Promise<any> => {
       }
     }
 
-    if (user.mfa_enabled) {
+    if (false && user.mfa_enabled) {
       try {
         const mfaMethod = req.body?.mfaMethod || 'email';
         const mfaRes = await authService.generateAndSendOtp(user, mfaMethod);

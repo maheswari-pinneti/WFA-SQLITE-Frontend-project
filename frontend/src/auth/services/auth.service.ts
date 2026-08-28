@@ -38,12 +38,12 @@ export const authService = {
 
   verifyMfa: async (challengeId: string, code: string) => {
     const data = await authApi.verifyMfa(challengeId, code);
-    const { token, user } = data;
+    const { token, user, recoveryCodes } = data;
     const normalizedUser = normalizeUser(user);
     if (!token || !normalizedUser) throw new Error('MFA returned an invalid user session.');
     setAccessToken(token);
     sessionStorage.setItem(STORAGE_KEYS.USER_DATA, JSON.stringify(normalizedUser));
-    return { token, user: normalizedUser };
+    return { token, user: normalizedUser, recoveryCodes };
   },
 
   resendMfa: async (challengeId: string, mfaMethod?: string) => {

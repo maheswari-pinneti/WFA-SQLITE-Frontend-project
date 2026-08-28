@@ -19,10 +19,13 @@ export const SignUpPage: React.FC = () => {
   }, [isAuthenticated, role, navigate]);
 
   const handleSignupSubmit = async (data: any) => {
-    await signup(data);
-    setTimeout(() => {
-      navigate('/login');
-    }, 2500);
+    const res = await signup(data);
+    if (!res || !res.data || !res.data.requiresMfaSetup) {
+      setTimeout(() => {
+        navigate('/login');
+      }, 2500);
+    }
+    return res;
   };
 
   return (

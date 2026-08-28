@@ -5,14 +5,16 @@ import AuthHeader from './AuthHeader';
 import AuthFooter from './AuthFooter';
 import { RoleType } from '../../theme/roles';
 import { authService } from '../../auth/services/auth.service';
+import { useAuth } from '../../auth/hooks/useAuth';
 
 interface SignupFormProps {
   selectedRole: RoleType;
   onRoleChange: (role: RoleType) => void;
-  onSubmit: (data: any) => void;
+  onSubmit: (data: any) => Promise<any>;
 }
 
 export const SignupForm: React.FC<SignupFormProps> = ({ selectedRole, onRoleChange, onSubmit }) => {
+  const { verifyMfa } = useAuth();
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [department, setDepartment] = useState('Engineering');
@@ -22,6 +24,12 @@ export const SignupForm: React.FC<SignupFormProps> = ({ selectedRole, onRoleChan
   const [error, setError] = useState('');
   const [isSuccess, setIsSuccess] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+
+  // MFA Setup states
+  const [requiresMfaSetup, setRequiresMfaSetup] = useState(false);
+  const [setupData, setSetupData] = useState<{ secret: string; qrCodeDataUrl: string; otpauthUrl: string; challengeId: string } | null>(null);
+  const [totpCode, setTotpCode] = useState('');
+  const [recoveryCodes, setRecoveryCodes] = useState<string[]>([]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -54,14 +62,24 @@ export const SignupForm: React.FC<SignupFormProps> = ({ selectedRole, onRoleChan
 
     setIsLoading(true);
     try {
-      await onSubmit({
+      const res = await onSubmit({
         fullName,
         email,
         department,
         roleType: 'EMPLOYEE',
         password
       });
-      setIsSuccess(true);
+      if (res && res.data && res.data.requiresMfaSetup) {
+        setSetupData({
+          secret: res.data.secret,
+          qrCodeDataUrl: res.data.qrCodeDataUrl,
+          otpauthUrl: res.data.otpauthUrl,
+          challengeId: res.data.challengeId
+        });
+        setRequiresMfaSetup(true);
+      } else {
+        setIsSuccess(true);
+      }
     } catch (err: any) {
       setIsSuccess(false);
       setError(err.message || 'Registration failed.');
@@ -69,6 +87,138 @@ export const SignupForm: React.FC<SignupFormProps> = ({ selectedRole, onRoleChan
       setIsLoading(false);
     }
   };
+
+  const handleVerifyMfa = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!setupData || !totpCode) return;
+    setError('');
+    setIsLoading(true);
+    try {
+      const verifyRes = (await verifyMfa(setupData.challengeId, totpCode)) as any;
+      if (verifyRes && verifyRes.recoveryCodes && verifyRes.recoveryCodes.length > 0) {
+        setRecoveryCodes(verifyRes.recoveryCodes);
+      }
+    } catch (err: any) {
+      setError(err.message || 'MFA Code verification failed.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  if (recoveryCodes.length > 0) {
+    return (
+      <div className="auth-space-y-6">
+        <AuthHeader
+          title="Account Secured"
+          subtitle="Two-Factor Authentication is now enabled"
+        />
+        <div className="auth-alert-success" style={{ textAlign: 'center', fontWeight: 'bold' }}>
+          🎉 MFA Registration Successful!
+        </div>
+        <div style={{ padding: '1rem', borderRadius: '12px', background: 'var(--bg-tertiary)', border: '1px solid var(--border-color)', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+          <p style={{ color: 'var(--role-primary)', fontSize: '0.875rem', fontWeight: 'bold', margin: 0 }}>⚠️ IMPORTANT: Store these 10 one-time recovery codes safely!</p>
+          <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', margin: 0 }}>If you lose access to your authenticator app, you can use these codes to log in.</p>
+          
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem', fontFamily: 'monospace', fontWeight: 'bold', textAlign: 'center', marginTop: '0.5rem' }}>
+            {recoveryCodes.map((code, idx) => (
+              <div key={idx} style={{ padding: '0.5rem', background: 'var(--bg-primary)', border: '1px solid var(--border-color)', borderRadius: '6px' }}>
+                {code}
+              </div>
+            ))}
+          </div>
+          
+          <button
+            type="button"
+            onClick={() => {
+              const text = recoveryCodes.join('\n');
+              navigator.clipboard.writeText(text);
+              alert('Recovery codes copied to clipboard.');
+            }}
+            className="auth-btn-primary"
+            style={{ background: 'var(--border-color)', color: 'var(--text-primary)', border: '1px solid var(--border-color)', marginTop: '0.5rem', cursor: 'pointer' }}
+          >
+            Copy to Clipboard
+          </button>
+        </div>
+        
+        <button
+          type="button"
+          onClick={() => {
+            window.location.reload(); // Reload or let parent route handle it
+          }}
+          className="auth-btn-primary"
+          style={{ cursor: 'pointer' }}
+        >
+          Proceed to Dashboard
+        </button>
+      </div>
+    );
+  }
+
+  if (requiresMfaSetup) {
+    return (
+      <div className="auth-space-y-6">
+        <AuthHeader
+          title="Secure Your Account"
+          subtitle="Configure Multi-Factor Authentication (MFA)"
+        />
+
+        {error && (
+          <div className="auth-alert-error">
+            {error}
+          </div>
+        )}
+
+        <form onSubmit={handleVerifyMfa} className="auth-space-y-6">
+          <div style={{ padding: '1rem', borderRadius: '12px', background: 'var(--bg-tertiary)', border: '1px solid var(--border-color)', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1rem' }}>
+            <p style={{ fontSize: '0.8125rem', fontWeight: 'bold', margin: 0, textAlign: 'center' }}>Scan this QR code with Google Authenticator or Microsoft Authenticator</p>
+            {setupData && (
+              <>
+                <img
+                  src={setupData.qrCodeDataUrl}
+                  alt="Setup QR Code"
+                  style={{ width: '9rem', height: '9rem', border: '1px solid var(--border-color)', padding: '0.25rem', borderRadius: '8px', background: 'white' }}
+                />
+                <div style={{ width: '100%', textAlign: 'center' }}>
+                  <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', margin: '0 0 0.25rem 0' }}>Or enter the secret key manually:</p>
+                  <code style={{ fontSize: '0.8125rem', fontWeight: 'bold', display: 'block', background: 'var(--bg-primary)', padding: '0.5rem', borderRadius: '6px', border: '1px solid var(--border-color)', wordBreak: 'break-all', userSelect: 'all' }}>
+                    {setupData.secret}
+                  </code>
+                </div>
+              </>
+            )}
+          </div>
+
+          <div className="auth-form-group">
+            <label htmlFor="setupTotpCode" className="auth-label" style={{ marginBottom: '0.5rem', display: 'block', textAlign: 'center', fontSize: '0.875rem', fontWeight: 600 }}>
+              Enter 6-Digit Authenticator Code
+            </label>
+            <input
+              id="setupTotpCode"
+              type="text"
+              maxLength={6}
+              value={totpCode}
+              onChange={(e) => setTotpCode(e.target.value.replace(/\D/g, ''))}
+              placeholder="000000"
+              required
+              className="auth-input"
+              style={{ textAlign: 'center', letterSpacing: '0.1em', fontSize: '1.25rem', padding: '0.75rem' }}
+              autoFocus
+            />
+          </div>
+
+          <button
+            type="submit"
+            disabled={isLoading || totpCode.length !== 6}
+            className="auth-btn-primary"
+            style={{ cursor: 'pointer' }}
+          >
+            {isLoading ? 'Verifying...' : 'Confirm & Complete Registration'}
+          </button>
+        </form>
+      </div>
+    );
+  }
 
   return (
     <div className="auth-space-y-6">
@@ -139,8 +289,6 @@ export const SignupForm: React.FC<SignupFormProps> = ({ selectedRole, onRoleChan
             <option value="Customer Success">Customer Success</option>
           </select>
         </div>
-
-        {/* Public role selection is disabled. All new signups default to EMPLOYEE. */}
 
         {/* Password */}
         <div>
