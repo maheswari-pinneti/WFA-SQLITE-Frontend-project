@@ -193,7 +193,7 @@ export const AdminEmployeeTable: React.FC<{ filteredEmployees: Employee[] }> = (
         Showing {filteredEmployees.length} employees
       </span>
     </div>
-    <div className="overflow-x-auto">
+    <div className="overflow-x-auto rounded-xl border border-slate-800 bg-slate-950/20">
       <table className="w-full text-left text-xs min-w-[1600px]">
         <thead className="bg-slate-950 text-slate-400 border-b border-slate-800 uppercase font-bold text-[10px]">
           <tr>
