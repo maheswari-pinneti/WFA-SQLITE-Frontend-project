@@ -62,7 +62,7 @@ export const MainLayout: React.FC<{ children: React.ReactNode }> = ({ children }
       <EnterpriseHeader onToggleSidebar={toggleSidebar} onOpenHelp={() => setSupportModalOpen(true)} />
 
       {/* Main Body Wrapper (Below Header) */}
-      <div className="flex-1 flex overflow-hidden w-full relative">
+      <div className="main-body flex-1 flex overflow-hidden w-full relative">
         {/* Sleek Dynamic Modular Sidebar Navigation */}
         <Sidebar
           collapsed={collapsed}
