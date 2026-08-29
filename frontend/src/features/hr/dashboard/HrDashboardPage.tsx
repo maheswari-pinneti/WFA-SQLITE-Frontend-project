@@ -223,21 +223,6 @@ export const HrDashboardPage: React.FC = () => {
     <RoleGuard allowedRoles={[Role.ADMIN, Role.HR]} requiredPermission={Permission.EMPLOYEE_READ}>
       <div className="space-y-6 animate-fadeIn font-sans pb-10">
         <HrDashboardOverview getGreeting={getGreeting} firstName={firstName} />
-        <HrDashboardFilters
-          dateFilter={dateFilter}
-          setDateFilter={setDateFilter}
-          locationFilter={locationFilter}
-          setLocationFilter={setLocationFilter}
-          deptFilter={deptFilter}
-          setDeptFilter={setDeptFilter}
-          teamFilter={teamFilter}
-          setTeamFilter={setTeamFilter}
-          empTypeFilter={empTypeFilter}
-          setEmpTypeFilter={setEmpTypeFilter}
-          statusFilter={statusFilter}
-          setStatusFilter={setStatusFilter}
-        />
-        
         {/* KPI metrics - Grid controlled by the Page */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <KPICard
@@ -272,6 +257,21 @@ export const HrDashboardPage: React.FC = () => {
           <AnalyticsBarChart title="Skills Coverage Analysis" subtitle="Highest frequency active skills in scope" data={analytics?.skillsAnalysis?.topSkills} xKey="name" series={[{ key: 'coverage', name: 'Coverage %', color: '#06b6d4' }]} layout="vertical" isLoading={isLoading} error={error} onRetry={reload} />
           <AnalyticsDonutChart title="Retention Risk Distribution" subtitle="Workforce stabilization assessment" data={analytics?.riskDistribution} isLoading={isLoading} error={error} onRetry={reload} colors={['#ef4444', '#f59e0b', '#10b981']} />
         </div>
+
+        <HrDashboardFilters
+          dateFilter={dateFilter}
+          setDateFilter={setDateFilter}
+          locationFilter={locationFilter}
+          setLocationFilter={setLocationFilter}
+          deptFilter={deptFilter}
+          setDeptFilter={setDeptFilter}
+          teamFilter={teamFilter}
+          setTeamFilter={setTeamFilter}
+          empTypeFilter={empTypeFilter}
+          setEmpTypeFilter={setEmpTypeFilter}
+          statusFilter={statusFilter}
+          setStatusFilter={setStatusFilter}
+        />
 
         <EmployeeTable />
         <HrSprintOverview hrTasks={hrTasks} />

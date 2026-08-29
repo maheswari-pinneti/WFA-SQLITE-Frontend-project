@@ -402,19 +402,6 @@ export const AdminDashboardPage: React.FC = () => {
           firstName={firstName}
           user={user}
         />
-        <AdminDashboardFilters
-          dateFilter={dateFilter}
-          setDateFilter={setDateFilter}
-          locationFilter={locationFilter}
-          setLocationFilter={setLocationFilter}
-          deptFilter={deptFilter}
-          setDeptFilter={setDeptFilter}
-          teamFilter={teamFilter}
-          setTeamFilter={setTeamFilter}
-          statusFilter={statusFilter}
-          setStatusFilter={setStatusFilter}
-        />
-        
         {/* KPI metrics - Grid controlled by the Page */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
           <MinimalKpiCard
@@ -449,6 +436,19 @@ export const AdminDashboardPage: React.FC = () => {
           <AnalyticsDonutChart title="Workforce Mode" subtitle="Office, remote and client attendance modes" data={analytics.data?.workforceDistribution} isLoading={analytics.isLoading} error={analytics.error} onRetry={analytics.reload} />
           <AnalyticsDonutChart title="Retention Risk" subtitle="Performance and attendance risk distribution" data={analytics.data?.riskDistribution} isLoading={analytics.isLoading} error={analytics.error} onRetry={analytics.reload} colors={['#ef4444', '#f59e0b', '#10b981']} />
         </div>
+
+        <AdminDashboardFilters
+          dateFilter={dateFilter}
+          setDateFilter={setDateFilter}
+          locationFilter={locationFilter}
+          setLocationFilter={setLocationFilter}
+          deptFilter={deptFilter}
+          setDeptFilter={setDeptFilter}
+          teamFilter={teamFilter}
+          setTeamFilter={setTeamFilter}
+          statusFilter={statusFilter}
+          setStatusFilter={setStatusFilter}
+        />
 
         <AdminEmployeeTable filteredEmployees={filteredEmployees} />
         <AdminSprintOverview tasks={tasks} />
