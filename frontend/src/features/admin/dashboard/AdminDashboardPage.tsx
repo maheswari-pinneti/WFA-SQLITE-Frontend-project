@@ -75,7 +75,7 @@ export const AdminDashboardFilters: React.FC<{
     <div className="flex items-center gap-2 text-slate-300 text-xs font-extrabold uppercase">
       <Filter size={16} className="text-blue-400" /> Executive Analytics Scopes
     </div>
-    <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
       <div>
         <label className="text-[10px] text-slate-400 font-bold block mb-1">Date</label>
         <input
@@ -283,8 +283,8 @@ export const AdminSprintOverview: React.FC<{ tasks: Task[] }> = ({ tasks }) => (
       </h3>
       <span className="badge badge-success text-[10px] font-bold">ORGANIZATION SPRINT</span>
     </div>
-    <div className="overflow-x-auto">
-      <table className="w-full text-left text-xs">
+    <div className="overflow-x-auto rounded-xl border border-slate-800 bg-slate-950/20">
+      <table className="w-full text-left text-xs min-w-[800px]">
         <thead className="bg-slate-950 text-slate-400 border-b border-slate-800 uppercase font-bold text-[10px]">
           <tr>
             <th className="py-3 px-4">Sprint</th>
@@ -439,7 +439,7 @@ export const AdminDashboardPage: React.FC = () => {
         </div>
 
         {/* Charts Grid - Grid layout controlled entirely by the Page component */}
-        <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
           <AnalyticsLineChart title="Employee Growth & Hiring" subtitle="Headcount and new hires by join month" data={analytics.data?.growthData} xKey="name" series={[{ key: 'headcount', name: 'Headcount', color: '#3b82f6' }, { key: 'hiring', name: 'New hires', color: '#06b6d4' }]} isLoading={analytics.isLoading} error={analytics.error} onRetry={analytics.reload} />
           <AnalyticsBarChart title="Attendance Overview" subtitle="Present, absent and late attendance by weekday" data={analytics.data?.attendanceOverview} xKey="name" series={[{ key: 'present', name: 'Present', color: '#10b981' }, { key: 'absent', name: 'Absent', color: '#ef4444' }, { key: 'late', name: 'Late', color: '#f59e0b' }]} isLoading={analytics.isLoading} error={analytics.error} onRetry={analytics.reload} />
           <AnalyticsBarChart title="Department Comparison" subtitle="Headcount and attendance performance by department" data={analytics.data?.departmentComparison} xKey="name" series={[{ key: 'headcount', name: 'Headcount', color: '#6366f1' }, { key: 'attendance', name: 'Attendance %', color: '#10b981' }]} layout="vertical" isLoading={analytics.isLoading} error={analytics.error} onRetry={analytics.reload} />

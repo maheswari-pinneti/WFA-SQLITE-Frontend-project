@@ -101,8 +101,8 @@ export const TeamLeadEmployeeTable: React.FC<{ filteredReports: Employee[] }> = 
         Showing {filteredReports.length} team members
       </span>
     </div>
-    <div className="overflow-x-auto">
-      <table className="w-full text-left text-xs">
+    <div className="overflow-x-auto rounded-xl border border-slate-800 bg-slate-950/20">
+      <table className="w-full text-left text-xs min-w-[800px]">
         <thead className="bg-slate-950 text-slate-400 border-b border-slate-800 uppercase font-bold text-[10px]">
           <tr>
             <th className="py-3 px-4">Employee</th>
@@ -165,8 +165,8 @@ export const TeamLeadSprintBoard: React.FC<{ sprintTasks: Task[] }> = ({ sprintT
       </h3>
       <span className="badge badge-success text-[10px] font-bold">FRONTEND SPRINT</span>
     </div>
-    <div className="overflow-x-auto">
-      <table className="w-full text-left text-xs">
+    <div className="overflow-x-auto rounded-xl border border-slate-800 bg-slate-950/20">
+      <table className="w-full text-left text-xs min-w-[800px]">
         <thead className="bg-slate-950 text-slate-400 border-b border-slate-800 uppercase font-bold text-[10px]">
           <tr>
             <th className="py-3 px-4">Task</th>
@@ -282,7 +282,7 @@ export const TeamLeadDashboardPage: React.FC = () => {
         </div>
 
         {/* Scoped Team Lead Analytics Grid controlled by the Page */}
-        <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
           <AnalyticsBarChart title="Squad Daily Attendance" subtitle="Weekdays breakdown inside squad" data={analytics.data?.attendanceOverview} xKey="name" series={[{ key: 'present', name: 'Present', color: '#0ea5e9' }, { key: 'absent', name: 'Absent', color: '#f43f5e' }]} isLoading={analytics.isLoading} error={analytics.error} onRetry={analytics.reload} />
           <AnalyticsBarChart title="Squad Task Velocity" subtitle="Productivity by sprint task status" data={analytics.data?.teamProductivity} xKey="name" series={[{ key: 'productivity', name: 'Productivity Rate', color: '#10b981' }]} isLoading={analytics.isLoading} error={analytics.error} onRetry={analytics.reload} />
           <AnalyticsDonutChart title="Employment Status Mix" subtitle="Squad duty allocation" data={analytics.data?.employmentStatus} isLoading={analytics.isLoading} error={analytics.error} onRetry={analytics.reload} />

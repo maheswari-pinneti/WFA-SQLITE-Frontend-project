@@ -57,7 +57,7 @@ export const HrDashboardFilters: React.FC<{
     <div className="flex items-center gap-2 text-slate-300 text-xs font-extrabold uppercase">
       <Filter size={16} className="text-purple-400" /> HR Operational Filters
     </div>
-    <div className="grid grid-cols-2 md:grid-cols-6 gap-3">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-3">
       <div>
         <label className="text-[10px] text-slate-400 font-bold block mb-1">Date</label>
         <input
@@ -141,8 +141,8 @@ export const HrSprintOverview: React.FC<{ hrTasks: Task[] }> = ({ hrTasks }) => 
       </h3>
       <span className="badge badge-primary text-[10px] font-bold">HR OPERATIONS SPRINT</span>
     </div>
-    <div className="overflow-x-auto">
-      <table className="w-full text-left text-xs">
+    <div className="overflow-x-auto rounded-xl border border-slate-800 bg-slate-950/20">
+      <table className="w-full text-left text-xs min-w-[800px]">
         <thead className="bg-slate-950 text-slate-400 border-b border-slate-800 uppercase font-bold text-[10px]">
           <tr>
             <th className="py-3 px-4">Task</th>
@@ -264,7 +264,7 @@ export const HrDashboardPage: React.FC = () => {
         </div>
 
         {/* Scoped HR Workforce Analytics Grid controlled by the Page */}
-        <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
           <AnalyticsLineChart title="Employee Growth & Hiring" subtitle="Headcount and new hires by join month" data={analytics?.growthData} xKey="name" series={[{ key: 'headcount', name: 'Headcount', color: '#8b5cf6' }, { key: 'hiring', name: 'New hires', color: '#ec4899' }]} isLoading={isLoading} error={error} onRetry={reload} />
           <AnalyticsBarChart title="Attendance Compliance Trend" subtitle="Daily shift present/absent stats" data={analytics?.attendanceOverview} xKey="name" series={[{ key: 'present', name: 'Present', color: '#10b981' }, { key: 'absent', name: 'Absent', color: '#ef4444' }]} isLoading={isLoading} error={error} onRetry={reload} />
           <AnalyticsDonutChart title="Employment Status Mix" subtitle="Active vs On Leave overview" data={analytics?.employmentStatus} isLoading={isLoading} error={error} onRetry={reload} />

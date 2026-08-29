@@ -105,8 +105,8 @@ export const EmployeeAttendanceTable: React.FC<{
         </select>
       </div>
     </div>
-    <div className="overflow-x-auto">
-      <table className="w-full text-left text-xs">
+    <div className="overflow-x-auto rounded-xl border border-slate-800 bg-slate-950/20">
+      <table className="w-full text-left text-xs min-w-[800px]">
         <thead className="bg-slate-950 text-slate-400 border-b border-slate-880 uppercase font-bold text-[10px]">
           <tr>
             <th className="py-3 px-4">Date</th>
@@ -185,8 +185,8 @@ export const EmployeeSprintWork: React.FC<{
         <p className="text-sm text-slate-400 font-medium">No active tasks in current sprint</p>
       </div>
     ) : (
-      <div className="overflow-x-auto">
-        <table className="w-full text-left text-sm">
+      <div className="overflow-x-auto rounded-xl border border-slate-800 bg-slate-950/20">
+        <table className="w-full text-left text-xs min-w-[600px]">
           <thead>
             <tr className="text-slate-400 border-b border-slate-850 pb-2">
               <th className="py-2.5 font-semibold">Task Title</th>
@@ -371,7 +371,7 @@ export const EmployeeDashboardPage: React.FC = () => {
           timesheetStatus={timesheetStatus}
         />
         {/* Personal Employee Analytics Grid controlled by the Page */}
-        <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
           <AnalyticsBarChart title="My Daily Work Hours" subtitle="My hours tracked per weekday" data={analytics.data?.attendanceOverview} xKey="name" series={[{ key: 'present', name: 'Work Hours', color: '#10b981' }]} isLoading={analytics.isLoading} error={analytics.error} onRetry={analytics.reload} />
           <AnalyticsLineChart title="My Performance History" subtitle="Calculated productivity score index" data={analytics.data?.performance} xKey="name" series={[{ key: 'performance', name: 'Productivity', color: '#0ea5e9' }]} isLoading={analytics.isLoading} error={analytics.error} onRetry={analytics.reload} />
         </div>

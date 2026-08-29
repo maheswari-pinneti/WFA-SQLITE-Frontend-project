@@ -24,7 +24,7 @@ export const AnalyticsChartContainer: React.FC<AnalyticsChartContainerProps> = (
 }) => {
   return (
     <section
-      className="w-full bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-3xl p-6 shadow-xl font-sans text-[var(--text-primary)] flex flex-col justify-between relative overflow-hidden transition-all duration-300 hover:border-blue-500/40"
+      className="w-full min-w-0 bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-3xl p-6 shadow-xl font-sans text-[var(--text-primary)] flex flex-col justify-between relative overflow-hidden transition-all duration-300 hover:border-blue-500/40"
       style={{ minHeight }}
       aria-busy={isLoading}
     >

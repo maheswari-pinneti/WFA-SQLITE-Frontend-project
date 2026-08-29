@@ -48,7 +48,7 @@ export const AnalyticsOverview: React.FC<AnalyticsOverviewProps> = ({
         ))}
       </div>
 
-      <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
         <AnalyticsLineChart title="Employee Growth & Hiring" subtitle="Headcount and new hires by join month" data={data?.growthData} xKey="name" series={[{ key: 'headcount', name: 'Headcount', color: '#3b82f6' }, { key: 'hiring', name: 'New hires', color: '#06b6d4' }]} isLoading={isLoading} error={error} onRetry={load} />
         <AnalyticsBarChart title="Attendance Overview" subtitle="Present, absent and late attendance by weekday" data={data?.attendanceOverview} xKey="name" series={[{ key: 'present', name: 'Present', color: '#10b981' }, { key: 'absent', name: 'Absent', color: '#ef4444' }, { key: 'late', name: 'Late', color: '#f59e0b' }]} isLoading={isLoading} error={error} onRetry={load} />
         <AnalyticsBarChart title="Department Comparison" subtitle="Headcount and attendance performance by department" data={data?.departmentComparison} xKey="name" series={[{ key: 'headcount', name: 'Headcount', color: '#6366f1' }, { key: 'attendance', name: 'Attendance %', color: '#10b981' }]} layout="vertical" isLoading={isLoading} error={error} onRetry={load} />
