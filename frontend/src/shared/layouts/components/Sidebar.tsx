@@ -403,8 +403,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
       {
         category: 'Attendance Management',
         items: [
-          { label: 'Check-In / Check-Out', path: '/employee/check-in-out', icon: <Clock size={18} strokeWidth={2} className="text-cyan-400" /> },
-          { label: 'Break Details', path: '/employee/break', icon: <Zap size={18} strokeWidth={2} className="text-amber-400" /> },
           { label: 'My Attendance', path: '/employee/attendance', icon: <History size={18} strokeWidth={2} className="text-rose-400" /> },
         ],
       },

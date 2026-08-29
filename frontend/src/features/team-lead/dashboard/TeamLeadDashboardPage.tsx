@@ -11,6 +11,7 @@ import { workforceApi, Task } from '../../../api/endpoints/workforce.api';
 import { Employee } from '../../../shared/types/common.types';
 import { Flame, GitPullRequest, Users, CheckCircle2, Zap, Clock, Star, FileText, AlertTriangle, ArrowRight, Filter, Layers, Calendar } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { EmployeeTable } from '../../../components/tables/EmployeeTable';
 
 export const TeamLeadDashboardOverview: React.FC = () => (
   <div className="p-6 rounded-2xl bg-gradient-to-r from-teal-950/50 via-slate-900 to-cyan-950/40 border border-teal-500/30 flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-xl">
@@ -91,70 +92,7 @@ export const TeamLeadDashboardFilters: React.FC<{
   </div>
 );
 
-export const TeamLeadEmployeeTable: React.FC<{ filteredReports: Employee[] }> = ({ filteredReports }) => (
-  <div className="p-6 rounded-3xl bg-slate-900 border border-slate-800 shadow-2xl space-y-4 w-full max-w-full min-w-0">
-    <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-      <h3 className="text-base font-extrabold text-white flex items-center gap-2">
-        <Users size={18} className="text-teal-400" /> Team Employee Table
-      </h3>
-      <span className="text-xs text-slate-400 font-semibold bg-slate-950/60 px-3 py-1 rounded-full border border-slate-850">
-        Showing {filteredReports.length} team members
-      </span>
-    </div>
-    <div className="overflow-auto max-h-[500px] rounded-xl border border-slate-800 bg-slate-950/20 w-full max-w-full min-w-0">
-      <table className="w-full text-left text-xs min-w-[800px]">
-        <thead className="sticky top-0 z-10 bg-slate-950 text-slate-400 border-b border-slate-800 uppercase font-bold text-[10px]">
-          <tr>
-            <th className="py-3 px-4">Employee</th>
-            <th className="py-3 px-4">Check In</th>
-            <th className="py-3 px-4">Break</th>
-            <th className="py-3 px-4">Resume</th>
-            <th className="py-3 px-4">Check Out</th>
-            <th className="py-3 px-4">Working Hours</th>
-            <th className="py-3 px-4">Tasks Progress</th>
-            <th className="py-3 px-4">Status</th>
-          </tr>
-        </thead>
-        <tbody className="divide-y divide-slate-800/80">
-          {filteredReports.map((emp) => (
-            <tr key={emp.id} className="hover:bg-slate-800/40">
-              <td className="py-3 px-4 font-bold text-white">
-                <div>
-                  <div>{emp.name}</div>
-                  <div className="text-[10px] text-slate-500 font-semibold">{emp.designation || 'Developer'}</div>
-                </div>
-              </td>
-              <td className="py-3 px-4 font-mono text-emerald-400">09:00 AM</td>
-              <td className="py-3 px-4 font-mono text-slate-400">12:30 PM</td>
-              <td className="py-3 px-4 font-mono text-slate-400">01:30 PM</td>
-              <td className="py-3 px-4 font-mono text-rose-400">05:00 PM</td>
-              <td className="py-3 px-4 font-mono font-bold text-blue-400">8.0 hrs</td>
-              <td className="py-3 px-4">
-                <div className="w-full bg-slate-800 rounded-full h-1.5 max-w-[100px]">
-                  <div className="bg-emerald-500 h-1.5 rounded-full" style={{ width: '80%' }}></div>
-                </div>
-              </td>
-              <td className="py-3 px-4">
-                <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${
-                  emp.status === 'Active' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-slate-800 text-slate-400'
-                }`}>
-                  {emp.status}
-                </span>
-              </td>
-            </tr>
-          ))}
-          {filteredReports.length === 0 && (
-            <tr>
-              <td colSpan={8} className="py-8 text-center text-slate-500 font-semibold">
-                No team members match the selected criteria
-              </td>
-            </tr>
-          )}
-        </tbody>
-      </table>
-    </div>
-  </div>
-);
+
 
 export const TeamLeadSprintBoard: React.FC<{ sprintTasks: Task[] }> = ({ sprintTasks }) => (
   <div className="p-6 rounded-3xl bg-slate-900 border border-slate-800 shadow-2xl space-y-4">
@@ -237,11 +175,7 @@ export const TeamLeadDashboardPage: React.FC = () => {
     });
   };
 
-  const filteredReports = directReports.filter(emp => {
-    const matchesEmp = employeeFilter === 'All' || emp.id === employeeFilter;
-    const matchesStatus = statusFilter === 'All' || emp.status === statusFilter;
-    return matchesEmp && matchesStatus;
-  });
+
 
   return (
     <RoleGuard allowedRoles={[Role.ADMIN, Role.HR, Role.MANAGER, Role.TEAM_LEAD]} requiredPermission={Permission.PRODUCTIVITY_VIEW}>
@@ -293,7 +227,10 @@ export const TeamLeadDashboardPage: React.FC = () => {
           <AnalyticsLineChart title="Squad Performance History" subtitle="Individual metrics trend" data={analytics.data?.performance} xKey="name" series={[{ key: 'performance', name: 'Performance', color: '#6366f1' }]} isLoading={analytics.isLoading} error={analytics.error} onRetry={analytics.reload} />
         </div>
 
-        <TeamLeadEmployeeTable filteredReports={filteredReports} />
+        <EmployeeTable
+          teamFilter={teamName}
+          statusFilter={statusFilter}
+        />
         <TeamLeadSprintBoard sprintTasks={sprintTasks} />
 
         <DrillDownModal isOpen={drillDownData !== null} onClose={() => setDrillDownData(null)} data={drillDownData} />

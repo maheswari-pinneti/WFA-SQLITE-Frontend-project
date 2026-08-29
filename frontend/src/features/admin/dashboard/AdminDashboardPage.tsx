@@ -10,6 +10,7 @@ import { AnalyticsBarChart, AnalyticsDonutChart, AnalyticsLineChart } from '../.
 import { employeeApi } from '../../../api/endpoints/employee.api';
 import { workforceApi, Task } from '../../../api/endpoints/workforce.api';
 import { Employee } from '../../../shared/types/common.types';
+import { EmployeeTable } from '../../../components/tables/EmployeeTable';
 import {
   Users,
   UserPlus,
@@ -183,96 +184,7 @@ const formatJoinDate = (dateStr?: string) => {
   return `${day} ${month} ${year}`;
 };
 
-export const AdminEmployeeTable: React.FC<{ filteredEmployees: Employee[] }> = ({ filteredEmployees }) => (
-  <div className="p-6 rounded-3xl bg-slate-900 border border-slate-800 shadow-2xl space-y-4 w-full max-w-full min-w-0">
-    <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-      <h3 className="text-base font-extrabold text-white flex items-center gap-2">
-        <Users size={18} className="text-emerald-500" /> Employee Attendance & Performance Table
-      </h3>
-      <span className="text-xs text-slate-400 font-semibold bg-slate-950/60 px-3 py-1 rounded-full border border-slate-850">
-        Showing {filteredEmployees.length} employees
-      </span>
-    </div>
-    <div className="overflow-auto max-h-[500px] rounded-xl border border-slate-800 bg-slate-950/20 w-full max-w-full min-w-0">
-      <table className="w-full text-left text-xs min-w-[1600px]">
-        <thead className="sticky top-0 z-10 bg-slate-950 text-slate-400 border-b border-slate-800 uppercase font-bold text-[10px]">
-          <tr>
-            <th className="py-3 px-4 w-[110px]">Employee ID</th>
-            <th className="py-3 px-4 w-[180px]">Employee Name</th>
-            <th className="py-3 px-4 w-[120px]">Joining Date</th>
-            <th className="py-3 px-4 w-[150px]">Employment Status</th>
-            <th className="py-3 px-4 w-[120px]">Tenure</th>
-            <th className="py-3 px-4 w-[140px]">Department</th>
-            <th className="py-3 px-4 w-[120px]">Team</th>
-            <th className="py-3 px-4 w-[130px]">Manager</th>
-            <th className="py-3 px-4 w-[130px]">Team Lead</th>
-            <th className="py-3 px-4 w-[100px]">Location</th>
-            <th className="py-3 px-4 w-[140px]">Attendance Status</th>
-            <th className="py-3 px-4 w-[100px]">Check-In</th>
-            <th className="py-3 px-4 w-[100px]">Check-Out</th>
-            <th className="py-3 px-4 w-[110px]">Working Hours</th>
-            <th className="py-3 px-4 w-[110px]">Break Duration</th>
-            <th className="py-3 px-4 w-[110px]">Leave Balance</th>
-            <th className="py-3 px-4 w-[120px]">Last Activity</th>
-            <th className="py-3 px-4 w-[100px]">Sync Status</th>
-            <th className="py-3 px-4 w-[80px]">Actions</th>
-          </tr>
-        </thead>
-        <tbody className="divide-y divide-slate-800/80">
-          {filteredEmployees.map((emp) => (
-            <tr key={emp.id} className="hover:bg-slate-800/40">
-              <td className="py-3 px-4 font-mono font-bold text-slate-300">
-                {emp.employeeCode || emp.code || 'EMP-1000'}
-              </td>
-              <td className="py-3 px-4 font-bold text-white">
-                <div>
-                  <div>{emp.name}</div>
-                  <div className="text-[10px] text-slate-500 font-semibold">{emp.designation || 'Specialist'}</div>
-                </div>
-              </td>
-              <td className="py-3 px-4 text-slate-300 font-medium">
-                {formatJoinDate(emp.joinDate)}
-              </td>
-              <td className="py-3 px-4">
-                <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${
-                  emp.status === 'Active' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-slate-800 text-slate-400'
-                }`}>
-                  {emp.status}
-                </span>
-              </td>
-              <td className="py-3 px-4 text-amber-300 font-semibold">
-                {calculateTenure(emp.joinDate)}
-              </td>
-              <td className="py-3 px-4 text-slate-300">{emp.department || 'General'}</td>
-              <td className="py-3 px-4 text-slate-400">{emp.team || 'N/A'}</td>
-              <td className="py-3 px-4 text-slate-400">{(emp as any).manager || 'Priya Sharma'}</td>
-              <td className="py-3 px-4 text-slate-400">{(emp as any).teamLead || 'Arjun Reddy'}</td>
-              <td className="py-3 px-4 text-slate-300 font-semibold">{emp.location || 'HQ'}</td>
-              <td className="py-3 px-4 text-emerald-400 font-bold">{(emp as any).attendance_status || 'Present'}</td>
-              <td className="py-3 px-4 font-mono">{(emp as any).checkIn || '09:32 AM'}</td>
-              <td className="py-3 px-4 font-mono">{(emp as any).checkOut || '06:35 PM'}</td>
-              <td className="py-3 px-4 font-mono font-bold text-blue-400">{(emp as any).workingHours || '08h 12m'}</td>
-              <td className="py-3 px-4 font-mono">{(emp as any).breakDuration || '01h 03m'}</td>
-              <td className="py-3 px-4 font-mono text-purple-400 font-bold">{(emp as any).leaveBalance || '12 days'}</td>
-              <td className="py-3 px-4 text-slate-400">{(emp as any).lastActivity || 'Check-In'}</td>
-              <td className="py-3 px-4 text-teal-400 font-bold">{(emp as any).syncStatus || 'Synced'}</td>
-              <td className="py-3 px-4">
-                <Link to={`/admin/employees`} className="text-blue-400 hover:text-blue-300 font-extrabold text-[11px]">View</Link>
-              </td>
-            </tr>
-          ))}
-          {filteredEmployees.length === 0 && (
-            <tr>
-              <td colSpan={19} className="py-8 text-center text-slate-500 font-semibold">
-                No employees match the selected criteria
-              </td>
-            </tr>
-          )}
-        </tbody>
-      </table>
-    </div>
-  </div>
-);
+
 
 export const AdminSprintOverview: React.FC<{ tasks: Task[] }> = ({ tasks }) => (
   <div className="p-6 rounded-3xl bg-slate-900 border border-slate-800 shadow-2xl space-y-4">
@@ -369,14 +281,6 @@ export const AdminDashboardPage: React.FC = () => {
     });
   };
 
-  const filteredEmployees = employees.filter(emp => {
-    const matchesDept = deptFilter === 'All' || emp.department === deptFilter;
-    const matchesLocation = locationFilter === 'All' || emp.location === locationFilter;
-    const matchesStatus = statusFilter === 'All' || emp.status === statusFilter;
-    const matchesTeam = teamFilter === 'All' || emp.team === teamFilter;
-    return matchesDept && matchesLocation && matchesStatus && matchesTeam;
-  });
-
   const currentDateFormatted = new Date().toLocaleDateString('en-US', {
     weekday: 'long',
     year: 'numeric',
@@ -455,7 +359,12 @@ export const AdminDashboardPage: React.FC = () => {
           <AnalyticsDonutChart title="Retention Risk" subtitle="Performance and attendance risk distribution" data={analytics.data?.riskDistribution} isLoading={analytics.isLoading} error={analytics.error} onRetry={analytics.reload} colors={['#ef4444', '#f59e0b', '#10b981']} />
         </div>
 
-        <AdminEmployeeTable filteredEmployees={filteredEmployees} />
+        <EmployeeTable
+          locationFilter={locationFilter}
+          deptFilter={deptFilter}
+          teamFilter={teamFilter}
+          statusFilter={statusFilter}
+        />
         <AdminSprintOverview tasks={tasks} />
         <DrillDownModal isOpen={!!drillDownData} data={drillDownData} onClose={() => setDrillDownData(null)} />
       </div>

@@ -11,6 +11,7 @@ import { employeeApi } from '../../../api/endpoints/employee.api';
 import { Employee } from '../../../shared/types/common.types';
 import { Briefcase, Users, CheckCircle2, XCircle, Clock, Zap, Star, FileText, AlertTriangle, ArrowRight, Filter, Layers } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { EmployeeTable } from '../../../components/tables/EmployeeTable';
 
 export const ManagerDashboardOverview: React.FC = () => (
   <div className="p-6 rounded-2xl bg-gradient-to-r from-blue-950/50 via-slate-900 to-indigo-950/40 border border-blue-500/30 flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-xl">
@@ -107,67 +108,7 @@ export const ManagerDashboardFilters: React.FC<{
   </div>
 );
 
-export const ManagerEmployeeTable: React.FC<{ deptEmployees: Employee[] }> = ({ deptEmployees }) => (
-  <div className="p-6 rounded-3xl bg-slate-900 border border-slate-800 shadow-2xl space-y-4 w-full max-w-full min-w-0">
-    <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-      <h3 className="text-base font-extrabold text-white flex items-center gap-2">
-        <Users size={18} className="text-emerald-500" /> Department Employee Table
-      </h3>
-      <span className="text-xs text-slate-400 font-semibold bg-slate-950/60 px-3 py-1 rounded-full border border-slate-850">
-        Showing {deptEmployees.length} department staff
-      </span>
-    </div>
-    <div className="overflow-auto max-h-[500px] rounded-xl border border-slate-800 bg-slate-950/20 w-full max-w-full min-w-0">
-      <table className="w-full text-left text-xs min-w-[800px]">
-        <thead className="sticky top-0 z-10 bg-slate-950 text-slate-400 border-b border-slate-800 uppercase font-bold text-[10px]">
-          <tr>
-            <th className="py-3 px-4">Employee</th>
-            <th className="py-3 px-4">Team</th>
-            <th className="py-3 px-4">Designation</th>
-            <th className="py-3 px-4">Location</th>
-            <th className="py-3 px-4">Check In</th>
-            <th className="py-3 px-4">Check Out</th>
-            <th className="py-3 px-4">Working Hours</th>
-            <th className="py-3 px-4">Attendance</th>
-            <th className="py-3 px-4">Performance</th>
-            <th className="py-3 px-4">Status</th>
-          </tr>
-        </thead>
-        <tbody className="divide-y divide-slate-800/80">
-          {deptEmployees.map((emp) => (
-            <tr key={emp.id} className="hover:bg-slate-800/40">
-              <td className="py-3 px-4 font-bold text-white">
-                <div>{emp.name}</div>
-              </td>
-              <td className="py-3 px-4 text-slate-300">{emp.team || 'N/A'}</td>
-              <td className="py-3 px-4 text-slate-400">{emp.designation || 'Engineer'}</td>
-              <td className="py-3 px-4 text-slate-450">{emp.location || 'HQ'}</td>
-              <td className="py-3 px-4 font-mono text-emerald-400">09:05 AM</td>
-              <td className="py-3 px-4 font-mono text-rose-400">05:15 PM</td>
-              <td className="py-3 px-4 font-mono text-blue-400">8.17 hrs</td>
-              <td className="py-3 px-4 font-bold text-emerald-400">{(emp.attendanceRate || 96.0).toFixed(1)}%</td>
-              <td className="py-3 px-4 font-bold text-indigo-400">{(emp.performanceScore || 85.0).toFixed(0)}%</td>
-              <td className="py-3 px-4">
-                <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${
-                  emp.status === 'Active' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-slate-800 text-slate-400'
-                }`}>
-                  {emp.status}
-                </span>
-              </td>
-            </tr>
-          ))}
-          {deptEmployees.length === 0 && (
-            <tr>
-              <td colSpan={10} className="py-8 text-center text-slate-500 font-semibold">
-                No department staff match the selected criteria
-              </td>
-            </tr>
-          )}
-        </tbody>
-      </table>
-    </div>
-  </div>
-);
+
 
 export const ManagerSprintOverview: React.FC<{ tasks: Task[] }> = ({ tasks }) => (
   <div className="p-6 rounded-3xl bg-slate-900 border border-slate-800 shadow-2xl space-y-4">
@@ -285,13 +226,7 @@ export const ManagerDashboardPage: React.FC = () => {
 
   const departmentName = 'Engineering';
 
-  const deptEmployees = employees.filter(emp => {
-    const isDept = emp.department === departmentName;
-    const matchesTeam = teamFilter === 'All' || emp.team === teamFilter;
-    const matchesEmp = employeeFilter === 'All' || emp.id === employeeFilter;
-    const matchesStatus = statusFilter === 'All' || emp.status === statusFilter;
-    return isDept && matchesTeam && matchesEmp && matchesStatus;
-  });
+
 
   const pendingApprovalsCount = approvals.filter(a => a.status === 'PENDING').length;
 
@@ -350,7 +285,11 @@ export const ManagerDashboardPage: React.FC = () => {
           <AnalyticsDonutChart title="Retention Risks" subtitle="Retention risk distribution" data={analytics.data?.riskDistribution} isLoading={analytics.isLoading} error={analytics.error} onRetry={analytics.reload} colors={['#ef4444', '#f59e0b', '#10b981']} />
         </div>
 
-        <ManagerEmployeeTable deptEmployees={deptEmployees} />
+        <EmployeeTable
+          deptFilter={departmentName}
+          teamFilter={teamFilter}
+          statusFilter={statusFilter}
+        />
         <ManagerSprintOverview tasks={tasks} />
 
         {/* Leave Requests Approvals Desk */}
