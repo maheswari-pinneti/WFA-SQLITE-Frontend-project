@@ -8,7 +8,19 @@ import { Search, ChevronLeft, ChevronRight, UserPlus, Filter, ChevronsLeft, Chev
 import { Button } from '../../shared/components/Button';
 import { useDepartmentAccess } from '../../hooks/useDepartmentAccess';
 
-export const EmployeeTable: React.FC = () => {
+interface EmployeeTableProps {
+  locationFilter?: string;
+  deptFilter?: string;
+  teamFilter?: string;
+  statusFilter?: string;
+}
+
+export const EmployeeTable: React.FC<EmployeeTableProps> = ({
+  locationFilter = 'ALL',
+  deptFilter = 'ALL',
+  teamFilter = 'ALL',
+  statusFilter = 'ALL'
+}) => {
   const dispatch = useDispatch<AppDispatch>();
   const { employees, isLoading } = useSelector((state: RootState) => state.hr);
   const [search, setSearch] = useState('');
@@ -40,9 +52,15 @@ export const EmployeeTable: React.FC = () => {
       emp.email.toLowerCase().includes(search.toLowerCase()) ||
       desig.toLowerCase().includes(search.toLowerCase());
 
-    const matchesDept = departmentFilter === 'ALL' || emp.department === departmentFilter;
+    // Use parent dashboard filters if they are not the default 'ALL' or 'All'
+    const finalDept = deptFilter !== 'ALL' && deptFilter !== 'All' ? deptFilter : departmentFilter;
+    const matchesDept = finalDept === 'ALL' || finalDept === 'All' || emp.department === finalDept;
+    
+    const matchesLocation = locationFilter === 'ALL' || locationFilter === 'All' || emp.location === locationFilter;
+    const matchesTeam = teamFilter === 'ALL' || teamFilter === 'All' || emp.team === teamFilter;
+    const matchesStatus = statusFilter === 'ALL' || statusFilter === 'All' || emp.status === statusFilter;
 
-    return matchesSearch && matchesDept;
+    return matchesSearch && matchesDept && matchesLocation && matchesTeam && matchesStatus;
   });
 
   const sortedFilteredEmployees = useMemo(() => {

@@ -374,7 +374,8 @@ export const AdminDashboardPage: React.FC = () => {
     const matchesDept = deptFilter === 'All' || emp.department === deptFilter;
     const matchesLocation = locationFilter === 'All' || emp.location === locationFilter;
     const matchesStatus = statusFilter === 'All' || emp.status === statusFilter;
-    return matchesDept && matchesLocation && matchesStatus;
+    const matchesTeam = teamFilter === 'All' || emp.team === teamFilter;
+    return matchesDept && matchesLocation && matchesStatus && matchesTeam;
   });
 
   const currentDateFormatted = new Date().toLocaleDateString('en-US', {

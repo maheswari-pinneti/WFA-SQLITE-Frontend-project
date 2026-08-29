@@ -277,7 +277,12 @@ export const HrDashboardPage: React.FC = () => {
           setStatusFilter={setStatusFilter}
         />
 
-        <EmployeeTable />
+        <EmployeeTable
+          locationFilter={locationFilter}
+          deptFilter={deptFilter}
+          teamFilter={teamFilter}
+          statusFilter={statusFilter}
+        />
         <HrSprintOverview hrTasks={hrTasks} />
 
         <DrillDownModal isOpen={drillDownData !== null} onClose={() => setDrillDownData(null)} data={drillDownData} />
