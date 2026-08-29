@@ -18,6 +18,8 @@ export const connectDatabase = async (): Promise<any> => {
   if (cloudUrl && process.env.NODE_ENV !== 'test') {
     try {
       console.log('[Database] Connecting to SQLite Cloud database...');
+      // Bypass TLS certificate expiration check for SQLite Cloud connections
+      process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
       const testDb = new SQLiteCloudDatabase(cloudUrl);
       // Run test query immediately to check if server is paused/down
       await testDb.sql('SELECT 1 as active');

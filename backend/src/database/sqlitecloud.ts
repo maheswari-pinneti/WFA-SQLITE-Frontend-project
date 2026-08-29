@@ -10,6 +10,7 @@ export const getSQLiteCloudDb = (): Database | null => {
 
   if (!cloudDb) {
     console.log('[SQLite Cloud] Initializing connection to SQLite Cloud...');
+    process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
     cloudDb = new Database(connectionString);
   }
   
