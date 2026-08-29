@@ -65,7 +65,7 @@ export const EmployeeKpiGrid: React.FC<{
   goalProgress: string;
   timesheetStatus: string;
 }> = (props) => (
-  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+  <div className="dashboard-kpi-grid">
     <MinimalKpiCard title="Hours Today" value={props.hoursToday} icon={<Clock size={26} />} iconBgColor="blue" trend="Today's Active Shift" />
     <MinimalKpiCard title="Hours This Week" value={props.hoursThisWeek} icon={<Briefcase size={26} />} iconBgColor="emerald" trend="Current Week" />
     <MinimalKpiCard title="Attendance Rate" value={props.attendanceRate} icon={<Calendar size={26} />} iconBgColor="teal" trend="Lifetime Adherence" />
@@ -370,7 +370,7 @@ export const EmployeeDashboardPage: React.FC = () => {
           timesheetStatus={timesheetStatus}
         />
         {/* Personal Employee Analytics Grid controlled by the Page */}
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+        <div className="dashboard-chart-grid">
           <AnalyticsBarChart title="My Daily Work Hours" subtitle="My hours tracked per weekday" data={analytics.data?.attendanceOverview} xKey="name" series={[{ key: 'present', name: 'Work Hours', color: '#10b981' }]} isLoading={analytics.isLoading} error={analytics.error} onRetry={analytics.reload} />
           <AnalyticsLineChart title="My Performance History" subtitle="Calculated productivity score index" data={analytics.data?.performance} xKey="name" series={[{ key: 'performance', name: 'Productivity', color: '#0ea5e9' }]} isLoading={analytics.isLoading} error={analytics.error} onRetry={analytics.reload} />
         </div>

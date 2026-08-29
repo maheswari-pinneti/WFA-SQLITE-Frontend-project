@@ -224,7 +224,7 @@ export const HrDashboardPage: React.FC = () => {
       <div className="space-y-6 animate-fadeIn font-sans pb-10">
         <HrDashboardOverview getGreeting={getGreeting} firstName={firstName} />
         {/* KPI metrics - Grid controlled by the Page */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="dashboard-kpi-grid">
           <KPICard
             title="Total Headcount"
             value={isLoading ? '…' : `${headCount} Staff`}
@@ -249,7 +249,7 @@ export const HrDashboardPage: React.FC = () => {
         </div>
 
         {/* Scoped HR Workforce Analytics Grid controlled by the Page */}
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+        <div className="dashboard-chart-grid">
           <AnalyticsLineChart title="Employee Growth & Hiring" subtitle="Headcount and new hires by join month" data={analytics?.growthData} xKey="name" series={[{ key: 'headcount', name: 'Headcount', color: '#8b5cf6' }, { key: 'hiring', name: 'New hires', color: '#ec4899' }]} isLoading={isLoading} error={error} onRetry={reload} />
           <AnalyticsBarChart title="Attendance Compliance Trend" subtitle="Daily shift present/absent stats" data={analytics?.attendanceOverview} xKey="name" series={[{ key: 'present', name: 'Present', color: '#10b981' }, { key: 'absent', name: 'Absent', color: '#ef4444' }]} isLoading={isLoading} error={error} onRetry={reload} />
           <AnalyticsDonutChart title="Employment Status Mix" subtitle="Active vs On Leave overview" data={analytics?.employmentStatus} isLoading={isLoading} error={error} onRetry={reload} />

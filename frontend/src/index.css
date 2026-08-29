@@ -1696,3 +1696,34 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .sunset-theme [class*="bg-purple-600"] {
   background-color: var(--dashboard-accent-strong) !important;
 }
+
+/* Precise Layout Redesign CSS Grid Systems */
+.dashboard-kpi-grid {
+  display: grid !important;
+  grid-template-columns: repeat(1, minmax(0, 1fr)) !important;
+  gap: 16px !important;
+  width: 100% !important;
+}
+@media (min-width: 640px) {
+  .dashboard-kpi-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+}
+@media (min-width: 1024px) {
+  .dashboard-kpi-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+  }
+}
+
+.dashboard-chart-grid {
+  display: grid !important;
+  grid-template-columns: repeat(1, minmax(0, 1fr)) !important;
+  gap: 16px !important;
+  width: 100% !important;
+}
+@media (min-width: 768px) {
+  .dashboard-chart-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+}
+

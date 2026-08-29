@@ -302,7 +302,7 @@ export const ManagerDashboardPage: React.FC = () => {
         <ManagerDashboardOverview />
         
         {/* KPI metrics */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="dashboard-kpi-grid">
           <KPICard
             title="Department Staff"
             value={`${employees.filter(e => e.department === departmentName).length} Engineers`}
@@ -325,7 +325,7 @@ export const ManagerDashboardPage: React.FC = () => {
         </div>
 
         {/* Scoped Department Analytics Grid controlled by the Page */}
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+        <div className="dashboard-chart-grid">
           <AnalyticsLineChart title="Department Growth & Hiring" subtitle="Staff additions inside department" data={analytics.data?.growthData} xKey="name" series={[{ key: 'headcount', name: 'Headcount', color: '#3b82f6' }]} isLoading={analytics.isLoading} error={analytics.error} onRetry={analytics.reload} />
           <AnalyticsBarChart title="Team Attendance Overview" subtitle="Attendance metrics by team" data={analytics.data?.attendanceOverview} xKey="name" series={[{ key: 'present', name: 'Present', color: '#10b981' }, { key: 'absent', name: 'Absent', color: '#ef4444' }]} isLoading={analytics.isLoading} error={analytics.error} onRetry={analytics.reload} />
           <AnalyticsDonutChart title="Employment Status Mix" subtitle="Department active duty rate" data={analytics.data?.employmentStatus} isLoading={analytics.isLoading} error={analytics.error} onRetry={analytics.reload} />

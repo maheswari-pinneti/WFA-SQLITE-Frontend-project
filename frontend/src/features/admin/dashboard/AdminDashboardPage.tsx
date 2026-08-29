@@ -403,7 +403,7 @@ export const AdminDashboardPage: React.FC = () => {
           user={user}
         />
         {/* KPI metrics - Grid controlled by the Page */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+        <div className="dashboard-kpi-grid">
           <MinimalKpiCard
             title="Total Headcount"
             value={employees.length || "500"}
@@ -426,7 +426,7 @@ export const AdminDashboardPage: React.FC = () => {
         </div>
 
         {/* Charts Grid - Grid layout controlled entirely by the Page component */}
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+        <div className="dashboard-chart-grid">
           <AnalyticsLineChart title="Employee Growth & Hiring" subtitle="Headcount and new hires by join month" data={analytics.data?.growthData} xKey="name" series={[{ key: 'headcount', name: 'Headcount', color: '#3b82f6' }, { key: 'hiring', name: 'New hires', color: '#06b6d4' }]} isLoading={analytics.isLoading} error={analytics.error} onRetry={analytics.reload} />
           <AnalyticsBarChart title="Attendance Overview" subtitle="Present, absent and late attendance by weekday" data={analytics.data?.attendanceOverview} xKey="name" series={[{ key: 'present', name: 'Present', color: '#10b981' }, { key: 'absent', name: 'Absent', color: '#ef4444' }, { key: 'late', name: 'Late', color: '#f59e0b' }]} isLoading={analytics.isLoading} error={analytics.error} onRetry={analytics.reload} />
           <AnalyticsBarChart title="Department Comparison" subtitle="Headcount and attendance performance by department" data={analytics.data?.departmentComparison} xKey="name" series={[{ key: 'headcount', name: 'Headcount', color: '#6366f1' }, { key: 'attendance', name: 'Attendance %', color: '#10b981' }]} layout="vertical" isLoading={analytics.isLoading} error={analytics.error} onRetry={analytics.reload} />

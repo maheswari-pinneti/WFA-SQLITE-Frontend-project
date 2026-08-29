@@ -249,7 +249,7 @@ export const TeamLeadDashboardPage: React.FC = () => {
       <div className="space-y-6 animate-fadeIn font-sans pb-10">
         <TeamLeadDashboardOverview />
         {/* KPI metrics */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="dashboard-kpi-grid">
           <KPICard
             title="Team Members"
             value={`${directReports.length} Developers`}
@@ -272,7 +272,7 @@ export const TeamLeadDashboardPage: React.FC = () => {
         </div>
 
         {/* Scoped Team Lead Analytics Grid controlled by the Page */}
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+        <div className="dashboard-chart-grid">
           <AnalyticsBarChart title="Squad Daily Attendance" subtitle="Weekdays breakdown inside squad" data={analytics.data?.attendanceOverview} xKey="name" series={[{ key: 'present', name: 'Present', color: '#0ea5e9' }, { key: 'absent', name: 'Absent', color: '#f43f5e' }]} isLoading={analytics.isLoading} error={analytics.error} onRetry={analytics.reload} />
           <AnalyticsBarChart title="Squad Task Velocity" subtitle="Productivity by sprint task status" data={analytics.data?.teamProductivity} xKey="name" series={[{ key: 'productivity', name: 'Productivity Rate', color: '#10b981' }]} isLoading={analytics.isLoading} error={analytics.error} onRetry={analytics.reload} />
           <AnalyticsDonutChart title="Employment Status Mix" subtitle="Squad duty allocation" data={analytics.data?.employmentStatus} isLoading={analytics.isLoading} error={analytics.error} onRetry={analytics.reload} />
