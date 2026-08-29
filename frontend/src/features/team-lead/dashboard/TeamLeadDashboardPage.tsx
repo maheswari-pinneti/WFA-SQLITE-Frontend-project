@@ -118,7 +118,7 @@ export const TeamLeadEmployeeTable: React.FC<{ filteredReports: Employee[] }> = 
         <tbody className="divide-y divide-slate-800/80">
           {filteredReports.map((emp) => (
             <tr key={emp.id} className="hover:bg-slate-800/40">
-              <td className="py-3 px-4 font-bold text-white flex items-center gap-2">
+              <td className="py-3 px-4 font-bold text-white">
                 <div>
                   <div>{emp.name}</div>
                   <div className="text-[10px] text-slate-500 font-semibold">{emp.designation || 'Developer'}</div>

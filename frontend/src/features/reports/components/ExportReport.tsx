@@ -10,14 +10,49 @@ export const ExportReport: React.FC<ExportReportProps> = ({ title = 'Export Anal
   const [downloading, setDownloading] = useState(false);
   const [success, setSuccess] = useState(false);
 
-  const handleExport = () => {
+  const handleExport = (format: 'csv' | 'json') => {
     setDownloading(true);
     setSuccess(false);
     setTimeout(() => {
+      const mockData = [
+        { Metric: "Sprint Velocity", Target: "85%", Actual: "89.4%", Status: "PASSED" },
+        { Metric: "Attendance Adherence", Target: "95%", Actual: "96.5%", Status: "PASSED" },
+        { Metric: "Tasks Completed", Target: "50 Tasks", Actual: "55 Tasks", Status: "PASSED" },
+        { Metric: "Leave Rate", Target: "< 5%", Actual: "2.4%", Status: "PASSED" }
+      ];
+
+      let fileContent = '';
+      let mimeType = '';
+      let fileExtension = '';
+
+      if (format === 'csv') {
+        const headers = Object.keys(mockData[0]).join(',');
+        const rows = mockData.map(row => 
+          Object.values(row).map(val => `"${String(val).replace(/"/g, '""')}"`).join(',')
+        );
+        fileContent = [headers, ...rows].join('\n');
+        mimeType = 'text/csv;charset=utf-8;';
+        fileExtension = 'csv';
+      } else {
+        fileContent = JSON.stringify(mockData, null, 2);
+        mimeType = 'application/json;charset=utf-8;';
+        fileExtension = 'json';
+      }
+
+      const blob = new Blob([fileContent], { type: mimeType });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.setAttribute('href', url);
+      link.setAttribute('download', `${title.toLowerCase().replace(/[^a-z0-9]+/g, '_')}_export.${fileExtension}`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+
       setDownloading(false);
       setSuccess(true);
       setTimeout(() => setSuccess(false), 3000);
-    }, 1000);
+    }, 800);
   };
 
   return (
@@ -46,7 +81,7 @@ export const ExportReport: React.FC<ExportReportProps> = ({ title = 'Export Anal
                 size="sm"
                 isLoading={downloading}
                 icon={<Download size={14} />}
-                onClick={handleExport}
+                onClick={() => handleExport('csv')}
               >
                 Export CSV
               </Button>
@@ -55,7 +90,7 @@ export const ExportReport: React.FC<ExportReportProps> = ({ title = 'Export Anal
                 size="sm"
                 isLoading={downloading}
                 icon={<Download size={14} />}
-                onClick={handleExport}
+                onClick={() => handleExport('json')}
               >
                 Export JSON
               </Button>

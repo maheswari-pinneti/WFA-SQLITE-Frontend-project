@@ -224,7 +224,7 @@ export const AdminEmployeeTable: React.FC<{ filteredEmployees: Employee[] }> = (
               <td className="py-3 px-4 font-mono font-bold text-slate-300">
                 {emp.employeeCode || emp.code || 'EMP-1000'}
               </td>
-              <td className="py-3 px-4 font-bold text-white flex items-center gap-2">
+              <td className="py-3 px-4 font-bold text-white">
                 <div>
                   <div>{emp.name}</div>
                   <div className="text-[10px] text-slate-500 font-semibold">{emp.designation || 'Specialist'}</div>

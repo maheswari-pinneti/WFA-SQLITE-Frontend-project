@@ -234,7 +234,7 @@ export const EmployeeTable: React.FC<EmployeeTableProps> = ({
                     <td className="px-5 py-3 font-mono font-bold text-slate-300">
                       {emp.employeeCode || emp.code || 'EMP-1000'}
                     </td>
-                    <td className="px-5 py-3 font-bold text-[var(--text-primary)] flex items-center gap-2">
+                    <td className="px-5 py-3 font-bold text-[var(--text-primary)]">
                       <div>
                         <div>{emp.name}</div>
                         <div className="text-[10px] text-slate-500 font-semibold">{emp.designation || 'Specialist'}</div>
