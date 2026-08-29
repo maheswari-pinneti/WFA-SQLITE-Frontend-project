@@ -119,7 +119,6 @@ export const TeamLeadEmployeeTable: React.FC<{ filteredReports: Employee[] }> = 
           {filteredReports.map((emp) => (
             <tr key={emp.id} className="hover:bg-slate-800/40">
               <td className="py-3 px-4 font-bold text-white flex items-center gap-2">
-                <img src={emp.avatar || "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=80"} className="w-8 h-8 rounded-lg object-cover" alt="" />
                 <div>
                   <div>{emp.name}</div>
                   <div className="text-[10px] text-slate-500 font-semibold">{emp.designation || 'Developer'}</div>
