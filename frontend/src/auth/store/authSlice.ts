@@ -16,22 +16,10 @@ export const initializeAuthThunk = createAsyncThunk(
   'auth/initializeAuth',
   async () => {
     try {
-      const refreshResult = await authService.refreshSilent();
-      const token = refreshResult.token;
-      
-      const response = await apiClient.get('/v1/auth/me');
-      if (response.data && response.data.success && response.data.data) {
-        return {
-          user: response.data.data,
-          token
-        };
-      } else {
-        await authService.logout();
-        return { user: null, token: null };
-      }
-    } catch (err) {
       await authService.logout();
-      return { user: null, token: null };
+      return { user: null, token: null } as { user: any; token: any };
+    } catch (err) {
+      return { user: null, token: null } as { user: any; token: any };
     }
   }
 );
