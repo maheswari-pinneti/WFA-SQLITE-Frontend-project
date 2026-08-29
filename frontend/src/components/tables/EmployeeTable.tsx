@@ -157,9 +157,9 @@ export const EmployeeTable: React.FC<EmployeeTableProps> = ({
       </div>
 
       {/* Roster Table */}
-      <div className="overflow-x-auto rounded-xl border border-[var(--border-color)] bg-[var(--bg-card)]">
+      <div className="overflow-auto max-h-[500px] rounded-xl border border-[var(--border-color)] bg-[var(--bg-card)]">
         <table className="w-full text-left text-sm min-w-[1600px]">
-          <thead className="bg-slate-950 text-slate-400 border-b border-slate-800 uppercase font-bold text-[10px]">
+          <thead className="sticky top-0 z-10 bg-slate-950 text-slate-400 border-b border-slate-800 uppercase font-bold text-[10px]">
             <tr>
               <th className="py-3 px-4 w-[110px]">Employee ID</th>
               <th className="py-3 px-4 w-[180px]">Employee Name</th>

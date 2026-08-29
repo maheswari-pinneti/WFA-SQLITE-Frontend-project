@@ -117,9 +117,9 @@ export const ManagerEmployeeTable: React.FC<{ deptEmployees: Employee[] }> = ({ 
         Showing {deptEmployees.length} department staff
       </span>
     </div>
-    <div className="overflow-x-auto rounded-xl border border-slate-800 bg-slate-950/20">
+    <div className="overflow-auto max-h-[500px] rounded-xl border border-slate-800 bg-slate-950/20">
       <table className="w-full text-left text-xs min-w-[800px]">
-        <thead className="bg-slate-950 text-slate-400 border-b border-slate-800 uppercase font-bold text-[10px]">
+        <thead className="sticky top-0 z-10 bg-slate-950 text-slate-400 border-b border-slate-800 uppercase font-bold text-[10px]">
           <tr>
             <th className="py-3 px-4">Employee</th>
             <th className="py-3 px-4">Team</th>
