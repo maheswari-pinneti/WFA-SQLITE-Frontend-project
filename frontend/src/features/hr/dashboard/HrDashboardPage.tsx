@@ -223,6 +223,21 @@ export const HrDashboardPage: React.FC = () => {
     <RoleGuard allowedRoles={[Role.ADMIN, Role.HR]} requiredPermission={Permission.EMPLOYEE_READ}>
       <div className="space-y-6 animate-fadeIn font-sans pb-10">
         <HrDashboardOverview getGreeting={getGreeting} firstName={firstName} />
+        <HrDashboardFilters
+          dateFilter={dateFilter}
+          setDateFilter={setDateFilter}
+          locationFilter={locationFilter}
+          setLocationFilter={setLocationFilter}
+          deptFilter={deptFilter}
+          setDeptFilter={setDeptFilter}
+          teamFilter={teamFilter}
+          setTeamFilter={setTeamFilter}
+          empTypeFilter={empTypeFilter}
+          setEmpTypeFilter={setEmpTypeFilter}
+          statusFilter={statusFilter}
+          setStatusFilter={setStatusFilter}
+        />
+
         {/* KPI metrics - Grid controlled by the Page */}
         <div className="dashboard-kpi-grid">
           <KPICard
@@ -262,21 +277,6 @@ export const HrDashboardPage: React.FC = () => {
           <AnalyticsDonutChart title="Retention Risk Distribution" subtitle="Workforce stabilization assessment" data={analytics?.riskDistribution} isLoading={isLoading} error={error} onRetry={reload} colors={['#ef4444', '#f59e0b', '#10b981']} />
         </div>
 
-        <HrDashboardFilters
-          dateFilter={dateFilter}
-          setDateFilter={setDateFilter}
-          locationFilter={locationFilter}
-          setLocationFilter={setLocationFilter}
-          deptFilter={deptFilter}
-          setDeptFilter={setDeptFilter}
-          teamFilter={teamFilter}
-          setTeamFilter={setTeamFilter}
-          empTypeFilter={empTypeFilter}
-          setEmpTypeFilter={setEmpTypeFilter}
-          statusFilter={statusFilter}
-          setStatusFilter={setStatusFilter}
-        />
-
         <EmployeeTable
           locationFilter={locationFilter}
           deptFilter={deptFilter}
@@ -284,7 +284,6 @@ export const HrDashboardPage: React.FC = () => {
           statusFilter={statusFilter}
         />
         <HrSprintOverview hrTasks={hrTasks} />
-
         <DrillDownModal isOpen={drillDownData !== null} onClose={() => setDrillDownData(null)} data={drillDownData} />
       </div>
     </RoleGuard>

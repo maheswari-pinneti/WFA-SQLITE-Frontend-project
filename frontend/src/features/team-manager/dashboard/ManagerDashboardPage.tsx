@@ -300,7 +300,20 @@ export const ManagerDashboardPage: React.FC = () => {
     <RoleGuard allowedRoles={[Role.ADMIN, Role.HR, Role.MANAGER]} requiredPermission={Permission.TEAM_ANALYTICS_VIEW}>
       <div className="space-y-6 animate-fadeIn font-sans pb-10">
         <ManagerDashboardOverview />
-        
+
+        <ManagerDashboardFilters
+          dateFilter={dateFilter}
+          setDateFilter={setDateFilter}
+          teamFilter={teamFilter}
+          setTeamFilter={setTeamFilter}
+          employeeFilter={employeeFilter}
+          setEmployeeFilter={setEmployeeFilter}
+          statusFilter={statusFilter}
+          setStatusFilter={setStatusFilter}
+          employees={employees}
+          departmentName={departmentName}
+        />
+
         {/* KPI metrics */}
         <div className="dashboard-kpi-grid">
           <KPICard
@@ -337,19 +350,6 @@ export const ManagerDashboardPage: React.FC = () => {
           <AnalyticsBarChart title="Productivity & Performance" subtitle="Team productivity score index" data={analytics.data?.teamProductivity} xKey="name" series={[{ key: 'productivity', name: 'Productivity', color: '#8b5cf6' }]} layout="vertical" isLoading={analytics.isLoading} error={analytics.error} onRetry={analytics.reload} />
           <AnalyticsDonutChart title="Retention Risks" subtitle="Retention risk distribution" data={analytics.data?.riskDistribution} isLoading={analytics.isLoading} error={analytics.error} onRetry={analytics.reload} colors={['#ef4444', '#f59e0b', '#10b981']} />
         </div>
-
-        <ManagerDashboardFilters
-          dateFilter={dateFilter}
-          setDateFilter={setDateFilter}
-          teamFilter={teamFilter}
-          setTeamFilter={setTeamFilter}
-          employeeFilter={employeeFilter}
-          setEmployeeFilter={setEmployeeFilter}
-          statusFilter={statusFilter}
-          setStatusFilter={setStatusFilter}
-          employees={employees}
-          departmentName={departmentName}
-        />
 
         <ManagerEmployeeTable deptEmployees={deptEmployees} />
         <ManagerSprintOverview tasks={tasks} />

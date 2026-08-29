@@ -359,6 +359,9 @@ export const EmployeeDashboardPage: React.FC = () => {
     <RoleGuard allowedRoles={[Role.EMPLOYEE, Role.TEAM_LEAD, Role.MANAGER, Role.HR, Role.ADMIN]} requiredPermission={Permission.PROFILE_VIEW}>
       <div className="space-y-6 animate-fadeIn font-sans pb-10">
         <EmployeeDashboardOverview user={user} />
+        
+        <EmployeeDashboardFilters dateFilter={dateFilter} setDateFilter={setDateFilter} />
+
         <EmployeeKpiGrid
           hoursToday={hoursToday}
           hoursThisWeek={hoursThisWeek}
@@ -410,8 +413,6 @@ export const EmployeeDashboardPage: React.FC = () => {
             </div>
           </div>
         </div>
-
-        <EmployeeDashboardFilters dateFilter={dateFilter} setDateFilter={setDateFilter} />
 
         <EmployeeAttendanceTable
           filteredHistory={filteredHistory}

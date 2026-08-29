@@ -248,6 +248,17 @@ export const TeamLeadDashboardPage: React.FC = () => {
     <RoleGuard allowedRoles={[Role.ADMIN, Role.HR, Role.MANAGER, Role.TEAM_LEAD]} requiredPermission={Permission.PRODUCTIVITY_VIEW}>
       <div className="space-y-6 animate-fadeIn font-sans pb-10">
         <TeamLeadDashboardOverview />
+
+        <TeamLeadDashboardFilters
+          dateFilter={dateFilter}
+          setDateFilter={setDateFilter}
+          employeeFilter={employeeFilter}
+          setEmployeeFilter={setEmployeeFilter}
+          statusFilter={statusFilter}
+          setStatusFilter={setStatusFilter}
+          directReports={directReports}
+        />
+
         {/* KPI metrics */}
         <div className="dashboard-kpi-grid">
           <KPICard
@@ -282,16 +293,6 @@ export const TeamLeadDashboardPage: React.FC = () => {
           <AnalyticsDonutChart title="Employment Status Mix" subtitle="Squad duty allocation" data={analytics.data?.employmentStatus} isLoading={analytics.isLoading} error={analytics.error} onRetry={analytics.reload} />
           <AnalyticsLineChart title="Squad Performance History" subtitle="Individual metrics trend" data={analytics.data?.performance} xKey="name" series={[{ key: 'performance', name: 'Performance', color: '#6366f1' }]} isLoading={analytics.isLoading} error={analytics.error} onRetry={analytics.reload} />
         </div>
-
-        <TeamLeadDashboardFilters
-          dateFilter={dateFilter}
-          setDateFilter={setDateFilter}
-          employeeFilter={employeeFilter}
-          setEmployeeFilter={setEmployeeFilter}
-          statusFilter={statusFilter}
-          setStatusFilter={setStatusFilter}
-          directReports={directReports}
-        />
 
         <TeamLeadEmployeeTable filteredReports={filteredReports} />
         <TeamLeadSprintBoard sprintTasks={sprintTasks} />
