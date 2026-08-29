@@ -159,27 +159,27 @@ export const EmployeeTable: React.FC<EmployeeTableProps> = ({
       {/* Roster Table */}
       <div className="overflow-x-auto rounded-xl border border-[var(--border-color)] bg-[var(--bg-card)]">
         <table className="w-full text-left text-sm min-w-[1600px]">
-          <thead className="bg-[var(--bg-tertiary)] text-[var(--text-secondary)] font-bold border-b border-[var(--border-color)]">
+          <thead className="bg-slate-950 text-slate-400 border-b border-slate-800 uppercase font-bold text-[10px]">
             <tr>
-              <th className="px-5 py-3">Employee ID</th>
-              <th className="px-5 py-3">Employee Name</th>
-              <th className="px-5 py-3">Joining Date</th>
-              <th className="px-5 py-3">Employment Status</th>
-              <th className="px-5 py-3">Tenure</th>
-              <th className="px-5 py-3">Department</th>
-              <th className="px-5 py-3">Team</th>
-              <th className="px-5 py-3">Manager</th>
-              <th className="px-5 py-3">Team Lead</th>
-              <th className="px-5 py-3">Location</th>
-              <th className="px-5 py-3">Attendance Status</th>
-              <th className="px-5 py-3">Check-In</th>
-              <th className="px-5 py-3">Check-Out</th>
-              <th className="px-5 py-3">Working Hours</th>
-              <th className="px-5 py-3">Break Duration</th>
-              <th className="px-5 py-3">Leave Balance</th>
-              <th className="px-5 py-3">Last Activity</th>
-              <th className="px-5 py-3">Sync Status</th>
-              <th className="px-5 py-3">Actions</th>
+              <th className="py-3 px-4 w-[110px]">Employee ID</th>
+              <th className="py-3 px-4 w-[180px]">Employee Name</th>
+              <th className="py-3 px-4 w-[120px]">Joining Date</th>
+              <th className="py-3 px-4 w-[150px]">Employment Status</th>
+              <th className="py-3 px-4 w-[120px]">Tenure</th>
+              <th className="py-3 px-4 w-[140px]">Department</th>
+              <th className="py-3 px-4 w-[120px]">Team</th>
+              <th className="py-3 px-4 w-[130px]">Manager</th>
+              <th className="py-3 px-4 w-[130px]">Team Lead</th>
+              <th className="py-3 px-4 w-[100px]">Location</th>
+              <th className="py-3 px-4 w-[140px]">Attendance Status</th>
+              <th className="py-3 px-4 w-[100px]">Check-In</th>
+              <th className="py-3 px-4 w-[100px]">Check-Out</th>
+              <th className="py-3 px-4 w-[110px]">Working Hours</th>
+              <th className="py-3 px-4 w-[110px]">Break Duration</th>
+              <th className="py-3 px-4 w-[110px]">Leave Balance</th>
+              <th className="py-3 px-4 w-[120px]">Last Activity</th>
+              <th className="py-3 px-4 w-[100px]">Sync Status</th>
+              <th className="py-3 px-4 w-[80px]">Actions</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-[var(--border-color)] text-xs">
@@ -231,19 +231,19 @@ export const EmployeeTable: React.FC<EmployeeTableProps> = ({
 
                 return (
                   <tr key={emp.id} className="hover:bg-[var(--bg-hover)] transition-colors">
-                    <td className="px-5 py-3 font-mono font-bold text-slate-300">
+                    <td className="py-3 px-4 font-mono font-bold text-slate-300">
                       {emp.employeeCode || emp.code || 'EMP-1000'}
                     </td>
-                    <td className="px-5 py-3 font-bold text-[var(--text-primary)]">
+                    <td className="py-3 px-4 font-bold text-[var(--text-primary)]">
                       <div>
                         <div>{emp.name}</div>
                         <div className="text-[10px] text-slate-500 font-semibold">{emp.designation || 'Specialist'}</div>
                       </div>
                     </td>
-                    <td className="px-5 py-3 text-slate-300 font-medium">
+                    <td className="py-3 px-4 text-slate-300 font-medium">
                       {formattedJoinDate}
                     </td>
-                    <td className="px-5 py-3">
+                    <td className="py-3 px-4">
                       <select
                         value={emp.status}
                         onChange={(e) => handleStatusChange(emp.id, e.target.value as Employee['status'])}
@@ -254,49 +254,49 @@ export const EmployeeTable: React.FC<EmployeeTableProps> = ({
                         <option value="TERMINATED">Terminated</option>
                       </select>
                     </td>
-                    <td className="px-5 py-3 text-amber-300 font-semibold">
+                    <td className="py-3 px-4 text-amber-300 font-semibold">
                       {tenure}
                     </td>
-                    <td className="px-5 py-3 font-bold text-[var(--text-primary)]">
+                    <td className="py-3 px-4 font-bold text-[var(--text-primary)]">
                       {emp.department}
                     </td>
-                    <td className="px-5 py-3 text-slate-400">
+                    <td className="py-3 px-4 text-slate-400">
                       {emp.team || 'N/A'}
                     </td>
-                    <td className="px-5 py-3 text-slate-400">
+                    <td className="py-3 px-4 text-slate-400">
                       {(emp as any).manager || 'Priya Sharma'}
                     </td>
-                    <td className="px-5 py-3 text-slate-400">
+                    <td className="py-3 px-4 text-slate-400">
                       {(emp as any).teamLead || 'Arjun Reddy'}
                     </td>
-                    <td className="px-5 py-3 text-slate-300 font-semibold">
+                    <td className="py-3 px-4 text-slate-300 font-semibold">
                       {emp.location || 'HQ'}
                     </td>
-                    <td className="px-5 py-3 text-emerald-400 font-bold">
+                    <td className="py-3 px-4 text-emerald-400 font-bold">
                       {(emp as any).attendance_status || 'Present'}
                     </td>
-                    <td className="px-5 py-3 font-mono">
+                    <td className="py-3 px-4 font-mono">
                       {(emp as any).checkIn || '09:32 AM'}
                     </td>
-                    <td className="px-5 py-3 font-mono">
+                    <td className="py-3 px-4 font-mono">
                       {(emp as any).checkOut || '06:35 PM'}
                     </td>
-                    <td className="px-5 py-3 font-mono font-bold text-blue-400">
+                    <td className="py-3 px-4 font-mono font-bold text-blue-400">
                       {(emp as any).workingHours || '08h 12m'}
                     </td>
-                    <td className="px-5 py-3 font-mono">
+                    <td className="py-3 px-4 font-mono">
                       {(emp as any).breakDuration || '01h 03m'}
                     </td>
-                    <td className="px-5 py-3 font-mono text-purple-400 font-bold">
+                    <td className="py-3 px-4 font-mono text-purple-400 font-bold">
                       {(emp as any).leaveBalance || '12 days'}
                     </td>
-                    <td className="px-5 py-3 text-slate-400">
+                    <td className="py-3 px-4 text-slate-400">
                       {(emp as any).lastActivity || 'Check-In'}
                     </td>
-                    <td className="px-5 py-3 text-teal-400 font-bold">
+                    <td className="py-3 px-4 text-teal-400 font-bold">
                       {(emp as any).syncStatus || 'Synced'}
                     </td>
-                    <td className="px-5 py-3">
+                    <td className="py-3 px-4">
                       <button className="text-blue-400 hover:text-blue-300 font-extrabold text-[11px]">View</button>
                     </td>
                   </tr>
