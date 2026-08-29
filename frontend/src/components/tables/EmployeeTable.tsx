@@ -90,7 +90,7 @@ export const EmployeeTable: React.FC<EmployeeTableProps> = ({
   ];
 
   return (
-    <div className="glass-panel p-6 space-y-4">
+    <div className="glass-panel p-6 space-y-4 w-full max-w-full min-w-0">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2">
@@ -157,7 +157,7 @@ export const EmployeeTable: React.FC<EmployeeTableProps> = ({
       </div>
 
       {/* Roster Table */}
-      <div className="overflow-auto max-h-[500px] rounded-xl border border-[var(--border-color)] bg-[var(--bg-card)]">
+      <div className="overflow-auto max-h-[500px] rounded-xl border border-[var(--border-color)] bg-[var(--bg-card)] w-full max-w-full min-w-0">
         <table className="w-full text-left text-sm min-w-[1600px]">
           <thead className="sticky top-0 z-10 bg-slate-950 text-slate-400 border-b border-slate-800 uppercase font-bold text-[10px]">
             <tr>
