@@ -77,7 +77,10 @@ import { SkillGapsPage } from '../../features/analytics/pages/SkillGapsPage';
 import { SkillCoveragePage } from '../../features/analytics/pages/SkillCoveragePage';
 
 const DefaultHomeRedirect: React.FC = () => {
-  const { role } = useAuth();
+  const { role, isAuthenticated } = useAuth();
+  if (!isAuthenticated) {
+    return <Navigate to="/login" replace />;
+  }
   const target = ROLE_HOME_PATHS[role] || '/employee/dashboard';
   return <Navigate to={target} replace />;
 };
@@ -100,6 +103,7 @@ export const AppRoutes: React.FC = () => {
 
   return (
     <Routes>
+      <Route path="/" element={<DefaultHomeRedirect />} />
       {/* Public Auth Routes */}
       <Route path="/login" element={<LoginPage />} />
       <Route path="/sso-callback" element={<SsoCallbackPage />} />
@@ -276,7 +280,6 @@ export const AppRoutes: React.FC = () => {
                 <Route path="/me" element={<Navigate to="/me/dashboard" replace />} />
 
                 {/* Default Route Fallback */}
-                <Route path="/" element={<DefaultHomeRedirect />} />
                 <Route path="*" element={<NotFoundPage />} />
               </Routes>
             </MainLayout>
