@@ -187,16 +187,16 @@ const formatJoinDate = (dateStr?: string) => {
 
 
 export const AdminSprintOverview: React.FC<{ tasks: Task[] }> = ({ tasks }) => (
-  <div className="p-6 rounded-3xl bg-slate-900 border border-slate-800 shadow-2xl space-y-4">
-    <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-      <h3 className="text-base font-extrabold text-white flex items-center gap-2">
+  <div className="p-6 rounded-3xl bg-[var(--bg-card)] border border-[var(--border-color)] shadow-2xl space-y-4">
+    <div className="flex items-center justify-between border-b border-[var(--border-color)] pb-3">
+      <h3 className="text-base font-extrabold text-[var(--text-primary)] flex items-center gap-2">
         <Layers size={18} className="text-blue-500" /> Active Sprint Work
       </h3>
       <span className="badge badge-success text-[10px] font-bold">ORGANIZATION SPRINT</span>
     </div>
-    <div className="overflow-x-auto rounded-xl border border-slate-800 bg-slate-950/20">
+    <div className="overflow-x-auto rounded-xl border border-[var(--border-color)] bg-[var(--bg-tertiary)]/20">
       <table className="w-full text-left text-xs min-w-[800px]">
-        <thead className="bg-slate-950 text-slate-400 border-b border-slate-800 uppercase font-bold text-[10px]">
+        <thead className="bg-[var(--bg-tertiary)] text-[var(--text-secondary)] border-b border-[var(--border-color)] uppercase font-bold text-[10px] tracking-wider">
           <tr>
             <th className="py-3 px-4">Sprint</th>
             <th className="py-3 px-4">Task</th>
@@ -207,28 +207,28 @@ export const AdminSprintOverview: React.FC<{ tasks: Task[] }> = ({ tasks }) => (
             <th className="py-3 px-4">Due Date</th>
           </tr>
         </thead>
-        <tbody className="divide-y divide-slate-800/80">
+        <tbody className="divide-y divide-[var(--border-color)]/80">
           {tasks.slice(0, 8).map((task) => (
-            <tr key={task.id} className="hover:bg-slate-800/40">
-              <td className="py-3 px-4 font-bold text-slate-300">Sprint 24B</td>
-              <td className="py-3 px-4 text-white font-medium max-w-[200px] truncate">{task.title}</td>
-              <td className="py-3 px-4 text-slate-400">{task.assigneeName || 'Unassigned'}</td>
+            <tr key={task.id} className="hover:bg-[var(--bg-hover)] transition-colors">
+              <td className="py-3 px-4 font-bold text-[var(--text-secondary)]">Sprint 24B</td>
+              <td className="py-3 px-4 text-[var(--text-primary)] font-medium max-w-[200px] truncate">{task.title}</td>
+              <td className="py-3 px-4 text-[var(--text-muted)]">{task.assigneeName || 'Unassigned'}</td>
               <td className="py-3 px-4">
                 <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
-                  task.priority === 'CRITICAL' || task.priority === 'HIGH' ? 'bg-rose-500/10 text-rose-400' : 'bg-slate-800 text-slate-300'
+                  task.priority === 'CRITICAL' || task.priority === 'HIGH' ? 'bg-rose-500/10 text-rose-400' : 'bg-[var(--bg-tertiary)] text-[var(--text-secondary)]'
                 }`}>
                   {task.priority}
                 </span>
               </td>
               <td className="py-3 px-4">
-                <span className="text-slate-300 font-bold uppercase">{task.status}</span>
+                <span className="text-[var(--text-primary)] font-bold uppercase">{task.status}</span>
               </td>
               <td className="py-3 px-4">
-                <div className="w-full bg-slate-800 rounded-full h-1.5 max-w-[100px]">
+                <div className="w-full bg-[var(--bg-tertiary)] rounded-full h-1.5 max-w-[100px]">
                   <div className="bg-blue-500 h-1.5 rounded-full" style={{ width: task.status === 'COMPLETED' ? '100%' : task.status === 'IN_PROGRESS' ? '50%' : '0%' }}></div>
                 </div>
               </td>
-              <td className="py-3 px-4 font-mono text-slate-400">2026-09-10</td>
+              <td className="py-3 px-4 font-mono text-[var(--text-muted)]">2026-09-10</td>
             </tr>
           ))}
         </tbody>

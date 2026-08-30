@@ -159,7 +159,7 @@ export const EmployeeTable: React.FC<EmployeeTableProps> = ({
       {/* Roster Table */}
       <div className="overflow-auto max-h-[500px] rounded-xl border border-[var(--border-color)] bg-[var(--bg-card)] w-full max-w-full min-w-0">
         <table className="w-full text-left text-sm min-w-[1600px]">
-          <thead className="sticky top-0 z-10 bg-slate-950 text-slate-400 border-b border-slate-800 uppercase font-bold text-[10px]">
+          <thead className="sticky top-0 z-10 bg-[var(--bg-tertiary)] text-[var(--text-secondary)] border-b border-[var(--border-color)] uppercase font-bold text-[10px] tracking-wider">
             <tr>
               <th className="py-3 px-4 w-[110px]">Employee ID</th>
               <th className="py-3 px-4 w-[180px]">Employee Name</th>
@@ -185,11 +185,11 @@ export const EmployeeTable: React.FC<EmployeeTableProps> = ({
           <tbody className="divide-y divide-[var(--border-color)] text-xs">
             {isLoading ? (
               <tr>
-                <td colSpan={19} className="px-5 py-8 text-center text-slate-400 font-semibold">Loading employee workforce directory...</td>
+                <td colSpan={19} className="px-5 py-8 text-center text-[var(--text-muted)] font-semibold">Loading employee workforce directory...</td>
               </tr>
             ) : paginatedEmployees.length === 0 ? (
               <tr>
-                <td colSpan={19} className="px-5 py-8 text-center text-slate-400">
+                <td colSpan={19} className="px-5 py-8 text-center text-[var(--text-muted)]">
                   No matching employee records found.
                 </td>
               </tr>
@@ -231,16 +231,16 @@ export const EmployeeTable: React.FC<EmployeeTableProps> = ({
 
                 return (
                   <tr key={emp.id} className="hover:bg-[var(--bg-hover)] transition-colors">
-                    <td className="py-3 px-4 font-mono font-bold text-slate-300">
+                    <td className="py-3 px-4 font-mono font-bold text-[var(--text-secondary)]">
                       {emp.employeeCode || emp.code || 'EMP-1000'}
                     </td>
                     <td className="py-3 px-4 font-bold text-[var(--text-primary)]">
                       <div>
                         <div>{emp.name}</div>
-                        <div className="text-[10px] text-slate-500 font-semibold">{emp.designation || 'Specialist'}</div>
+                        <div className="text-[10px] text-[var(--text-muted)] font-semibold">{emp.designation || 'Specialist'}</div>
                       </div>
                     </td>
-                    <td className="py-3 px-4 text-slate-300 font-medium">
+                    <td className="py-3 px-4 text-[var(--text-secondary)] font-medium">
                       {formattedJoinDate}
                     </td>
                     <td className="py-3 px-4">
@@ -254,50 +254,50 @@ export const EmployeeTable: React.FC<EmployeeTableProps> = ({
                         <option value="TERMINATED">Terminated</option>
                       </select>
                     </td>
-                    <td className="py-3 px-4 text-amber-300 font-semibold">
+                    <td className="py-3 px-4 text-emerald-600 dark:text-emerald-400 font-semibold">
                       {tenure}
                     </td>
                     <td className="py-3 px-4 font-bold text-[var(--text-primary)]">
                       {emp.department}
                     </td>
-                    <td className="py-3 px-4 text-slate-400">
+                    <td className="py-3 px-4 text-[var(--text-muted)]">
                       {emp.team || 'N/A'}
                     </td>
-                    <td className="py-3 px-4 text-slate-400">
+                    <td className="py-3 px-4 text-[var(--text-muted)]">
                       {(emp as any).manager || 'Priya Sharma'}
                     </td>
-                    <td className="py-3 px-4 text-slate-400">
+                    <td className="py-3 px-4 text-[var(--text-muted)]">
                       {(emp as any).teamLead || 'Arjun Reddy'}
                     </td>
-                    <td className="py-3 px-4 text-slate-300 font-semibold">
+                    <td className="py-3 px-4 text-[var(--text-secondary)] font-semibold">
                       {emp.location || 'HQ'}
                     </td>
-                    <td className="py-3 px-4 text-emerald-400 font-bold">
+                    <td className="py-3 px-4 text-emerald-600 dark:text-emerald-400 font-bold">
                       {(emp as any).attendance_status || 'Present'}
                     </td>
-                    <td className="py-3 px-4 font-mono">
+                    <td className="py-3 px-4 font-mono text-[var(--text-secondary)]">
                       {(emp as any).checkIn || '09:32 AM'}
                     </td>
-                    <td className="py-3 px-4 font-mono">
+                    <td className="py-3 px-4 font-mono text-[var(--text-secondary)]">
                       {(emp as any).checkOut || '06:35 PM'}
                     </td>
-                    <td className="py-3 px-4 font-mono font-bold text-blue-400">
+                    <td className="py-3 px-4 font-mono font-bold text-blue-600 dark:text-blue-400">
                       {(emp as any).workingHours || '08h 12m'}
                     </td>
-                    <td className="py-3 px-4 font-mono">
+                    <td className="py-3 px-4 font-mono text-[var(--text-secondary)]">
                       {(emp as any).breakDuration || '01h 03m'}
                     </td>
-                    <td className="py-3 px-4 font-mono text-purple-400 font-bold">
+                    <td className="py-3 px-4 font-mono text-purple-600 dark:text-purple-400 font-bold">
                       {(emp as any).leaveBalance || '12 days'}
                     </td>
-                    <td className="py-3 px-4 text-slate-400">
+                    <td className="py-3 px-4 text-[var(--text-muted)]">
                       {(emp as any).lastActivity || 'Check-In'}
                     </td>
-                    <td className="py-3 px-4 text-teal-400 font-bold">
+                    <td className="py-3 px-4 text-teal-600 dark:text-teal-400 font-bold">
                       {(emp as any).syncStatus || 'Synced'}
                     </td>
                     <td className="py-3 px-4">
-                      <button className="text-blue-400 hover:text-blue-300 font-extrabold text-[11px]">View</button>
+                      <button className="text-blue-600 dark:text-blue-400 hover:text-blue-500 font-extrabold text-[11px]">View</button>
                     </td>
                   </tr>
                 );
