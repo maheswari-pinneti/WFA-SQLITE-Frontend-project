@@ -47,6 +47,27 @@ async function migrate() {
     }
     console.log('[SQLite Cloud] Migrations applied successfully.');
 
+    // Apply schema adjustments to match seeder alterations
+    console.log('[SQLite Cloud] Applying schema alterations...');
+    const alterations = [
+      'ALTER TABLE locations ADD COLUMN latitude REAL;',
+      'ALTER TABLE locations ADD COLUMN longitude REAL;',
+      'ALTER TABLE locations ADD COLUMN geofenceRadius INTEGER DEFAULT 100;',
+      "ALTER TABLE users ADD COLUMN authProvider TEXT DEFAULT 'local';",
+      'ALTER TABLE users ADD COLUMN providerSubject TEXT;',
+      "ALTER TABLE mfachallenges ADD COLUMN type TEXT DEFAULT 'totp-mfa';",
+      'ALTER TABLE failed_logins ADD COLUMN lockedAt TEXT;',
+      'ALTER TABLE failed_logins ADD COLUMN lockReason TEXT;'
+    ];
+    for (const alt of alterations) {
+      try {
+        await cloudDb.sql(alt);
+      } catch (e) {
+        // Suppress errors for columns that already exist
+      }
+    }
+    console.log('[SQLite Cloud] Schema alterations completed.');
+
     // 2. Check if local SQLite database exists to upload data
     if (fs.existsSync(LOCAL_DB_PATH)) {
       console.log(`[SQLite Cloud] Found local SQLite database at ${LOCAL_DB_PATH}. Syncing data to cloud...`);
