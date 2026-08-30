@@ -33,7 +33,9 @@ export const MinimalKpiCard: React.FC<MinimalKpiCardProps> = ({
   return (
     <div
       onClick={onClick}
-      className="kpi-card bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-3xl p-6 shadow-sm hover:shadow-lg transition-all duration-300 flex items-center justify-between gap-4 cursor-pointer group"
+      className={`kpi-card bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-3xl p-6 shadow-sm transition-all duration-300 flex items-center justify-between gap-4 group ${
+        onClick ? 'cursor-pointer hover:shadow-lg' : 'cursor-default'
+      }`}
     >
       {/* 3D Glass Soft Colored Icon Sphere */}
       <div
