@@ -47,22 +47,22 @@ export const AttendanceCalendarView: React.FC = () => {
   };
 
   return (
-    <div className="w-full bg-[#0a1124] border border-slate-800/80 rounded-3xl p-6 shadow-2xl font-sans text-slate-200 space-y-6">
+    <div className="glass-panel w-full bg-[var(--bg-card)] border border-[var(--border-color)] rounded-3xl p-6 shadow-2xl font-sans text-[var(--text-primary)] space-y-6">
       
       {/* Calendar Controls */}
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex items-center gap-1.5">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div className="flex flex-wrap items-center gap-2">
           {/* Prev Button */}
           <button 
             onClick={handlePrevMonth}
-            className="p-2 rounded-xl bg-slate-800/60 hover:bg-slate-700/60 border border-slate-800 text-slate-300 transition-colors cursor-pointer"
+            className="p-2 rounded-xl bg-[var(--bg-tertiary)] hover:bg-[var(--bg-hover)] border border-[var(--border-color)] text-[var(--text-secondary)] transition-colors cursor-pointer"
           >
             <ChevronLeft size={16} />
           </button>
           {/* Next Button */}
           <button 
             onClick={handleNextMonth}
-            className="p-2 rounded-xl bg-slate-800/60 hover:bg-slate-700/60 border border-slate-800 text-slate-300 transition-colors cursor-pointer"
+            className="p-2 rounded-xl bg-[var(--bg-tertiary)] hover:bg-[var(--bg-hover)] border border-[var(--border-color)] text-[var(--text-secondary)] transition-colors cursor-pointer"
           >
             <ChevronRight size={16} />
           </button>
@@ -72,13 +72,13 @@ export const AttendanceCalendarView: React.FC = () => {
             <select 
               value={selectedMonth} 
               onChange={(e) => setSelectedMonth(e.target.value)}
-              className="appearance-none bg-slate-800/60 hover:bg-slate-700/60 border border-slate-800 rounded-xl px-4 py-2 pr-10 text-xs font-bold text-slate-200 focus:outline-none cursor-pointer"
+              className="appearance-none bg-[var(--bg-tertiary)] hover:bg-[var(--bg-hover)] border border-[var(--border-color)] rounded-xl px-4 py-2 pr-10 text-xs font-bold text-[var(--text-primary)] focus:outline-none cursor-pointer"
             >
               {MONTHS.map((m) => (
                 <option key={m} value={m}>{m}</option>
               ))}
             </select>
-            <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+            <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)] pointer-events-none" />
           </div>
 
           {/* Year Dropdown Selector */}
@@ -86,20 +86,20 @@ export const AttendanceCalendarView: React.FC = () => {
             <select 
               value={selectedYear} 
               onChange={(e) => setSelectedYear(e.target.value)}
-              className="appearance-none bg-slate-800/60 hover:bg-slate-700/60 border border-slate-800 rounded-xl px-4 py-2 pr-10 text-xs font-bold text-slate-200 focus:outline-none cursor-pointer"
+              className="appearance-none bg-[var(--bg-tertiary)] hover:bg-[var(--bg-hover)] border border-[var(--border-color)] rounded-xl px-4 py-2 pr-10 text-xs font-bold text-[var(--text-primary)] focus:outline-none cursor-pointer"
             >
               {YEARS.map((y) => (
                 <option key={y} value={y}>{y}</option>
               ))}
             </select>
-            <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+            <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)] pointer-events-none" />
           </div>
         </div>
 
         {/* Today Button */}
         <button 
           onClick={handleGoToToday}
-          className="px-4 py-2 bg-slate-800/65 hover:bg-slate-700/65 border border-slate-800 text-xs font-bold rounded-xl text-slate-200 transition-colors cursor-pointer"
+          className="w-full sm:w-auto px-4 py-2 bg-[var(--bg-tertiary)] hover:bg-[var(--bg-hover)] border border-[var(--border-color)] text-xs font-bold rounded-xl text-[var(--text-primary)] transition-colors cursor-pointer"
         >
           Today
         </button>
@@ -109,7 +109,7 @@ export const AttendanceCalendarView: React.FC = () => {
       <div className="space-y-4">
         
         {/* Weekday Headers */}
-        <div className="grid grid-cols-7 gap-2 text-center text-xs font-bold text-slate-500 tracking-wider">
+        <div className="grid grid-cols-7 gap-2 text-center text-xs font-bold text-[var(--text-muted)] tracking-wider">
           <div>Su</div>
           <div>Mo</div>
           <div>Tu</div>
@@ -123,7 +123,7 @@ export const AttendanceCalendarView: React.FC = () => {
         <div className="grid grid-cols-7 gap-2 text-center">
           {/* Empty Slots */}
           {emptySlots.map((_, idx) => (
-            <div key={`empty-${idx}`} className="aspect-square flex items-center justify-center text-sm font-semibold text-slate-700" />
+            <div key={`empty-${idx}`} className="aspect-square flex items-center justify-center text-sm font-semibold text-[var(--text-muted)]" />
           ))}
 
           {/* Day numbers */}
@@ -133,26 +133,26 @@ export const AttendanceCalendarView: React.FC = () => {
             const isToday = day === 5 && selectedMonth === 'August' && selectedYear === '2026';
             const isPresent = day === 3 || day === 4 || day === 5;
 
-            let textClass = 'text-slate-400 font-semibold';
+            let textClass = 'text-[var(--text-secondary)] font-semibold';
             let borderClass = 'border-transparent';
             let bgClass = 'bg-transparent';
 
             if (isWeekend) {
-              textClass = 'text-slate-600 font-medium';
+              textClass = 'text-[var(--text-muted)] font-medium';
             } else if (isPresent) {
-              textClass = 'text-emerald-400 font-bold';
+              textClass = 'text-emerald-600 dark:text-emerald-400 font-bold';
             }
 
             if (isToday) {
-              borderClass = 'border-slate-300/80';
-              bgClass = 'bg-slate-800/20';
-              textClass = 'text-emerald-400 font-black';
+              borderClass = 'border-[var(--border-color)]';
+              bgClass = 'bg-[var(--bg-tertiary)]';
+              textClass = 'text-emerald-600 dark:text-emerald-400 font-black';
             }
 
             return (
               <div 
                 key={day} 
-                className={`aspect-square flex items-center justify-center text-sm rounded-xl border-2 transition-all hover:scale-105 cursor-pointer ${borderClass} ${bgClass} ${textClass}`}
+                className={`aspect-square flex items-center justify-center text-sm rounded-xl border transition-all hover:scale-105 cursor-pointer ${borderClass} ${bgClass} ${textClass}`}
               >
                 {day}
               </div>

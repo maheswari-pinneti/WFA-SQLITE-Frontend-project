@@ -84,17 +84,17 @@ export const EmployeeAttendanceTable: React.FC<{
   statusFilter: string;
   setStatusFilter: (val: string) => void;
 }> = ({ filteredHistory, statusFilter, setStatusFilter }) => (
-  <div className="p-6 rounded-3xl bg-slate-900 border border-slate-800 shadow-2xl space-y-4 w-full max-w-full min-w-0">
-    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-2 border-b border-slate-800">
-      <h3 className="text-base font-extrabold text-white flex items-center gap-2">
+  <div className="glass-panel p-6 shadow-2xl space-y-4 w-full max-w-full min-w-0 overflow-hidden">
+    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-2 border-b border-[var(--border-color)]">
+      <h3 className="text-base font-extrabold text-[var(--text-primary)] flex items-center gap-2">
         <ClipboardList size={18} className="text-emerald-500" /> Attendance History
       </h3>
       <div className="flex items-center gap-3">
-        <span className="text-xs text-slate-400 font-semibold">Filter Status:</span>
+        <span className="text-xs text-[var(--text-muted)] font-semibold">Filter Status:</span>
         <select
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value)}
-          className="bg-slate-950 border border-slate-800 text-slate-300 text-xs rounded-xl px-2.5 py-1.5 focus:outline-none focus:ring-1 focus:ring-emerald-500 cursor-pointer font-semibold"
+          className="bg-[var(--bg-tertiary)] border border-[var(--border-color)] text-[var(--text-primary)] text-xs rounded-xl px-2.5 py-1.5 focus:outline-none focus:ring-1 focus:ring-emerald-500 cursor-pointer font-semibold"
         >
           <option value="All">All</option>
           <option value="Present">Present</option>
@@ -104,9 +104,9 @@ export const EmployeeAttendanceTable: React.FC<{
         </select>
       </div>
     </div>
-    <div className="overflow-auto max-h-[400px] rounded-xl border border-slate-800 bg-slate-950/20 w-full max-w-full min-w-0">
+    <div className="overflow-x-auto overflow-y-auto max-h-[400px] rounded-xl border border-[var(--border-color)] bg-[var(--bg-tertiary)]/20 w-full max-w-full min-w-0">
       <table className="w-full text-left text-xs min-w-[850px]">
-        <thead className="sticky top-0 z-10 bg-slate-950 text-slate-400 border-b border-slate-800 uppercase font-bold text-[10px]">
+        <thead className="sticky top-0 z-10 bg-[var(--bg-tertiary)] text-[var(--text-secondary)] border-b border-[var(--border-color)] uppercase font-bold text-[10px] tracking-wider">
           <tr>
             <th className="py-3 px-4 w-[160px]">Date</th>
             <th className="py-3 px-4 w-[120px]">Status</th>
@@ -117,35 +117,35 @@ export const EmployeeAttendanceTable: React.FC<{
             <th className="py-3 px-4 w-[80px]">Edit</th>
           </tr>
         </thead>
-        <tbody className="divide-y divide-slate-800/80">
+        <tbody className="divide-y divide-[var(--border-color)]/80">
           {filteredHistory.map((h, i) => (
-            <tr key={i} className="hover:bg-slate-800/40">
-              <td className="py-3 px-4 font-bold text-white">{h.date}</td>
+            <tr key={i} className="hover:bg-[var(--bg-hover)] transition-colors">
+              <td className="py-3 px-4 font-bold text-[var(--text-primary)]">{h.date}</td>
               <td className="py-3 px-4">
                 <span className={`px-2.5 py-0.5 rounded text-[10px] font-bold uppercase ${
                   h.status === 'Present' || h.status === 'Checked In' || h.status === 'Working'
-                    ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
+                    ? 'bg-emerald-500/20 text-emerald-600 dark:text-emerald-450 border border-emerald-500/30'
                     : h.status === 'Absent'
-                    ? 'bg-rose-500/20 text-rose-400 border border-rose-500/30'
+                    ? 'bg-rose-500/20 text-rose-600 dark:text-rose-450 border border-rose-500/30'
                     : h.status === 'Weekend'
-                    ? 'bg-slate-800 text-slate-400'
-                    : 'bg-purple-500/20 text-purple-400 border border-purple-500/30'
+                    ? 'bg-[var(--bg-tertiary)] text-[var(--text-muted)]'
+                    : 'bg-purple-500/20 text-purple-600 dark:text-purple-450 border border-purple-500/30'
                 }`}>
                   {h.status}
                 </span>
               </td>
-              <td className="py-3 px-4 font-mono text-emerald-400 font-bold">{h.in}</td>
-              <td className="py-3 px-4 font-mono text-rose-400 font-bold">{h.out}</td>
-              <td className="py-3 px-4 font-mono text-blue-400 font-bold">{h.workingTime}</td>
-              <td className="py-3 px-4 text-slate-300 font-medium">{h.remarks || '—'}</td>
+              <td className="py-3 px-4 font-mono text-emerald-600 dark:text-emerald-450 font-bold">{h.in}</td>
+              <td className="py-3 px-4 font-mono text-rose-600 dark:text-rose-450 font-bold">{h.out}</td>
+              <td className="py-3 px-4 font-mono text-blue-600 dark:text-blue-450 font-bold">{h.workingTime}</td>
+              <td className="py-3 px-4 text-[var(--text-secondary)] font-medium">{h.remarks || '—'}</td>
               <td className="py-3 px-4">
-                <Link to="/employee/corrections" className="text-blue-400 hover:text-blue-300 font-extrabold text-[11px]">Edit</Link>
+                <Link to="/employee/corrections" className="text-blue-600 dark:text-blue-400 hover:text-blue-500 font-extrabold text-[11px]">Edit</Link>
               </td>
             </tr>
           ))}
           {filteredHistory.length === 0 && (
             <tr>
-              <td colSpan={7} className="py-8 text-center text-slate-500 font-semibold">
+              <td colSpan={7} className="py-8 text-center text-[var(--text-muted)] font-semibold">
                 No matching daily logs found
               </td>
             </tr>
@@ -158,35 +158,35 @@ export const EmployeeAttendanceTable: React.FC<{
 
 // 4b. Leave Balance Card
 export const LeaveBalanceCard: React.FC = () => (
-  <div className="p-6 rounded-3xl bg-slate-900 border border-slate-800 shadow-2xl flex flex-col justify-between h-full">
+  <div className="glass-panel p-6 shadow-2xl flex flex-col justify-between h-full bg-[var(--bg-card)] border border-[var(--border-color)]">
     <div className="space-y-4">
-      <h3 className="text-base font-extrabold text-white flex items-center gap-2">
-        <Layers size={18} className="text-purple-400" /> Your leave balance
+      <h3 className="text-base font-extrabold text-[var(--text-primary)] flex items-center gap-2">
+        <Layers size={18} className="text-purple-500" /> Your leave balance
       </h3>
-      <div className="space-y-3 text-xs text-slate-300">
-        <div className="flex justify-between items-center py-1.5 border-b border-slate-800/60">
-          <span className="font-semibold text-slate-400">Casual Leave</span>
-          <span className="font-mono font-bold text-white bg-slate-950 px-2.5 py-0.5 rounded-lg border border-slate-850">2 / 2</span>
+      <div className="space-y-3 text-xs text-[var(--text-secondary)]">
+        <div className="flex justify-between items-center py-1.5 border-b border-[var(--border-color)]/60">
+          <span className="font-semibold text-[var(--text-muted)]">Casual Leave</span>
+          <span className="font-mono font-bold text-[var(--text-primary)] bg-[var(--bg-tertiary)] px-2.5 py-0.5 rounded-lg border border-[var(--border-color)]">2 / 2</span>
         </div>
-        <div className="flex justify-between items-center py-1.5 border-b border-slate-800/60">
-          <span className="font-semibold text-slate-400">Sick Leave</span>
-          <span className="font-mono font-bold text-white bg-slate-950 px-2.5 py-0.5 rounded-lg border border-slate-850">2 / 2</span>
+        <div className="flex justify-between items-center py-1.5 border-b border-[var(--border-color)]/60">
+          <span className="font-semibold text-[var(--text-muted)]">Sick Leave</span>
+          <span className="font-mono font-bold text-[var(--text-primary)] bg-[var(--bg-tertiary)] px-2.5 py-0.5 rounded-lg border border-[var(--border-color)]">2 / 2</span>
         </div>
-        <div className="flex justify-between items-center py-1.5 border-b border-slate-800/60">
-          <span className="font-semibold text-slate-400">Maternity Leave</span>
-          <span className="font-mono font-bold text-white bg-slate-950 px-2.5 py-0.5 rounded-lg border border-slate-850">0 / 0</span>
+        <div className="flex justify-between items-center py-1.5 border-b border-[var(--border-color)]/60">
+          <span className="font-semibold text-[var(--text-muted)]">Maternity Leave</span>
+          <span className="font-mono font-bold text-[var(--text-primary)] bg-[var(--bg-tertiary)] px-2.5 py-0.5 rounded-lg border border-[var(--border-color)]">0 / 0</span>
         </div>
-        <div className="flex justify-between items-center py-1.5 border-b border-slate-800/60">
-          <span className="font-semibold text-slate-400">Paternity Leave</span>
-          <span className="font-mono font-bold text-white bg-slate-950 px-2.5 py-0.5 rounded-lg border border-slate-850">0 / 0</span>
+        <div className="flex justify-between items-center py-1.5 border-b border-[var(--border-color)]/60">
+          <span className="font-semibold text-[var(--text-muted)]">Paternity Leave</span>
+          <span className="font-mono font-bold text-[var(--text-primary)] bg-[var(--bg-tertiary)] px-2.5 py-0.5 rounded-lg border border-[var(--border-color)]">0 / 0</span>
         </div>
         <div className="flex justify-between items-center py-1.5">
-          <span className="font-semibold text-slate-400">Marriage Leave</span>
-          <span className="font-mono font-bold text-white bg-slate-950 px-2.5 py-0.5 rounded-lg border border-slate-850">0 / 0</span>
+          <span className="font-semibold text-[var(--text-muted)]">Marriage Leave</span>
+          <span className="font-mono font-bold text-[var(--text-primary)] bg-[var(--bg-tertiary)] px-2.5 py-0.5 rounded-lg border border-[var(--border-color)]">0 / 0</span>
         </div>
       </div>
     </div>
-    <div className="mt-4 pt-4 border-t border-slate-800/60 text-[10px] text-slate-500 font-bold uppercase tracking-wider">
+    <div className="mt-4 pt-4 border-t border-[var(--border-color)]/60 text-[10px] text-[var(--text-muted)] font-bold uppercase tracking-wider">
       Available for Calendar Year 2026
     </div>
   </div>
@@ -194,12 +194,12 @@ export const LeaveBalanceCard: React.FC = () => (
 
 // 4c. Leave Actions Card
 export const LeaveActionsCard: React.FC = () => (
-  <div className="p-6 rounded-3xl bg-slate-900 border border-slate-800 shadow-2xl flex flex-col justify-between h-full">
+  <div className="glass-panel p-6 shadow-2xl flex flex-col justify-between h-full bg-[var(--bg-card)] border border-[var(--border-color)]">
     <div className="space-y-4">
-      <h3 className="text-base font-extrabold text-white flex items-center gap-2">
-        <HeartHandshake size={18} className="text-rose-400" /> Leave
+      <h3 className="text-base font-extrabold text-[var(--text-primary)] flex items-center gap-2">
+        <HeartHandshake size={18} className="text-rose-500" /> Leave
       </h3>
-      <p className="text-xs text-slate-400 leading-relaxed">
+      <p className="text-xs text-[var(--text-muted)] leading-relaxed">
         Need time off? Plan your leaves and submit requests for approvals securely.
       </p>
       <Link 
@@ -209,7 +209,7 @@ export const LeaveActionsCard: React.FC = () => (
         <Plus size={14} /> Apply Leave
       </Link>
     </div>
-    <div className="mt-4 pt-4 border-t border-slate-800/60 text-[10px] text-slate-500 font-bold uppercase tracking-wider">
+    <div className="mt-4 pt-4 border-t border-[var(--border-color)]/60 text-[10px] text-[var(--text-muted)] font-bold uppercase tracking-wider">
       Automatic Routing to Manager
     </div>
   </div>
@@ -436,26 +436,6 @@ export const EmployeeDashboardPage: React.FC = () => {
   return (
     <RoleGuard allowedRoles={[Role.EMPLOYEE, Role.TEAM_LEAD, Role.MANAGER, Role.HR, Role.ADMIN]} requiredPermission={Permission.PROFILE_VIEW}>
       <div className="space-y-6 animate-fadeIn font-sans pb-10">
-        <EmployeeDashboardOverview user={user} />
-        
-        <EmployeeDashboardFilters dateFilter={dateFilter} setDateFilter={setDateFilter} />
-
-        <EmployeeKpiGrid
-          hoursToday={hoursToday}
-          hoursThisWeek={hoursThisWeek}
-          attendanceRate={attendanceRate}
-          leaveBalance={leaveBalance}
-          leavesUsed={leavesUsed}
-          pendingTasksCount={pendingTasksCount}
-          goalProgress={goalProgress}
-          timesheetStatus={timesheetStatus}
-        />
-
-        {/* Personal Employee Analytics Grid controlled by the Page */}
-        <div className="dashboard-chart-grid">
-          <AnalyticsBarChart title="My Daily Work Hours" subtitle="My hours tracked per weekday" data={analytics.data?.attendanceOverview} xKey="name" series={[{ key: 'present', name: 'Work Hours', color: '#10b981' }]} isLoading={analytics.isLoading} error={analytics.error} onRetry={analytics.reload} />
-          <AnalyticsLineChart title="My Performance History" subtitle="Calculated productivity score index" data={analytics.data?.performance} xKey="name" series={[{ key: 'performance', name: 'Productivity', color: '#0ea5e9' }]} isLoading={analytics.isLoading} error={analytics.error} onRetry={analytics.reload} />
-        </div>
         
         {/* Top Section - Attendance Actions (Left) and Leave Balance Card (Right) */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -477,16 +457,11 @@ export const EmployeeDashboardPage: React.FC = () => {
           </div>
         </div>
 
+        {/* Bottom Section - Attendance History Table */}
         <EmployeeAttendanceTable
           filteredHistory={filteredHistory}
           statusFilter={statusFilter}
           setStatusFilter={setStatusFilter}
-        />
-
-        <EmployeeSprintWork
-          tasks={tasks}
-          loading={loading}
-          handleUpdateTaskStatus={handleUpdateTaskStatus}
         />
       </div>
     </RoleGuard>
