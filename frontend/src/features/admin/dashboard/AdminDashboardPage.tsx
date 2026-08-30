@@ -94,7 +94,7 @@ export const AdminDashboardFilters: React.FC<{
           className="w-full bg-slate-950 border border-slate-800 text-slate-300 text-xs rounded-xl px-3 py-2.5 focus:outline-none focus:ring-1 focus:ring-blue-500 font-semibold cursor-pointer"
         >
           <option value="All">All Locations</option>
-          <option value="Bangalore">Bangalore</option>
+          <option value="Bengaluru">Bengaluru</option>
           <option value="Hyderabad">Hyderabad</option>
           <option value="Salem">Salem</option>
         </select>
