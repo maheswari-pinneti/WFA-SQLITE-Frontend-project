@@ -220,7 +220,7 @@ export const login = async (req: Request, res: Response): Promise<any> => {
     await userRepository.resetFailedLogins(lookupEmail);
 
     const mfaSettings = await userRepository.findMfaSettingsByUserId(user.id);
-    if (false && mfaSettings && mfaSettings.enabled) {
+    if (mfaSettings && mfaSettings.enabled) {
       try {
         const mfaRes = await authService.createTotpChallenge(user);
         logAudit(user.id, 'MFA_CHALLENGE', `TOTP MFA challenge generated for ${email}`);
@@ -240,7 +240,7 @@ export const login = async (req: Request, res: Response): Promise<any> => {
     }
 
     // Force TOTP MFA setup on first login if not enabled (disabled in test suites)
-    if (false && process.env.NODE_ENV !== 'test') {
+    if (process.env.NODE_ENV !== 'test') {
       try {
         const enrollData = await authService.enrollTotp(user);
         const mfaRes = await authService.createTotpChallenge(user);
@@ -264,7 +264,7 @@ export const login = async (req: Request, res: Response): Promise<any> => {
       }
     }
 
-    if (false && user.mfa_enabled) {
+    if (user.mfa_enabled) {
       try {
         const mfaMethod = req.body?.mfaMethod || 'email';
         const mfaRes = await authService.generateAndSendOtp(user, mfaMethod);
