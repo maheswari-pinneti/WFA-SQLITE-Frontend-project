@@ -92,8 +92,14 @@ export const DrillDownModal: React.FC<DrillDownModalProps> = ({ isOpen, onClose,
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-fadeIn">
-      <div className="w-full max-w-4xl glass-panel bg-slate-900 border-slate-700 shadow-2xl rounded-2xl overflow-hidden flex flex-col max-h-[90vh] text-slate-100">
+    <div
+      onClick={onClose}
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-fadeIn cursor-pointer"
+    >
+      <div
+        onClick={(e) => e.stopPropagation()}
+        className="w-full max-w-4xl glass-panel bg-slate-900 border-slate-700 shadow-2xl rounded-2xl overflow-hidden flex flex-col max-h-[90vh] text-slate-100 cursor-default"
+      >
         
         {/* Modal Header */}
         <div className="p-5 border-b border-slate-800 flex items-center justify-between bg-slate-900/90">
@@ -119,15 +125,23 @@ export const DrillDownModal: React.FC<DrillDownModalProps> = ({ isOpen, onClose,
         {/* Modal Body */}
         <div className="p-6 overflow-y-auto space-y-6 flex-1">
           {/* Main KPI Summary */}
-          <div className="p-5 rounded-2xl bg-gradient-to-r from-blue-950/40 via-slate-900 to-indigo-950/40 border border-blue-500/30 flex items-center justify-between">
+          <div className="p-5 rounded-2xl bg-gradient-to-r from-blue-950/40 via-slate-900 to-indigo-950/40 border border-blue-500/30 flex items-center justify-between gap-4 flex-wrap">
             <div>
               <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Aggregated Metric Total</p>
               <p className="text-3xl font-black text-white mt-1">{data.metricValue}</p>
               {data.subtitle && <p className="text-xs text-slate-300 mt-1">{data.subtitle}</p>}
             </div>
-            <button className="btn btn-primary btn-sm flex items-center gap-1.5 shadow-md">
-              <Download size={14} /> Export All
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={onClose}
+                className="px-4 py-2 text-xs font-bold bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl transition-colors border border-slate-700 cursor-pointer"
+              >
+                Close Modal
+              </button>
+              <button className="btn btn-primary btn-sm flex items-center gap-1.5 shadow-md cursor-pointer">
+                <Download size={14} /> Export All
+              </button>
+            </div>
           </div>
 
           {/* Metric Sub-Breakdown Details */}
