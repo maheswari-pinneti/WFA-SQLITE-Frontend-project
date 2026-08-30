@@ -95,9 +95,8 @@ export const AdminDashboardFilters: React.FC<{
         >
           <option value="All">All Locations</option>
           <option value="Bangalore">Bangalore</option>
-          <option value="Delhi">Delhi</option>
           <option value="Hyderabad">Hyderabad</option>
-          <option value="Remote">Remote</option>
+          <option value="Salem">Salem</option>
         </select>
       </div>
       <div>
