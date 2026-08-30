@@ -195,19 +195,19 @@ export const LiveCheckInWidget: React.FC<LiveCheckInWidgetProps> = ({
             <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase ${
               activeRecord
                 ? activeRecord.status === 'On Break'
-                  ? 'bg-amber-500/20 text-amber-500 dark:text-amber-400 border border-amber-500/30'
-                  : 'bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30'
-                : 'bg-rose-500/20 text-rose-600 dark:text-rose-400 border border-rose-500/30'
+                  ? 'bg-amber-500/20 text-amber-550 border border-amber-500/30'
+                  : 'bg-emerald-500/20 text-emerald-500 border border-emerald-500/30'
+                : 'bg-rose-500/20 text-rose-500 border border-rose-500/30'
             }`}>
               {activeRecord ? `● ${activeRecord.status.toUpperCase()}` : '○ CLOCKED OUT'}
             </span>
 
             {isOfflineMode ? (
-              <span className="flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase bg-red-500/20 text-red-550 dark:text-red-400 border border-red-500/30">
+              <span className="flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase bg-red-500/20 text-red-500 border border-red-500/30">
                 <WifiOff size={10} /> Offline Mode
               </span>
             ) : (
-              <span className="flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30">
+              <span className="flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase bg-emerald-500/20 text-emerald-500 border border-emerald-500/30">
                 <Wifi size={10} /> Online
               </span>
             )}
@@ -218,7 +218,7 @@ export const LiveCheckInWidget: React.FC<LiveCheckInWidgetProps> = ({
         </div>
 
         <div className="text-left sm:text-right font-mono">
-          <p className="text-xl font-black text-blue-600 dark:text-blue-400">
+          <p className="text-xl font-black text-blue-500">
             {now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true })}
           </p>
           <p className="text-[10px] text-[var(--text-muted)] font-bold uppercase tracking-wider">
@@ -268,7 +268,7 @@ export const LiveCheckInWidget: React.FC<LiveCheckInWidgetProps> = ({
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-2">
         <div className="p-3.5 rounded-2xl bg-[var(--bg-tertiary)] border border-[var(--border-color)] space-y-1">
           <p className="text-[10px] font-extrabold uppercase text-[var(--text-muted)]">Total Hours Today</p>
-          <p className="text-base font-black text-blue-600 dark:text-blue-400 font-mono">
+          <p className="text-base font-black text-blue-500 font-mono">
             {formatHrsMins(stats.workingHours)}
           </p>
           <p className="text-[9.5px] text-[var(--text-muted)]">Target: 8h 00m</p>
@@ -276,7 +276,7 @@ export const LiveCheckInWidget: React.FC<LiveCheckInWidgetProps> = ({
 
         <div className="p-3.5 rounded-2xl bg-[var(--bg-tertiary)] border border-[var(--border-color)] space-y-1">
           <p className="text-[10px] font-extrabold uppercase text-[var(--text-muted)]">Break Duration</p>
-          <p className="text-base font-black text-amber-600 dark:text-amber-400 font-mono">
+          <p className="text-base font-black text-amber-500 font-mono">
             {formatHrsMins(stats.breakDuration)}
           </p>
           <p className="text-[9.5px] text-[var(--text-muted)]">Max Allowed: 1h 00m</p>
@@ -284,7 +284,7 @@ export const LiveCheckInWidget: React.FC<LiveCheckInWidgetProps> = ({
 
         <div className="p-3.5 rounded-2xl bg-[var(--bg-tertiary)] border border-[var(--border-color)] space-y-1">
           <p className="text-[10px] font-extrabold uppercase text-[var(--text-muted)]">Overtime Hours</p>
-          <p className="text-base font-black text-emerald-600 dark:text-emerald-400 font-mono">
+          <p className="text-base font-black text-emerald-500 font-mono">
             {formatHrsMins(stats.overtime)}
           </p>
           <p className="text-[9.5px] text-[var(--text-muted)]">Over 8.0 hrs</p>
@@ -294,12 +294,12 @@ export const LiveCheckInWidget: React.FC<LiveCheckInWidgetProps> = ({
           <p className="text-[10px] font-extrabold uppercase text-[var(--text-muted)]">Late / Early Out</p>
           <div className="flex items-center gap-1 mt-0.5">
             {stats.lateArrival ? (
-              <span className="px-2 py-0.5 rounded bg-rose-500/10 border border-rose-500/20 text-rose-500 dark:text-rose-450 text-[10px] font-bold">LATE ARRIVAL</span>
+              <span className="px-2 py-0.5 rounded bg-rose-500/10 border border-rose-500/20 text-rose-500 text-[10px] font-bold">LATE ARRIVAL</span>
             ) : (
-              <span className="px-2 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-450 text-[10px] font-bold">ON TIME</span>
+              <span className="px-2 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 text-[10px] font-bold">ON TIME</span>
             )}
             {stats.earlyDeparture && (
-              <span className="px-2 py-0.5 rounded bg-amber-500/10 border border-amber-500/20 text-amber-600 dark:text-amber-450 text-[10px] font-bold">EARLY OUT</span>
+              <span className="px-2 py-0.5 rounded bg-amber-500/10 border border-amber-500/20 text-amber-500 text-[10px] font-bold">EARLY OUT</span>
             )}
           </div>
         </div>
