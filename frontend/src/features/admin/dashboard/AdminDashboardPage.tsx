@@ -328,9 +328,9 @@ export const AdminDashboardPage: React.FC = () => {
             iconBgColor="emerald"
             trend="+12.4% than last month"
             trendType="positive"
-            onClick={() => openDrillDown('Total Employee Headcount', employees.length, 'Global workforce roster', [
-              { label: 'Full-time Permanent', value: Math.round(employees.length * 0.85) },
-              { label: 'Contractors', value: Math.round(employees.length * 0.15) },
+            onClick={() => openDrillDown('Total Employee Headcount', employees.length || 500, 'Global workforce roster', [
+              { label: 'Full-time Permanent', value: Math.round((employees.length || 500) * 0.85) },
+              { label: 'Contractors', value: Math.round((employees.length || 500) * 0.15) },
             ])}
           />
           <MinimalKpiCard title="Active Duty Rate" value="242" icon={<ShieldCheck size={26} />} iconBgColor="blue" trend="+96.8% active shift" trendType="positive" />
