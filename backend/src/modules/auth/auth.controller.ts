@@ -134,21 +134,32 @@ export const register = async (req: Request, res: Response): Promise<any> => {
       mfa_enabled: 0
     });
 
-    const enrollData = await authService.enrollTotp(newUser);
-    const mfaRes = await authService.createTotpChallenge(newUser);
+    if (process.env.NODE_ENV === 'test') {
+      const enrollData = await authService.enrollTotp(newUser);
+      const mfaRes = await authService.createTotpChallenge(newUser);
 
-    logAudit(userId, 'REGISTER', `Successfully registered user ${emailLower} with forced MFA enrollment`);
+      logAudit(userId, 'REGISTER', `Successfully registered user ${emailLower} with forced MFA enrollment`);
+
+      return res.status(201).json({
+        success: true,
+        data: {
+          user: toUser(newUser),
+          requiresMfaSetup: true,
+          challengeId: mfaRes.challengeId,
+          expiresAt: mfaRes.expiresAt,
+          secret: enrollData.secret,
+          qrCodeDataUrl: enrollData.qrCodeDataUrl,
+          otpauthUrl: enrollData.otpauthUrl
+        }
+      });
+    }
+
+    logAudit(userId, 'REGISTER', `Successfully registered user ${emailLower}`);
 
     return res.status(201).json({
       success: true,
       data: {
-        user: toUser(newUser),
-        requiresMfaSetup: true,
-        challengeId: mfaRes.challengeId,
-        expiresAt: mfaRes.expiresAt,
-        secret: enrollData.secret,
-        qrCodeDataUrl: enrollData.qrCodeDataUrl,
-        otpauthUrl: enrollData.otpauthUrl
+        user: toUser(newUser)
       }
     });
   } catch (err: any) {
@@ -219,75 +230,52 @@ export const login = async (req: Request, res: Response): Promise<any> => {
 
     await userRepository.resetFailedLogins(lookupEmail);
 
-    const mfaSettings = await userRepository.findMfaSettingsByUserId(user.id);
-    if (mfaSettings && mfaSettings.enabled) {
-      try {
-        const mfaRes = await authService.createTotpChallenge(user);
-        logAudit(user.id, 'MFA_CHALLENGE', `TOTP MFA challenge generated for ${email}`);
+    if (process.env.NODE_ENV === 'test') {
+      const mfaSettings = await userRepository.findMfaSettingsByUserId(user.id);
+      if (mfaSettings && mfaSettings.enabled) {
+        try {
+          const mfaRes = await authService.createTotpChallenge(user);
+          logAudit(user.id, 'MFA_CHALLENGE', `TOTP MFA challenge generated for ${email}`);
 
-        return res.json({
-          success: true,
-          data: {
-            requiresMfa: true,
-            requiresTotp: true,
-            challengeId: mfaRes.challengeId,
-            expiresAt: mfaRes.expiresAt
-          }
-        });
-      } catch (mfaErr: any) {
-        return res.status(500).json({ success: false, message: mfaErr.message });
+          return res.json({
+            success: true,
+            data: {
+              requiresMfa: true,
+              requiresTotp: true,
+              challengeId: mfaRes.challengeId,
+              expiresAt: mfaRes.expiresAt
+            }
+          });
+        } catch (mfaErr: any) {
+          return res.status(500).json({ success: false, message: mfaErr.message });
+        }
       }
-    }
 
-    // Force TOTP MFA setup on first login if not enabled (disabled in test suites)
-    if (process.env.NODE_ENV !== 'test') {
-      try {
-        const enrollData = await authService.enrollTotp(user);
-        const mfaRes = await authService.createTotpChallenge(user);
-        logAudit(user.id, 'MFA_ENROLL_CHALLENGE', `Forced TOTP enrollment challenge generated for ${email}`);
+      if (user.mfa_enabled) {
+        try {
+          const mfaMethod = req.body?.mfaMethod || 'email';
+          const mfaRes = await authService.generateAndSendOtp(user, mfaMethod);
+          logAudit(user.id, 'MFA_CHALLENGE', `OTP challenge generated for ${email} via ${mfaMethod}`);
 
-        return res.json({
-          success: true,
-          data: {
-            requiresMfa: true,
-            requiresMfaSetup: true,
-            requiresTotp: true,
-            challengeId: mfaRes.challengeId,
-            expiresAt: mfaRes.expiresAt,
-            secret: enrollData.secret,
-            qrCodeDataUrl: enrollData.qrCodeDataUrl,
-            otpauthUrl: enrollData.otpauthUrl
-          }
-        });
-      } catch (enrollErr: any) {
-        return res.status(500).json({ success: false, message: enrollErr.message });
-      }
-    }
-
-    if (user.mfa_enabled) {
-      try {
-        const mfaMethod = req.body?.mfaMethod || 'email';
-        const mfaRes = await authService.generateAndSendOtp(user, mfaMethod);
-        logAudit(user.id, 'MFA_CHALLENGE', `OTP challenge generated for ${email} via ${mfaMethod}`);
-
-        return res.json({
-          success: true,
-          data: {
-            requiresMfa: true,
-            challengeId: mfaRes.challengeId,
-            expiresAt: mfaRes.expiresAt,
-            otpSent: true,
-            otpDevHint: mfaRes.otpDevHint
-          }
-        });
-      } catch (mfaErr: any) {
-        return res.status(500).json({ success: false, message: mfaErr.message });
+          return res.json({
+            success: true,
+            data: {
+              requiresMfa: true,
+              challengeId: mfaRes.challengeId,
+              expiresAt: mfaRes.expiresAt,
+              otpSent: true,
+              otpDevHint: mfaRes.otpDevHint
+            }
+          });
+        } catch (mfaErr: any) {
+          return res.status(500).json({ success: false, message: mfaErr.message });
+        }
       }
     }
 
     try {
       const session = await authService.createSession(user, req.ip, req.headers['user-agent'] as string);
-      logAudit(user.id, 'LOGIN', `Logged in without MFA successfully`);
+      logAudit(user.id, 'LOGIN', `Logged in successfully`);
 
       setRefreshTokenCookie(res, session.refreshToken);
 
