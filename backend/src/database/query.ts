@@ -103,14 +103,26 @@ export function deserializeRow(tableName: string, row: any): any {
   if (!row) return null;
   const result = { ...row };
   
-  if (tableName === 'users' && result.permissions) {
-    try { result.permissions = JSON.parse(result.permissions); } catch (e) { result.permissions = []; }
+  if (tableName === 'users') {
+    if (result.permissions) {
+      try { result.permissions = JSON.parse(result.permissions); } catch (e) { result.permissions = []; }
+    } else {
+      result.permissions = [];
+    }
   }
-  if (tableName === 'attendancerecords' && result.breaks) {
-    try { result.breaks = JSON.parse(result.breaks); } catch (e) { result.breaks = []; }
+  if (tableName === 'attendancerecords') {
+    if (result.breaks) {
+      try { result.breaks = JSON.parse(result.breaks); } catch (e) { result.breaks = []; }
+    } else {
+      result.breaks = [];
+    }
   }
-  if (tableName === 'idempotencyrecords' && result.response) {
-    try { result.response = JSON.parse(result.response); } catch (e) { result.response = {}; }
+  if (tableName === 'idempotencyrecords') {
+    if (result.response) {
+      try { result.response = JSON.parse(result.response); } catch (e) { result.response = {}; }
+    } else {
+      result.response = {};
+    }
   }
   
   if (result.id) {
