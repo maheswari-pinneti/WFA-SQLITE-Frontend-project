@@ -13,6 +13,7 @@ Welcome to the official technical documentation suite for the **Stackly Workforc
 - 🌿 [Git Workflow](./Git-Workflow.md) - Branching strategy, commit standards, and pull request workflow.
 - 🧪 [Testing Strategy](./Testing-Strategy.md) - Type checking, unit testing, and E2E validation procedures.
 - 🏛️ [Full-Stack Integration Architecture](./architecture/Backend-Database-Frontend-Integration.md) - Folder layout, Express server API, and SQLite database schemas.
+- 💾 [SQLite Database Guide](./SQLITE_DATABASE_GUIDE.md) - Database setup, table structures, connection flows, migrations, seeding, query layers, and DB Browser verification.
 
 ### API Documentation
 - 🌐 [API Overview](./api/API-Documentation.md) - REST API endpoints, response schemas, and error handling.

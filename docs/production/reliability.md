@@ -2,16 +2,16 @@
 
 This document describes the production-hardening design decisions and operational parameters implemented to support up to 250 concurrent active users.
 
-## 1. Database Resiliency & Optimization (MongoDB)
+## 1. Database Resiliency & Optimization (SQLite Cloud / SQLite Fallback)
 
-Although MongoDB is a highly scalable document database, it is optimized for high-performance production workloads under proper configurations:
+The database persistent layer uses a resilient SQLite architecture:
 
-* **Connection Pooling**: Configured via connection string parameters and Mongoose options (`maxPoolSize: 50`, `minPoolSize: 10`). This ensures a ready supply of reusable connections to avoid socket allocation overhead during high concurrent traffic spikes.
-* **Auto-Reconnect & Timeout Limits**: Timeout parameters (`socketTimeoutMS: 45000`, `serverSelectionTimeoutMS: 3000`) prevent backend API threads from hanging during network partitioning, failing fast and failing gracefully.
-* **Index Strategy**: High-traffic search queries and dashboard aggregate pipelines are backed by dedicated collection indices:
-  - Single column indexes: `users(email)`, `employees(employeeCode)`, `attendancerecords(employeeId)`, `attendancerecords(date)`, `auditlogs(timestamp)`
-  - Compound indexes: `idempotencyrecords(companyId, key)` to support fast double-submission preventions.
-  - TTL (Time-To-Live) indexes: `idempotencyrecords(expiresAt)` automatically cleans up transaction session records.
+* **SQLite Cloud & Local Fallback**: The application attempts to connect to SQLite Cloud. If the connection fails, it dynamically falls back to a local SQLite file database (`wfa.sqlite` or `wfa-test.sqlite` in test mode), ensuring zero downtime.
+* **Write-Ahead Logging (WAL) Mode**: To handle concurrency, the local SQLite database uses WAL journal mode (`journal_mode = WAL`) and `synchronous = NORMAL`. This allows concurrent readers and writers to operate simultaneously without locking the database.
+* **Busy Timeout**: A `busy_timeout = 10000` (10 seconds) configuration ensures that the SQLite engine queues concurrent update requests instead of throwing immediate lock errors.
+* **Index Strategy**: Dedicated indexes are configured on high-traffic columns to speed up querying:
+  - Indexes on `mfa_settings(user_id)` and `mfa_recovery_codes(user_id)` to speed up multi-factor auth validation.
+  - Indexes on key tables like `users(email)`, `employees(employeeCode)`, `attendance_records(employeeId)`, and `audit_logs(timestamp)`.
 
 ---
 
@@ -37,5 +37,5 @@ Socket connections are hardened using:
 
 * **Health Endpoints**:
   - `/live`: Simple liveness probe checking process health.
-  - `/ready`: Readiness check verifying MongoDB server status via active ping check.
-* **Graceful Exit**: On `SIGINT`/`SIGTERM`, the application stops accepting new HTTP connections, closes Socket.IO rooms, drains active HTTP requests, closes the Mongoose/MongoDB connection, and exits cleanly.
+  - `/ready`: Readiness check verifying SQLite / SQLite Cloud database health via active ping query checks.
+* **Graceful Exit**: On `SIGINT`/`SIGTERM`, the application stops accepting new HTTP connections, closes Socket.IO rooms, drains active HTTP requests, closes the SQLite database connection handles, and exits cleanly.

@@ -7,12 +7,17 @@ WFA-Rolebased-Architecture-main/
 ├── backend/                       # Backend Express API Service
 │   ├── scripts/                   # Simulator and seed execution scripts
 │   └── src/                       # Main source code
-│       ├── config/                # Environment variables, MongoDB/Mongoose initialization, and logging configs
+│       ├── config/                # Environment variables and logging configs
 │       ├── controllers/           # HTTP Request controllers (handling API logic)
+│       ├── database/              # SQLite database connections, migrations, and schema setup
 │       ├── middleware/            # JWT validation, Role checks, ABAC limits, and Rate limiters
-│       ├── routes/                # API route definitions (/v1/...)
-│       ├── services/              # Business logic services (MFA delivery, Session tracking, employee updates)
-│       └── app.js                 # Express application instantiation
+│       ├── models/                # TypeScript models/interfaces for database schema
+│       ├── modules/               # Feature-based API modules (e.g., auth, employee, dashboard)
+│       ├── repositories/          # Data access layer interfacing with SQLite
+│       ├── routes/                # Express router path mappings
+│       ├── services/              # Business logic services (MFA delivery, session tracking)
+│       ├── sockets/               # Real-time WebSockets synchronization handlers
+│       └── app.ts                 # Express application instantiation and setup
 ├── database/                      # Database design specifications and documentation
 ├── docs/                          # Architecture and design documentation
 │   ├── security/                  # Threat models and security assessments
@@ -43,5 +48,5 @@ WFA-Rolebased-Architecture-main/
    - Keep global layout states in `frontend/store/`.
    - Feature-specific UI dashboards belong in `frontend/features/<role>/`.
 2. **Backend API Routing**:
-   - Write request controllers in `backend/src/controllers/`.
-   - Ensure all routes in `backend/src/routes/api.routes.js` are protected by `authenticateToken` and rate limiters.
+   - Write request controllers in `backend/src/controllers/` or features in `backend/src/modules/`.
+   - Ensure all routes in `backend/src/routes/` are protected by `authenticateToken` and appropriate rate limiters.

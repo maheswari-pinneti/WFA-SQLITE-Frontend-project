@@ -11,7 +11,7 @@ We configured five recommended role themes by overriding custom CSS variables in
 - **Admin / Super Admin** $\rightarrow$ **Cyber Sunset** (`.sunset-theme`) (Vibrant alert-orange accents, dark grid; defaults to Dark Mode)
 
 ## 🏢 2. Employee Directory Roster
-- **Capacity**: Seeding increased from 200 to **250 records** inside the MongoDB backend database, plus custom employees (Uday, Suresh, Ravi, Suman).
+- **Capacity**: Seeding increased from 200 to **250 records** inside the SQLite backend database, plus custom employees (Uday, Suresh, Ravi, Suman).
 - **Format**: Dynamic employee STK ID generator matches `STK-[Joining Year]-[Initials][SequenceNumber]` (e.g. `STK-2023-UD0001`).
 - **Table Headings**: Configured the complete 12 table headings:
   1. Employee ID

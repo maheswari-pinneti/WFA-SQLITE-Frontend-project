@@ -1,6 +1,6 @@
 # Workforce Analytics Dashboard - Header Architecture
 
-This document presents the enterprise responsive header navigation architecture, Redux state model, RBAC header behaviors, API integration flows, and component breakdown for the **Workforce Analytics Dashboard**.
+This document presents the enterprise responsive header navigation architecture, local and global state models, RBAC header behaviors, API integration flows, and component structure for the **Workforce Analytics Dashboard**.
 
 ---
 
@@ -11,119 +11,119 @@ This document presents the enterprise responsive header navigation architecture,
 title: "Workforce Analytics Dashboard - Header UI Architecture"
 ---
 flowchart TD
-    subgraph HEADER_CONTAINER["Header Container (Sticky Glassmorphism Top Bar)"]
-        subgraph LEFT["LEFT SECTION (HeaderLeft)"]
-            TOGGLE["SidebarToggle (Hamburger Menu)"]
-            TITLE["PageTitle (Dynamic Route Header)"]
-            CRUMBS["Breadcrumbs (Home > Section > Page)"]
-            TOGGLE --> TITLE --> CRUMBS
+    subgraph HEADER_CONTAINER["EnterpriseHeader (Sticky Glassmorphism Top Bar)"]
+        subgraph LEFT["LEFT SECTION"]
+            TOGGLE["SidebarToggle (Hamburger Menu Icon)"]
+            LOGO["Stackly Brand Logo (SVG)"]
+            CRUMBS["Breadcrumbs (Home > Section > Page via useLocation)"]
+            TOGGLE --> LOGO --> CRUMBS
         end
 
-        subgraph CENTER["CENTER SECTION (HeaderCenter)"]
-            SEARCH["GlobalSearch (Employees, Depts, Reports, Shortcuts Ctrl+K)"]
+        subgraph CENTER["CENTER SECTION"]
+            SEARCH["GlobalSearch (Autocomplete search with filters)"]
         end
 
-        subgraph RIGHT["RIGHT SECTION (HeaderRight)"]
-            NOTIF["NotificationMenu (Real-time Alerts & Badges)"]
-            THEME["ThemeToggle (Light / Dark Mode)"]
-            LANG["LanguageSelector (EN, HI, ES, FR, DE)"]
-            PROFILE["UserProfileMenu (Avatar, Name, Role, Logout)"]
-            NOTIF --> THEME --> LANG --> PROFILE
+        subgraph RIGHT["RIGHT SECTION"]
+            NOTIF["NotificationMenu (Real-time Alerts & Badges Dropdown)"]
+            THEME["ThemeToggle (Light / Dark Mode Switcher)"]
+            HELP["Help & Support trigger (onOpenHelp)"]
+            PROFILE["UserProfileMenu (Avatar, Name, Role Badge, Logout Action)"]
+            NOTIF --> THEME --> HELP --> PROFILE
         end
     end
 
-    subgraph STATE["Redux Toolkit Header State"]
-        H_SLICE["headerSlice (sidebarOpen, theme, notifications, searchQuery, userProfile)"]
+    subgraph CONTEXTS["Global Context Hooks"]
+        AUTH["useAuth (user, role, permissions, logout)"]
+        THEME_CTX["useTheme (theme, toggleTheme)"]
     end
 
-    HEADER_CONTAINER <--> STATE
+    HEADER_CONTAINER <--> CONTEXTS
 ```
 
 ---
 
 ## 2. React Component Architecture
 
-```text
-src/components/header/
-├── Header.tsx               # Master Modular Header Layout Container
-├── HeaderLeft.tsx           # Groups Toggle, PageTitle & Breadcrumbs
-│   ├── SidebarToggle.tsx    # Mobile & Desktop Sidebar Collapse Button
-│   ├── Breadcrumbs.tsx      # Dynamic Route Breadcrumbs (Clickable)
-│   └── PageTitle.tsx        # Dynamic Role & Page Title Component
-├── HeaderCenter.tsx         # Center Section Wrapper
-│   └── GlobalSearch.tsx     # Ctrl + K Search Bar with Filter Pills & Recent Results
-├── HeaderRight.tsx          # Groups Right Action Controls
-│   ├── NotificationMenu.tsx # Real-time Notification Bell & Unread Badges
-│   ├── ThemeToggle.tsx      # Light / Dark Theme Switcher Button
-│   ├── LanguageSelector.tsx # Multi-Language Scope Switcher Dropdown
-│   └── UserProfileMenu.tsx  # User Avatar, Details, Account Settings & Logout
-├── HeaderActions.tsx        # Actions Group Component
-├── HeaderResponsive.tsx     # Tablet / Mobile Responsive Controls
-├── types.ts                 # TypeScript Interfaces & Header State Data Model
-├── headerSlice.ts           # Redux Toolkit Header State Slice
-└── index.ts                 # Central Module Barrel Export
-```
+The header is implemented as a cohesive, high-performance module located at:
+
+* **Header File**: [`EnterpriseHeader.tsx`](file:///c:/Users/91970/Documents/WFA-SQLITE-Frontend-project/frontend/src/shared/layouts/components/EnterpriseHeader.tsx)
+
+It is integrated into the master frame layout:
+* **Layout File**: [`MainLayout.tsx`](file:///c:/Users/91970/Documents/WFA-SQLITE-Frontend-project/frontend/src/shared/layouts/MainLayout.tsx)
 
 ---
 
-## 3. Redux State Structure (`headerSlice.ts`)
+## 3. Component State Model & Context Hooks
 
+Rather than using complex global Redux reducers for simple UI headers, `EnterpriseHeader` combines lightweight **React local state** with **Global React Contexts**:
+
+### Global Contexts
+* **`useAuth()`**: Supplies authenticated `user`, current `role`, array of `permissions`, and `logout()` controller actions.
+* **`useTheme()`**: Supplies current design system `theme` (`light` | `dark`) and `toggleTheme()` switcher function.
+
+### Local State Hooks
 ```typescript
-export interface HeaderState {
-  sidebarOpen: boolean;
-  theme: 'light' | 'dark';
-  language: LanguageOption;
-  notifications: HeaderNotification[];
-  unreadNotificationCount: number;
-  searchQuery: string;
-  searchCategory: 'all' | 'employees' | 'departments' | 'reports' | 'security';
-  searchFocused: boolean;
-  activeDropdown: 'notif' | 'profile' | 'role' | 'language' | null;
-}
+// Search states
+const [searchQuery, setSearchQuery] = useState<string>('');
+const [searchFocused, setSearchFocused] = useState<boolean>(false);
+const [searchCategory, setSearchCategory] = useState<'all' | 'employees' | 'departments' | 'reports' | 'security'>('all');
+
+// Notifications states
+const [unreadCount, setUnreadCount] = useState<number>(3);
+const [notifications, setNotifications] = useState<HeaderNotification[]>([]);
+
+// Dropdown navigation state
+const [activeDropdown, setActiveDropdown] = useState<'profile' | 'role' | 'notif' | 'messages' | null>(null);
+
+// Scope previews & Modals
+const [showPermissionsPreview, setShowPermissionsPreview] = useState<boolean>(false);
+const [showLogoutModal, setShowLogoutModal] = useState<boolean>(false);
 ```
 
 ---
 
-## 4. API Integration Flow
+## 4. API & Authentication Flow
 
 ```mermaid
 sequenceDiagram
 title Header API & Authentication Integration Data Flow
 actor User
-participant Client as "React Frontend (Header)"
-participant Redux as "Redux Toolkit Store"
-participant AuthAPI as "Authentication Service"
-participant NotifAPI as "Notification API (GET /notifications)"
-User ->> Client: Login Request
-Client ->> AuthAPI: POST /auth/login
-AuthAPI -->> Client: Return User Token & Role Metadata
-Client ->> Redux: Dispatch setUser(Name, Role, Department, Permissions)
-Redux -->> Client: Update Header Profile Avatar & Role Badge
+participant Client as "EnterpriseHeader Component"
+participant Auth as "useAuth Context Hook"
+participant NotifAPI as "Notification Service / API"
+User ->> Client: Perform Login
+Client ->> Auth: Authenticate User
+Auth -->> Client: Return User Token & Role Metadata
+Client ->> Client: Render Profile details & dynamic breadcrumbs
 Client ->> NotifAPI: GET /notifications
-NotifAPI -->> Client: Return Real-time Alerts & Unread Badges
-Client ->> Redux: Update Header Notifications Array
+NotifAPI -->> Client: Return Real-time alerts & unread badges
+Client ->> Client: Update notifications state & unreadCount
 ```
 
 ---
 
 ## 5. RBAC & Permission-Based Header Behavior
 
-- **ADMIN HEADER**: Displays organization statistics, system audit stream, security alert badges, and system settings access.
-- **HR MANAGER HEADER**: Displays HR recruitment alerts, candidate applications, leave request queues, and employee lifecycle updates.
-- **DEPARTMENT MANAGER HEADER**: Displays department headcount trends, team leave approvals, and performance evaluation reminders.
-- **TEAM LEAD HEADER**: Displays active sprint task counts, team attendance alerts, and productivity metrics.
-- **EMPLOYEE HEADER**: Displays personal notifications, leave balance status, and performance goals updates.
+The header uses roles dynamically extracted from `useAuth()` to adjust visible regions and labels:
+
+* **ADMIN HEADER**: Renders the system administrator role badge, exposes full audit stream navigation, and allows checking security permissions scopes via the profile dropdown.
+* **HR MANAGER HEADER**: Renders HR specialist tags, features human capital indicators, and prioritizes HR-specific alerts (e.g. late check-ins, employee profile verification).
+* **DEPARTMENT MANAGER / TEAM LEAD HEADER**: Renders executive management role badges, displays team-centric approvals alerts, and highlights management links in search suggestions.
+* **EMPLOYEE HEADER**: Displays employee self-service details, personal profile settings, and standard employee notification streams.
 
 ---
 
-## 6. Complete Layout Integration
+## 6. Layout Spacing Specifications
 
 ```text
 -----------------------------------------------------------------------------
-| Logo | Breadcrumbs | Global Search (Ctrl + K) | Notifications | Theme | User |
+| SidebarToggle | Logo | Breadcrumbs | Global Search (Ctrl + K) | Actions | Profile |
 -----------------------------------------------------------------------------
-|          |                                                                |
-| Sidebar  |                   Dashboard Content Area                       |
-| Navigation|                                                               |
+|               |                                                           |
+|  Sidebar      |                   Dashboard Content Area                  |
+|  Navigation   |                                                           |
 -----------------------------------------------------------------------------
 ```
+- **Height**: Fixed at `4rem` (`64px`) to perfectly line up with the sidebar content spacing.
+- **Glassmorphism**: `backdrop-blur-md` with `border-b border-slate-200/80` (Light Mode) and `border-slate-800/80` (Dark Mode).
+- **Z-Index Layer**: Hardened at `z-index: 40` to hover cleanly above scrollable page views while staying below interactive modal overlays.
